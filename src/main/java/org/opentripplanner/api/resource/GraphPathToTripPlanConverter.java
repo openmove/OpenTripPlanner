@@ -722,6 +722,7 @@ public abstract class GraphPathToTripPlanConverter {
             leg.tripId = trip.getId();
             leg.tripShortName = trip.getTripShortName();
             leg.tripBlockId = trip.getBlockId();
+            leg.peakOffpeak = trip.getPeakOffpeak();
 
             if (serviceDay != null) {
                 leg.serviceDate = serviceDay.getServiceDate().getAsString();

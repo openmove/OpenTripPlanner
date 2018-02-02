@@ -327,7 +327,7 @@ public class NearbySchedulesResource {
     }
 
     private Map<TransitStop, State> getNearbyStops(double lat, double lon, double radius) {
-        RoutingRequest options = router.defaultRoutingRequest;
+        RoutingRequest options = router.defaultRoutingRequest.clone();
         options.modes = new TraverseModeSet(TraverseMode.WALK);
         options.batch = true;
         options.setFrom(lat, lon);

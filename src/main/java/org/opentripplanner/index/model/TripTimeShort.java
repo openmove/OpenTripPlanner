@@ -79,6 +79,9 @@ public class TripTimeShort {
     /** track number, if available */
     public String track;
 
+    /** track number, if available */
+    public Integer peakOffpeak;
+
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.
      */
@@ -99,6 +102,7 @@ public class TripTimeShort {
         tripHeadsign       = tt.trip.getTripHeadsign();
         stopHeadsign       = tt.hasStopHeadsigns() ? tt.getHeadsign(i) : null;
         track              = tt.getTrack(i);
+        peakOffpeak        = tt.trip.getPeakOffpeak();
     }
 
     public TripTimeShort(TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz) {

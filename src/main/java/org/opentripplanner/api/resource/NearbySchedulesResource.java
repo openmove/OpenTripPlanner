@@ -209,11 +209,6 @@ public class NearbySchedulesResource {
     @GET
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML + Q})
     public Collection<StopTimesByStop> getNearbySchedules() {
-
-        if (radius != null && radius > IndexAPI.MAX_STOP_SEARCH_RADIUS){
-            radius = IndexAPI.MAX_STOP_SEARCH_RADIUS;
-        }
-
         boolean isLatLonSearch = lat != null && lon != null && radius != null;
         long startTime = getStartTimeSec();
 

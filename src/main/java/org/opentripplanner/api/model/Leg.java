@@ -304,6 +304,13 @@ public class Leg {
 
     public List<Departure> nextDepartures;
 
+     /**
+      * Information about whether a trip is peak or off-peak
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public Integer peakOffpeak;
+
     /**
      * Whether this leg is a transit leg or not.
      * @return Boolean true if the leg is a transit leg
@@ -315,8 +322,8 @@ public class Leg {
         else if (mode.equals(TraverseMode.BICYCLE.toString())) return false;
         else return true;
     }
-    
-    /** 
+
+    /**
      * The leg's duration in seconds
      */
     @XmlElement

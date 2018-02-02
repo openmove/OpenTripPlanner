@@ -14,9 +14,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package org.opentripplanner.index.model;
 
 import com.google.common.collect.Lists;
+import com.vividsolutions.jts.geom.Coordinate;
 import org.onebusaway.gtfs.model.Stop;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.routing.alertpatch.Alert;
+import org.opentripplanner.util.PolylineEncoder;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -32,8 +35,17 @@ public class StopTimesByStop {
 
     public List<LocalizedAlert> alerts;
 
-    public StopTimesByStop(Stop stop, boolean groupByParent, List<StopTimesInPattern> stopTimesInPattern) {
+    public StopTimesByStop(Stop stop, double distance, long walkTime, Iterable<Coordinate> coordinates, boolean groupByParent, List<StopTimesInPattern> stopTimesInPattern) {
         this.stop = new StopShort(stop);
+        if (distance >= 0) {
+            this.stop.dist = (int) Math.round(distance);
+        }
+        if (coordinates != null) {
+            this.stop.geometry = PolylineEncoder.createEncodings(coordinates);
+        }
+        if (walkTime >= 0) {
+            this.stop.walkTime = walkTime;
+        }
         if (stop.getParentStation() != null && groupByParent) {
             this.stop.id.setId(stop.getParentStation());
             this.stop.cluster = null;
@@ -42,10 +54,14 @@ public class StopTimesByStop {
         this.patterns = stopTimesInPattern;
     }
 
-    /**
-     * Stop which these arrival-departures are supplied for. If groupByParent = true, this will be a parent station
-     * (if parent stations are given in GTFS).
-     */
+    public StopTimesByStop(Stop stop, boolean groupByParent, List<StopTimesInPattern> stopTimesInPattern) {
+        this(stop, -1, -1, null, groupByParent, stopTimesInPattern);
+    }
+
+        /**
+         * Stop which these arrival-departures are supplied for. If groupByParent = true, this will be a parent station
+         * (if parent stations are given in GTFS).
+         */
     public StopShort getStop() {
         return stop;
     }

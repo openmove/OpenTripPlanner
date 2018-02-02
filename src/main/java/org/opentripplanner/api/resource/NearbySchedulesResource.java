@@ -16,13 +16,17 @@ import com.vividsolutions.jts.geom.Coordinate;
 import org.apache.commons.lang.StringUtils;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;
-import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
+import org.opentripplanner.api.util.StopFinder;
 import org.opentripplanner.index.IndexAPI;
 import org.opentripplanner.index.model.StopTimesByStop;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.RouteMatcher;
+import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
@@ -82,7 +86,22 @@ public class NearbySchedulesResource {
      * maximum number of stops to return if lat, lon, and radius are given; Ignored if stops are given;
      */
     @QueryParam("maxStops")
+    @DefaultValue("100")
     private Integer maxStops;
+
+    /**
+     * Minimum number of stops to return if lat, lon, and radius are given. Will search past radius to find stops.
+     */
+    @QueryParam("minStops")
+    @DefaultValue("1")
+    private Integer minStops;
+
+    /**
+     * Timeout for graph search, in seconds. In the future, this value may be overridden by a system maximum.
+     */
+    @QueryParam("timeout")
+    @DefaultValue("1.0")
+    private Double timeout;
 
     /**
      * list of routes of interest. Should be in the format MTASBWY__A,MNR__1, etc. Optional.
@@ -137,20 +156,6 @@ public class NearbySchedulesResource {
     private boolean groupByParent;
 
     /**
-     * If true, will increase search radius until at least one stop is returned in the results.
-     */
-    @QueryParam("autoScale")
-    @DefaultValue("false")
-    private boolean autoScale;
-
-    /**
-     * Maximum number of times the autoScale method will run. Will default to 5. Max value is 10.
-     */
-    @QueryParam("autoScaleAttempts")
-    @DefaultValue("5")
-    private int autoScaleAttempts;
-
-    /**
      * List of agencies that are excluded from the stopTime results
      */
     @QueryParam("bannedAgencies")
@@ -184,14 +189,15 @@ public class NearbySchedulesResource {
     @QueryParam("mode")
     private String mode;
 
-    private static int AUTO_SCALE_LIMIT = 10;
-
     private GraphIndex index;
+
+    private Router router;
 
     private StreetVertexIndexService streetIndex;
 
     public NearbySchedulesResource(@Context OTPServer otpServer, @PathParam("routerId") String routerId) {
         Router router = otpServer.getRouter(routerId);
+        this.router = router;
         index = router.graph.index;
         streetIndex = router.graph.streetIndex;
     }
@@ -211,59 +217,22 @@ public class NearbySchedulesResource {
         boolean isLatLonSearch = lat != null && lon != null && radius != null;
         long startTime = getStartTimeSec();
 
-        int maxAutoScaleAttempts = getMaxAutoScale();
-        double autoScaleCount = 0;
-
-        Map<AgencyAndId, StopTimesByStop> stopIdAndStopTimesMap;
-
-        do{
-            List<TransitStop> transitStops = getTransitStops(isLatLonSearch, radius);
-            stopIdAndStopTimesMap = getStopTimesByParentStop(transitStops, startTime);
-            if(stopIdAndStopTimesMap.size() == 0 && isLatLonSearch && autoScale){
-                radius += radius * getAutoScaleMultiplier();
-                autoScaleCount++;
-            }
+        Collection<TransitStop> transitStops;
+        Map<TransitStop, State> transitStopStates = null;
+        if (isLatLonSearch) {
+            transitStopStates = getNearbyStops(lat, lon, radius);
+            transitStops = transitStopStates.keySet();
+        } else if (stopsStr != null) {
+            transitStops = getStopsFromList(stopsStr);
+        } else {
+            throw new IllegalArgumentException("Must supply lat/lon/radius, or list of stops.");
         }
-        while(stopIdAndStopTimesMap.size() == 0
-                && autoScale
-                && isLatLonSearch
-                && autoScaleCount < maxAutoScaleAttempts);
-
-        // check for maxStops
-        if(isLatLonSearch && maxStops != null && maxStops > 0) {
-            return stopIdAndStopTimesMap.entrySet().stream()
-                    .limit(maxStops)
-                    .map(Map.Entry::getValue)
-                    .collect(Collectors.toList());
-        }
+        Map<AgencyAndId, StopTimesByStop> stopIdAndStopTimesMap = getStopTimesByParentStop(transitStops, startTime, transitStopStates);
 
         return stopIdAndStopTimesMap.values();
     }
 
-    private int getMaxAutoScale(){
-        return autoScaleAttempts <= AUTO_SCALE_LIMIT ? autoScaleAttempts : AUTO_SCALE_LIMIT;
-    }
-
-    private Double getAutoScaleMultiplier(){
-        if(radius < 50)
-            return 0.5;
-        else if(radius < 100)
-            return 0.3;
-        else
-            return 0.2;
-    }
-
-    private List<TransitStop> getTransitStops(boolean isLatLonSearch, Double radius){
-        if (isLatLonSearch) {
-            return getNearbyStops(lat, lon, radius);
-        } else if (stopsStr != null) {
-            return getStopsFromList(stopsStr);
-        } else {
-            throw new IllegalArgumentException("Must supply lat/lon/radius, or list of stops.");
-        }
-    }
-
-    private Map<AgencyAndId, StopTimesByStop> getStopTimesByParentStop(List<TransitStop> transitStops, long startTime){
+    private Map<AgencyAndId, StopTimesByStop> getStopTimesByParentStop(Collection<TransitStop> transitStops, long startTime, Map<TransitStop, State> stateMap){
         Map<AgencyAndId, StopTimesByStop> stopIdAndStopTimesMap = new LinkedHashMap<>();
         RouteMatcher routeMatcher = RouteMatcher.parse(routesStr);
         for (TransitStop tstop : transitStops) {
@@ -286,7 +255,18 @@ public class NearbySchedulesResource {
             StopTimesByStop stopTimes = stopIdAndStopTimesMap.get(key);
 
             if (stopTimes == null) {
-                stopTimes = new StopTimesByStop(stop, groupByParent, stopTimesPerPattern);
+                if (stateMap != null) {
+                    State state = stateMap.get(tstop);
+                    double distance = state.getWalkDistance();
+                    LinkedList<Coordinate> coords = new LinkedList<>();
+                    for (State s = state; s != null; s = s.getBackState()) {
+                        coords.addFirst(s.getVertex().getCoordinate());
+                    }
+                    long time = state.getElapsedTimeSeconds();
+                    stopTimes = new StopTimesByStop(stop, distance, time, coords, groupByParent, stopTimesPerPattern);
+                } else {
+                    stopTimes = new StopTimesByStop(stop, groupByParent, stopTimesPerPattern);
+                }
                 stopIdAndStopTimesMap.put(key, stopTimes);
             } else {
                 stopTimes.addPatterns(stopTimesPerPattern);
@@ -346,21 +326,17 @@ public class NearbySchedulesResource {
         return 0; // index.stopTimesForStop will treat this as current time
     }
 
-    // Finding nearby stops is adapted from IndexAPI.getStopsInRadius
-    private List<TransitStop> getNearbyStops(double lat, double lon, double radius) {
-        Map<Double,TransitStop> transitStopsMap = new HashMap<>();
-        Coordinate coord = new Coordinate(lon, lat);
-        for (TransitStop tstop : streetIndex.getNearbyTransitStops(coord, radius)) {
-            double distance = SphericalDistanceLibrary.fastDistance(tstop.getCoordinate(), coord);
-            if (distance < radius) {
-                transitStopsMap.put(distance, tstop);
-            }
-        }
-
-        return transitStopsMap.entrySet().stream()
-                .sorted(Comparator.comparing(Map.Entry::getKey))
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
+    private Map<TransitStop, State> getNearbyStops(double lat, double lon, double radius) {
+        RoutingRequest options = router.defaultRoutingRequest;
+        options.modes = new TraverseModeSet(TraverseMode.WALK);
+        options.batch = true;
+        options.setFrom(lat, lon);
+        options.setRoutingContext(index.graph);
+        AStar search = new AStar();
+        StopFinder finder = new StopFinder(radius, minStops, maxStops);
+        search.setTraverseVisitor(finder);
+        search.getShortestPathTree(options, -1, finder);
+        return finder.getStops();
     }
 
     private List<TransitStop> getStopsFromList(String stopsStr) {
@@ -425,5 +401,4 @@ public class NearbySchedulesResource {
         }
         return null;
     }
-
 }

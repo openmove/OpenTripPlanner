@@ -25,6 +25,7 @@ import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.RoutingContext;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
 import org.slf4j.Logger;
@@ -254,5 +255,14 @@ public class GraphPath {
 
     public void setRealtimeConsequences(List<Alert> realtimeConsequences) {
         this.realtimeConsequences = realtimeConsequences;
+    }
+
+    public boolean pathIncludesMode(TraverseMode mode) {
+        for (State s : states) {
+            if (mode.equals(s.getBackMode())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

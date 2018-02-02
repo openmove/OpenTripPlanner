@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -97,6 +98,11 @@ public class RoutingRequest implements Cloneable, Serializable {
      * Defaults to unlimited.
      */
     public double maxWalkDistance = Double.MAX_VALUE;
+
+    /**
+     * Maximum walking distance for heuristic.
+     */
+    public double maxWalkDistanceHeuristic = Double.MAX_VALUE;
 
     /**
      * The maximum distance (in meters) the user is willing to walk for transfer legs.
@@ -461,6 +467,13 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean bikeParkAndRide = false;
     public boolean parkAndRide  = false;
     public boolean kissAndRide  = false;
+
+    // smart kiss and ride - if this option is turned on, intelligently use pre-transit and post-transit kiss-and-ride
+    public boolean smartKissAndRide = false;
+    public boolean preTransitKissAndRide = false;
+    public boolean postTransitKissAndRide = false;
+    public Set<AgencyAndId> kissAndRideWhitelist = Collections.emptySet();
+    public Set<String> kissAndRideOverrides = Collections.emptySet();
 
     /* Whether we are in "long-distance mode". This is currently a server-wide setting, but it could be made per-request. */
     // TODO remove
@@ -965,6 +978,8 @@ public class RoutingRequest implements Cloneable, Serializable {
         ret.setArriveBy(!ret.arriveBy);
         ret.reverseOptimizing = !ret.reverseOptimizing; // this is not strictly correct
         ret.useBikeRentalAvailabilityInformation = false;
+        ret.preTransitKissAndRide = this.postTransitKissAndRide;
+        ret.postTransitKissAndRide = this.preTransitKissAndRide;
         return ret;
     }
 
@@ -1100,7 +1115,11 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && disableAlertFiltering == other.disableAlertFiltering
                 && geoidElevation == other.geoidElevation
                 && nextDepartureWindow == other.nextDepartureWindow
-                && hardPathBanning == other.hardPathBanning;
+                && hardPathBanning == other.hardPathBanning
+                && smartKissAndRide == other.smartKissAndRide
+                && kissAndRideWhitelist.equals(other.kissAndRideWhitelist)
+                && kissAndRideOverrides.equals(other.kissAndRideOverrides)
+                && maxWalkDistanceHeuristic == other.maxWalkDistanceHeuristic;
     }
 
     /**
@@ -1133,7 +1152,11 @@ public class RoutingRequest implements Cloneable, Serializable {
                 + new Boolean(disableRemainingWeightHeuristic).hashCode() * 193939
                 + new Boolean(useTraffic).hashCode() * 10169
                 + Integer.hashCode(nextDepartureWindow) * 1373
-                + Boolean.hashCode(hardPathBanning) * 63061489;
+                + Boolean.hashCode(hardPathBanning) * 63061489
+                + Boolean.hashCode(smartKissAndRide) * 10169
+                + kissAndRideWhitelist.hashCode() * 63061489
+                + kissAndRideOverrides.hashCode() * 731980
+                + Double.hashCode(maxWalkDistanceHeuristic) * 731980;
         if (batch) {
             hashCode *= -1;
             // batch mode, only one of two endpoints matters
@@ -1481,5 +1504,4 @@ public class RoutingRequest implements Cloneable, Serializable {
         }
         return false;
     }
-
 }

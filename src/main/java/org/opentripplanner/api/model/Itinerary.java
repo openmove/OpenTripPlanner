@@ -60,6 +60,17 @@ public class Itinerary {
      * How much time is spent walking, in seconds.
      */
     public long walkTime = 0;
+
+    /**
+     * How much time is spent biking, in seconds.
+     */
+    public long bikeTime = 0;
+
+    /**
+     * How much time is spent driving, in seconds.
+     */
+    public long driveTime = 0;
+
     /**
      * How much time is spent on transit, in seconds.
      */

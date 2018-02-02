@@ -7,6 +7,7 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.analyst.request.*;
 import org.opentripplanner.analyst.scenario.ScenarioStore;
 import org.opentripplanner.inspector.TileRendererManager;
@@ -25,9 +26,12 @@ import org.opentripplanner.visualizer.GraphVisualizer;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents the configuration of a single router (a single graph for a specific geographic area)
@@ -170,6 +174,22 @@ public class Router {
             graph.stopClusterMode = stopClusterMode.asText();    
         } else {
             graph.stopClusterMode = "proximity";
+        }
+
+        JsonNode kissAndRideWhitelist = config.get("kissAndRideWhitelist");
+        if (kissAndRideWhitelist != null) {
+            Set<AgencyAndId> stopList = new HashSet<>();
+            String stopsStr = kissAndRideWhitelist.asText();
+            for (String idStr : stopsStr.split(",")) {
+                AgencyAndId id = AgencyAndId.convertFromString(idStr, ':');
+                stopList.add(id);
+            }
+            defaultRoutingRequest.kissAndRideWhitelist = stopList;
+        }
+
+        JsonNode kissAndRideOverrides = config.get("kissAndRideOverrides");
+        if (kissAndRideOverrides != null) {
+            defaultRoutingRequest.kissAndRideOverrides = new HashSet<>(Arrays.asList(kissAndRideOverrides.asText().split(",")));
         }
 
         graph.consequencesStrategy = getConsequencesStrategyConfig(config.get("consequences"));

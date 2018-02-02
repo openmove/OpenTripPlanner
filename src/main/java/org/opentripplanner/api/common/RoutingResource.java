@@ -104,6 +104,10 @@ public abstract class RoutingResource {
     @QueryParam("maxWalkDistance")
     protected Double maxWalkDistance;
 
+    /** Maximum walk distance for heuristic */
+    @QueryParam("maxWalkDistanceHeuristic")
+    protected Double maxWalkDistanceHeuristic;
+
     /**
      * The maximum time (in seconds) of pre-transit travel when using drive-to-transit (park and
      * ride or kiss and ride). Defaults to unlimited.
@@ -501,6 +505,10 @@ public abstract class RoutingResource {
     @QueryParam("nextDepartureWindow")
     private Integer nextDepartureWindow = 1800;
 
+    /** Whether to turn on "smart kiss-an-ride" */
+    @QueryParam("smartKissAndRide")
+    private Boolean smartKissAndRide;
+
     /* 
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones. 
      * this should ideally be done when setting the routing context, but at present departure/
@@ -563,7 +571,13 @@ public abstract class RoutingResource {
         if (maxWalkDistance != null) {
             request.setMaxWalkDistance(maxWalkDistance);
             request.maxTransferWalkDistance = maxWalkDistance;
+            if (request.maxWalkDistanceHeuristic == Double.MAX_VALUE) {
+                request.maxWalkDistanceHeuristic = maxWalkDistance;
+            }
         }
+
+        if (maxWalkDistanceHeuristic != null)
+            request.maxWalkDistanceHeuristic = maxWalkDistanceHeuristic;
 
         if (maxPreTransitTime != null)
             request.setMaxPreTransitTime(maxPreTransitTime);
@@ -778,6 +792,9 @@ public abstract class RoutingResource {
 
         if (nextDepartureWindow != null)
             request.nextDepartureWindow = nextDepartureWindow;
+
+        if (smartKissAndRide != null)
+            request.smartKissAndRide = smartKissAndRide;
 
         //getLocale function returns defaultLocale if locale is null
         request.locale = ResourceBundleSingleton.INSTANCE.getLocale(locale);

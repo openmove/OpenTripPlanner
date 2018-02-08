@@ -23,6 +23,7 @@ import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -31,6 +32,7 @@ import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.location.TemporaryStreetLocation;
 import org.opentripplanner.routing.services.FareService;
@@ -878,9 +880,9 @@ public abstract class GraphPathToTripPlanConverter {
             return;
         }
         RoutingRequest options = state.getOptions();
-        if (options.nextDepartureWindow <= 0)
+        GraphIndex index = options.rctx.graph.index;
+        if (options.nextDepartureWindow <= 0 || index == null)
             return;
-        TimeZone tz = options.rctx.graph.getTimeZone();
         long time = state.getTimeSeconds();
         int stopIndex;
         TripPattern pattern;
@@ -896,25 +898,13 @@ public abstract class GraphPathToTripPlanConverter {
             return;
         }
         leg.nextDepartures = new ArrayList<>();
-        for (ServiceDay sd : options.rctx.serviceDays) {
-            Timetable timetable = pattern.getUpdatedTimetable(options, sd);
-            if (timetable.temporallyViable(sd, time, -1, true)) {
-                List<TripTimes> sortedTimes = new ArrayList<>(timetable.tripTimes);
-                sortedTimes.sort(Comparator.comparingInt(tt -> tt.getDepartureTime(stopIndex)));
-                for (TripTimes tt : sortedTimes) {
-                    if (!timetable.isTripTimesOk(tt, sd, state, stopIndex, false))
-                        continue;
-                    long deptTime = sd.time(tt.getDepartureTime(stopIndex));
-                    if (deptTime > time) {
-                        if (deptTime > time + options.nextDepartureWindow) {
-                            break;
-                        }
-                        Departure dept = new Departure(tz, sd, tt, stopIndex);
-                        leg.nextDepartures.add(dept);
-                    }
-                }
-            }
-        }
+        Stop stop = pattern.getStop(stopIndex);
+        RouteMatcher matcher = RouteMatcher.emptyMatcher();
+        matcher.addRouteId(pattern.route.getId());
+        List<StopTimesInPattern> stips = index.stopTimesForStop(stop, time, options.nextDepartureWindow, 3, true, matcher,
+                pattern.directionId, leg.headsign, null, null);
+
+        leg.nextDepartures = stips;
     }
 
     /**

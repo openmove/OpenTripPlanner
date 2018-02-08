@@ -244,7 +244,7 @@ public class NearbySchedulesResource {
             }
 
             List<StopTimesInPattern> stopTimesPerPattern = index.stopTimesForStop(
-                    stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction,
+                    stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null,
                     bannedAgencies, bannedRouteTypes);
 
             StopTimesByStop stopTimes = stopIdAndStopTimesMap.get(key);

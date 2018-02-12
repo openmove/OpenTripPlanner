@@ -135,6 +135,10 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         final int[] arrivals   = new int[nStops];
         final int[] sequences  = new int[nStops];
         final int[] departureBuffers = new int[nStops];
+        String[] tracks = null;
+        if (stopTimes.stream().anyMatch(st -> st.getTrack() != null)) {
+            tracks = new String[nStops];
+        }
         boolean hasDepartureBuffers = false;
         final BitSet timepoints = new BitSet(nStops);
         // Times are always shifted to zero. This is essential for frequencies and deduplication.
@@ -147,6 +151,9 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             timepoints.set(s, st.getTimepoint() == 1);
             if (st.getDepartureBuffer() != -1) {
                 hasDepartureBuffers = true;
+            }
+            if (st.getTrack() != null) {
+                tracks[s] = st.getTrack();
             }
             s++;
         }
@@ -169,6 +176,9 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         } else {
             this.departureBuffers = null;
         }
+        if (tracks != null) {
+            this.tracks = deduplicator.deduplicateStringArray(tracks);
+        }
         LOG.trace("trip {} has timepoint at indexes {}", trip, timepoints);
     }
 
@@ -185,6 +195,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.stopSequences = object.stopSequences;
         this.timepoints = object.timepoints;
         this.departureBuffers = object.departureBuffers;
+        this.tracks = object.tracks;
     }
 
     /**

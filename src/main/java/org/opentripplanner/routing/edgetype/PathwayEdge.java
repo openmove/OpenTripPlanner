@@ -87,10 +87,16 @@ public class PathwayEdge extends Edge {
        return TraverseMode.WALK;
     }
 
+    @Override
     public LineString getGeometry() {
         Coordinate[] coordinates = new Coordinate[] { getFromVertex().getCoordinate(),
                 getToVertex().getCoordinate() };
         return GeometryUtils.getGeometryFactory().createLineString(coordinates);
+    }
+
+    @Override
+    public boolean isApproximateGeometry() {
+        return true;
     }
 
     public String getName() {

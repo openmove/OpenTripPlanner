@@ -202,6 +202,10 @@ public abstract class Edge implements Serializable {
         return null;
     }
 
+    public boolean isApproximateGeometry() {
+        return false;
+    }
+
     /**
      * Returns the azimuth of this edge from head to tail.
      * 

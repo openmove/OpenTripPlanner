@@ -217,7 +217,7 @@ public abstract class GraphPathToTripPlanConverter {
         for (Edge edge : edges) {
             LineString geometry = edge.getGeometry();
 
-            if (geometry != null) {
+            if (geometry != null && !edge.isApproximateGeometry()) {
                 if (coordinates.size() == 0) {
                     coordinates.extend(geometry.getCoordinates());
                 } else {
@@ -445,6 +445,8 @@ public abstract class GraphPathToTripPlanConverter {
                         instr += ". " + extraInstr;
                     }
                     return instr;
+                } else {
+                    return "Continue on to pathway.";
                 }
             }
             if (e instanceof TransferEdge && nextState != null && nextState.getBackTrip() != null) {

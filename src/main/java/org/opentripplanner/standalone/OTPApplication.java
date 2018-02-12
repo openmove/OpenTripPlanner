@@ -99,7 +99,8 @@ public class OTPApplication extends Application {
             /* Features and Filters: extend Jersey, manipulate requests and responses. */
             CorsFilter.class,
             MultiPartFeature.class,
-            NearbySchedulesResource.class
+            NearbySchedulesResource.class,
+            RoutePatternsResource.class
         ));
         
         if (this.secure) {

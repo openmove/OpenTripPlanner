@@ -404,27 +404,36 @@ public class RoutingContext implements Cloneable {
      * TraverseOptions already has a CalendarService set.
      */
     private void setServiceDays() {
-        Calendar c = Calendar.getInstance();
-        c.setTime(new Date(opt.getSecondsSinceEpoch() * 1000));
-        c.setTimeZone(graph.getTimeZone());
-
-        final ServiceDate serviceDate = new ServiceDate(c);
-        this.serviceDays = new ArrayList<ServiceDay>(3);
         if (calendarService == null && graph.getCalendarService() != null
                 && (opt.modes == null || opt.modes.contains(TraverseMode.TRANSIT))) {
             LOG.warn("RoutingContext has no CalendarService. Transit will never be boarded.");
             return;
         }
+        this.serviceDays = getServiceDays(graph, opt.getSecondsSinceEpoch());
+    }
 
+    // utility method - this should be moved somewhere it makes sense
+    public static ArrayList<ServiceDay> getServiceDays(Graph graph, long time) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(new Date(time * 1000));
+        c.setTimeZone(graph.getTimeZone());
+
+        final ServiceDate serviceDate = new ServiceDate(c);
+        ArrayList<ServiceDay> serviceDays = new ArrayList<ServiceDay>(3);
+
+        CalendarService calendarService = graph.getCalendarService();
+        if (calendarService == null)
+            return null;
         for (String feedId : graph.getFeedIds()) {
             for (Agency agency : graph.getAgencies(feedId)) {
-                addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.previous(),
+                addIfNotExists(serviceDays, new ServiceDay(graph, serviceDate.previous(),
                         calendarService, agency.getId()));
-                addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate, calendarService, agency.getId()));
-                addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.next(),
+                addIfNotExists(serviceDays, new ServiceDay(graph, serviceDate, calendarService, agency.getId()));
+                addIfNotExists(serviceDays, new ServiceDay(graph, serviceDate.next(),
                         calendarService, agency.getId()));
             }
         }
+        return serviceDays;
     }
 
     private static <T> void addIfNotExists(ArrayList<T> list, T item) {

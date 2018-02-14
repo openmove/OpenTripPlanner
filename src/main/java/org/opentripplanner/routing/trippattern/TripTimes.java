@@ -240,7 +240,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
      * have a pointer to its enclosing timetable or pattern.
      */
     public String getHeadsign(final int stop) {
-        if (headsigns == null) {
+        if (headsigns == null || headsigns[stop] == null) {
             return trip.getTripHeadsign();
         } else {
             return headsigns[stop];

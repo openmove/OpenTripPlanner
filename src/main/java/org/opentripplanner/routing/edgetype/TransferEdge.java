@@ -101,7 +101,7 @@ public class TransferEdge extends Edge {
         se.setBackMode(TraverseMode.WALK);
         int time = getTime(rr);
         se.incrementTimeInSeconds(time);
-        se.incrementWeight(time);
+        se.incrementWeight(time * rr.walkReluctance);
         se.incrementWalkDistance(distance);
         se.setTransferNotPermissible();
         return se.makeState();
@@ -109,7 +109,7 @@ public class TransferEdge extends Edge {
 
     @Override
     public double weightLowerBound(RoutingRequest rr) {
-        return (getTime(rr));
+        return (getTime(rr) * rr.walkReluctance);
     }
 
     public void setGeometry(LineString geometry) {

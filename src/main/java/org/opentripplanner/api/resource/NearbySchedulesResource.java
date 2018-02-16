@@ -58,19 +58,19 @@ import static org.opentripplanner.api.resource.ServerInfo.Q;
 public class NearbySchedulesResource {
 
     /**
-     * latitude of center of search circle. Either circle, list of stops, or both must be supplied.
+     * latitude of origin of search. Either origin, list of stops, or both must be supplied.
      */
     @QueryParam("lat")
     private Double lat;
 
     /**
-     * longitude of center of search circle.
+     * longitude of origin of search.
      */
     @QueryParam("lon")
     private Double lon;
 
     /**
-     * radius of center of search circle.
+     * Maximum walking distance that the search will use to find stops.
      */
     @QueryParam("radius")
     private Double radius;

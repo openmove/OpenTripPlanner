@@ -72,6 +72,7 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
         List<FeedEntity> feedEntityList = null;
         List<TripUpdate> updates = null;
         fullDataset = true;
+        long start = System.currentTimeMillis();
         try {
             InputStream is = HttpUtils.getData(url);
             if (is != null) {
@@ -95,6 +96,9 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
             }
         } catch (Exception e) {
             LOG.warn("Failed to parse gtfs-rt feed from " + url + ":", e);
+        } finally {
+            long end = System.currentTimeMillis();
+            LOG.info("Feed " + this.feedId + " downloaded in " + (end-start) + "ms via url=" + url);
         }
         return updates;
     }

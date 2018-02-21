@@ -222,7 +222,6 @@ public class GraphPathFinder {
                 if (options.smartKissAndRide && path.pathIncludesMode(TraverseMode.CAR)) {
                     options.preTransitKissAndRide = false;
                     options.postTransitKissAndRide = false;
-                    options.smartKissAndRide = false;
                 }
             }
 

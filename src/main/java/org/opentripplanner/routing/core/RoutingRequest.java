@@ -16,6 +16,7 @@ package org.opentripplanner.routing.core;
 import com.google.common.base.Objects;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
@@ -186,6 +187,11 @@ public class RoutingRequest implements Cloneable, Serializable {
      *  of not wanting to walk too much without asking for totally ridiculous itineraries, but this
      *  observation should in no way be taken as scientific or definitive. Your mileage may vary.*/
     public double walkReluctance = 2.0;
+
+    /** Multiplier for how bad driving is - similar to walkReluctance. Set to 1.0 to match previous
+     * OTP behavior by default, but it would be reasonable to set this value to higher than
+     * walkReluctance. */
+    public double carReluctance = 1.0;
 
     /** Multiplier for OptimizeType = walking */
     public double optimizeWalkMultiplier = 3.5;
@@ -962,6 +968,8 @@ public class RoutingRequest implements Cloneable, Serializable {
             clone.unpreferredAgencies = (HashSet<String>) unpreferredAgencies.clone();
             clone.unpreferredRoutes = unpreferredRoutes.clone();
             clone.bannedPaths = new HashSet<>(bannedPaths);
+            clone.kissAndRideOverrides = new HashSet<>(kissAndRideOverrides);
+            clone.kissAndRideWhitelist = new HashSet<>(kissAndRideWhitelist);
             if (this.bikeWalkingOptions != this)
                 clone.bikeWalkingOptions = this.bikeWalkingOptions.clone();
             else
@@ -1072,6 +1080,7 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && transferPenalty == other.transferPenalty
                 && maxSlope == other.maxSlope
                 && walkReluctance == other.walkReluctance
+                && carReluctance == other.carReluctance
                 && waitReluctance == other.waitReluctance
                 && waitAtBeginningFactor == other.waitAtBeginningFactor
                 && walkBoardCost == other.walkBoardCost
@@ -1135,7 +1144,7 @@ public class RoutingRequest implements Cloneable, Serializable {
                 + optimize.hashCode() + new Double(maxWalkDistance).hashCode()
                 + new Double(maxTransferWalkDistance).hashCode()
                 + new Double(transferPenalty).hashCode() + new Double(maxSlope).hashCode()
-                + new Double(walkReluctance).hashCode() + new Double(waitReluctance).hashCode()
+                + new Double(walkReluctance).hashCode() + new Double(waitReluctance).hashCode() + new Double(carReluctance).hashCode()
                 + new Double(waitAtBeginningFactor).hashCode() * 15485863
                 + walkBoardCost + bikeBoardCost + bannedRoutes.hashCode()
                 + bannedTrips.hashCode() * 1373 + transferSlack * 20996011
@@ -1278,6 +1287,12 @@ public class RoutingRequest implements Cloneable, Serializable {
         if (walkReluctance > 0) {
             this.walkReluctance = walkReluctance;
             // Do not set bikeWalkingOptions.walkReluctance here, because that needs a higher value.
+        }
+    }
+
+    public void setCarReluctance(double carReluctance) {
+        if (carReluctance > 0) {
+            this.carReluctance = carReluctance;
         }
     }
 
@@ -1501,6 +1516,17 @@ public class RoutingRequest implements Cloneable, Serializable {
             if (hash.startsWith(other + "#")) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    public boolean canUseStopForKissAndRide(Stop stop) {
+        if (kissAndRideWhitelist.contains(stop.getId())) {
+            return true;
+        }
+        if (stop.getParentStation() != null) {
+            AgencyAndId id = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+            return kissAndRideWhitelist.contains(id);
         }
         return false;
     }

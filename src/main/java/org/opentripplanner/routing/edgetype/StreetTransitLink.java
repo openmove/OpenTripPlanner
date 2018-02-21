@@ -157,14 +157,14 @@ public class StreetTransitLink extends Edge {
             }
         }
         if (req.preTransitKissAndRide && !leavingTransit) {
-            if (!req.kissAndRideWhitelist.contains(getTransitStop().getStopId())) {
+            if (!req.canUseStopForKissAndRide(getTransitStop().getStop())) {
                 return null;
             } else {
                 s1.setCarParked(true);
             }
         }
         if (req.postTransitKissAndRide && leavingTransit) {
-            if (!req.kissAndRideWhitelist.contains(getTransitStop().getStopId())) {
+            if (!req.canUseStopForKissAndRide(getTransitStop().getStop())) {
                 return null;
             }
             else {

@@ -274,7 +274,7 @@ public class StreetEdge extends Edge implements Cloneable {
                 return forkState;
         }
         // Also branch to CAR at the beginning of smart-kiss-and-ride
-        if (options.preTransitKissAndRide && (s0.getBackMode() == null) && !s0.isEverBoarded()) {
+        if (options.preTransitKissAndRide && !TraverseMode.CAR.equals(s0.getBackMode()) && !s0.isEverBoarded()) {
             State forkState = forkToCarMode(s0, state);
             if (forkState != null)
                 return forkState;
@@ -291,7 +291,7 @@ public class StreetEdge extends Edge implements Cloneable {
     }
 
     private boolean lastStopOk(State s0) {
-       return s0.getOptions().kissAndRideWhitelist.contains(s0.getPreviousStop().getId());
+       return s0.getOptions().canUseStopForKissAndRide(s0.getPreviousStop());
     }
 
     private State forkToCarMode(State s0, State s1) {
@@ -416,8 +416,10 @@ public class StreetEdge extends Edge implements Cloneable {
 
         if (isStairs()) {
             weight *= options.stairsReluctance;
+        } else if (traverseMode.equals(TraverseMode.CAR)) {
+            weight *= options.carReluctance;
         } else {
-            // TODO: this is being applied even when biking or driving.
+            // TODO: this is being applied even when biking.
             weight *= options.walkReluctance;
         }
 
@@ -544,7 +546,6 @@ public class StreetEdge extends Edge implements Cloneable {
         }
 
         s1.incrementTimeInSeconds(roundedTime);
-        
         s1.incrementWeight(weight);
 
         return s1;

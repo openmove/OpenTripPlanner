@@ -126,6 +126,11 @@ public abstract class RoutingResource {
     @QueryParam("walkReluctance")
     protected Double walkReluctance;
 
+    /* Multiplier for how bad driving is, compared to being in transit for equal lengths of time. */
+    @Ignore
+    @QueryParam("carReluctance")
+    protected Double carReluctance;
+
     /**
      * How much worse is waiting for a transit vehicle than being on a transit vehicle, as a
      * multiplier. The default value treats wait and on-vehicle time as the same.
@@ -584,6 +589,9 @@ public abstract class RoutingResource {
 
         if (walkReluctance != null)
             request.setWalkReluctance(walkReluctance);
+
+        if (carReluctance != null)
+            request.setCarReluctance(carReluctance);
 
         if (waitReluctance != null)
             request.setWaitReluctance(waitReluctance);

@@ -262,7 +262,7 @@ public class TimetableSnapshotSource {
                     appliedBlockCount++;
                     appliedUpdates++;
                 } else {
-                    LOG.warn("Failed to apply TripUpdate.");
+                    LOG.trace("Failed to apply TripUpdate.");
                     LOG.trace(" Contents: {}", tripUpdate);
                 }
 
@@ -338,7 +338,7 @@ public class TimetableSnapshotSource {
         final TripPattern pattern = getPatternForTripId(feedId, tripId);
 
         if (pattern == null) {
-            LOG.warn("No pattern found for tripId {} with feedId {}, skipping TripUpdate.", tripId, feedId);
+            LOG.trace("No pattern found for tripId {} with feedId {}, skipping TripUpdate.", tripId, feedId);
             return false;
         }
 
@@ -395,20 +395,20 @@ public class TimetableSnapshotSource {
         if (trip != null) {
             // TODO: should we support this and add a new instantiation of this trip (making it
             // frequency based)?
-            LOG.warn("Graph already contains trip id of ADDED trip, skipping.");
+            LOG.trace("Graph already contains trip id of ADDED trip, skipping.");
             return false;
         }
 
         // Check whether a start date exists
         if (!tripDescriptor.hasStartDate()) {
             // TODO: should we support this and apply update to all days?
-            LOG.warn("ADDED trip doesn't have a start date in TripDescriptor, skipping.");
+            LOG.trace("ADDED trip doesn't have a start date in TripDescriptor, skipping.");
             return false;
         }
 
         // Check whether at least two stop updates exist
         if (tripUpdate.getStopTimeUpdateCount() < 2) {
-            LOG.warn("ADDED trip has less then two stops, skipping.");
+            LOG.trace("ADDED trip has less then two stops, skipping.");
             return false;
         }
 
@@ -451,13 +451,13 @@ public class TimetableSnapshotSource {
 
                 // Check non-negative
                 if (stopSequence < 0) {
-                    LOG.warn("Trip update contains negative stop sequence, skipping.");
+                    LOG.trace("Trip update contains negative stop sequence, skipping.");
                     return null;
                 }
 
                 // Check whether sequence is increasing
                 if (previousStopSequence != null && previousStopSequence > stopSequence) {
-                    LOG.warn("Trip update contains decreasing stop sequence, skipping.");
+                    LOG.trace("Trip update contains decreasing stop sequence, skipping.");
                     return null;
                 }
                 previousStopSequence = stopSequence;
@@ -476,12 +476,12 @@ public class TimetableSnapshotSource {
                     // Set a null value for a skipped stop
                     stops.add(null);
                 } else {
-                    LOG.warn("Graph doesn't contain stop id \"{}\" of trip update, skipping.",
+                    LOG.trace("Graph doesn't contain stop id \"{}\" of trip update, skipping.",
                             stopTimeUpdate.getStopId());
                     return null;
                 }
             } else {
-                LOG.warn("Trip update misses some stop ids, skipping.");
+                LOG.trace("Trip update misses some stop ids, skipping.");
                 return null;
             }
 
@@ -492,7 +492,7 @@ public class TimetableSnapshotSource {
                     // Check for increasing time
                     final Long time = stopTimeUpdate.getArrival().getTime();
                     if (previousTime != null && previousTime > time) {
-                        LOG.warn("Trip update contains decreasing times, skipping.");
+                        LOG.trace("Trip update contains decreasing times, skipping.");
                         return null;
                     }
                     previousTime = time;
@@ -504,7 +504,7 @@ public class TimetableSnapshotSource {
                         // Determine whether earlier stop is skipped
                         final boolean earlierSkippedStop = isStopSkipped(earlierStopTimeUpdate);
                         if (!earlierSkippedStop) {
-                            LOG.warn("Trip update misses arrival time, skipping.");
+                            LOG.trace("Trip update misses arrival time, skipping.");
                             return null;
                         }
                     }
@@ -515,7 +515,7 @@ public class TimetableSnapshotSource {
                     // Check for increasing time
                     final Long time = stopTimeUpdate.getDeparture().getTime();
                     if (previousTime != null && previousTime > time) {
-                        LOG.warn("Trip update contains decreasing times, skipping.");
+                        LOG.trace("Trip update contains decreasing times, skipping.");
                         return null;
                     }
                     previousTime = time;
@@ -527,7 +527,7 @@ public class TimetableSnapshotSource {
                         // Determine whether later stop is skipped
                         final boolean laterSkippedStop = isStopSkipped(laterStopTimeUpdate);
                         if (!laterSkippedStop) {
-                            LOG.warn("Trip update misses departure time, skipping.");
+                            LOG.trace("Trip update misses departure time, skipping.");
                             return null;
                         }
                     }
@@ -608,7 +608,7 @@ public class TimetableSnapshotSource {
         final Set<AgencyAndId> serviceIds = graph.getCalendarService().getServiceIdsOnDate(serviceDate);
         if (serviceIds.isEmpty()) {
             // No service id exists: return error for now
-            LOG.warn("ADDED trip has service date for which no service id is available, skipping.");
+            LOG.trace("ADDED trip has service date for which no service id is available, skipping.");
             return false;
         } else {
             // Just use first service id of set
@@ -663,7 +663,7 @@ public class TimetableSnapshotSource {
                 if (stopTimeUpdate.hasArrival() && stopTimeUpdate.getArrival().hasTime()) {
                     final long arrivalTime = stopTimeUpdate.getArrival().getTime() - midnightSecondsSinceEpoch;
                     if (arrivalTime < 0 || arrivalTime > MAX_ARRIVAL_DEPARTURE_TIME) {
-                        LOG.warn("ADDED trip has invalid arrival time (compared to start date in "
+                        LOG.trace("ADDED trip has invalid arrival time (compared to start date in "
                                 + "TripDescriptor), skipping.");
                         return false;
                     }
@@ -673,7 +673,7 @@ public class TimetableSnapshotSource {
                 if (stopTimeUpdate.hasDeparture() && stopTimeUpdate.getDeparture().hasTime()) {
                     final long departureTime = stopTimeUpdate.getDeparture().getTime() - midnightSecondsSinceEpoch;
                     if (departureTime < 0 || departureTime > MAX_ARRIVAL_DEPARTURE_TIME) {
-                        LOG.warn("ADDED trip has invalid departure time (compared to start date in "
+                        LOG.trace("ADDED trip has invalid departure time (compared to start date in "
                                 + "TripDescriptor), skipping.");
                         return false;
                     }

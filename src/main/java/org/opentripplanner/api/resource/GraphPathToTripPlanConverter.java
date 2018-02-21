@@ -267,7 +267,8 @@ public abstract class GraphPathToTripPlanConverter {
 
             // Ignore spurious transitions when there is a StreetTransitLink followed by walking pathways. TODO does this work with bikes?
             boolean stationEntrance = (edge instanceof StreetTransitLink) && ((StreetTransitLink) edge).getTransitStop().isEntrance();
-            if (stationEntrance && forwardMode.equals(backMode)) {
+            boolean modeTransition = i < states.length - 2 && !backMode.equals(states[i + 2].getBackMode());
+            if (stationEntrance && !modeTransition) {
                 do {
                     i++;
                 } while (i < states.length - 2 && states[i + 2].getBackEdge() instanceof PathwayEdge);

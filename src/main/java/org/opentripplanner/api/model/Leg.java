@@ -201,6 +201,20 @@ public class Leg {
     @JsonSerialize
     public String headsign = null;
 
+     /**
+      * For transit legs, the stopHeadsign
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public String stopHeadsign = null;
+
+     /**
+      * For transit legs, the tripHeadsign of the bus or train being used.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public String tripHeadsign = null;
+
     /**
      * For transit legs, the ID of the transit agency that operates the service used for this leg.
      * For non-transit legs, null.

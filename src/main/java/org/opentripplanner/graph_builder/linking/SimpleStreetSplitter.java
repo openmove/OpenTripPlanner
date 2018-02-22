@@ -297,17 +297,17 @@ public class SimpleStreetSplitter {
         // We use a really tiny epsilon here because we only want points that actually snap to exactly the same location on the
         // street to use the same vertices. Otherwise the order the stops are loaded in will affect where they are snapped.
         if (ll.getSegmentIndex() == 0 && ll.getSegmentFraction() < 1e-8) {
-            makeLinkEdges(tstop, (StreetVertex) edge.getFromVertex());
+            makeLinkEdges(tstop, (StreetVertex) edge.getFromVertex(), edge.wayId);
         }
         // -1 converts from count to index. Because of the fencepost problem, npoints - 1 is the "segment"
         // past the last point
         else if (ll.getSegmentIndex() == orig.getNumPoints() - 1) {
-            makeLinkEdges(tstop, (StreetVertex) edge.getToVertex());
+            makeLinkEdges(tstop, (StreetVertex) edge.getToVertex(), edge.wayId);
         }
 
         // nPoints - 2: -1 to correct for index vs count, -1 to account for fencepost problem
         else if (ll.getSegmentIndex() == orig.getNumPoints() - 2 && ll.getSegmentFraction() > 1 - 1e-8) {
-            makeLinkEdges(tstop, (StreetVertex) edge.getToVertex());
+            makeLinkEdges(tstop, (StreetVertex) edge.getToVertex(), edge.wayId);
         }
 
         else {
@@ -326,7 +326,7 @@ public class SimpleStreetSplitter {
             }
             // split the edge, get the split vertex
             SplitterVertex v0 = split(edge, ll, temporaryVertex != null, endVertex);
-            makeLinkEdges(tstop, v0);
+            makeLinkEdges(tstop, v0, edge.wayId);
         }
     }
 
@@ -382,11 +382,11 @@ public class SimpleStreetSplitter {
     }
 
     /** Make the appropriate type of link edges from a vertex */
-    private void makeLinkEdges(Vertex from, StreetVertex to) {
+    private void makeLinkEdges(Vertex from, StreetVertex to, long wayId) {
         if (from instanceof TemporaryStreetLocation) {
             makeTemporaryEdges((TemporaryStreetLocation) from, to);
         } else if (from instanceof TransitStop) {
-            makeTransitLinkEdges((TransitStop) from, to);
+            makeTransitLinkEdges((TransitStop) from, to, wayId);
         } else if (from instanceof BikeRentalStationVertex) {
             makeBikeRentalLinkEdges((BikeRentalStationVertex) from, to);
         } else if (from instanceof BikeParkVertex) {
@@ -428,7 +428,7 @@ public class SimpleStreetSplitter {
     /** 
      * Make street transit link edges, unless they already exist.
      */
-    private void makeTransitLinkEdges (TransitStop tstop, StreetVertex v) {
+    private void makeTransitLinkEdges (TransitStop tstop, StreetVertex v, long wayId) {
         if (!destructiveSplitting) {
             throw new RuntimeException("Transitedges are created with non destructive splitting!");
         }
@@ -439,9 +439,13 @@ public class SimpleStreetSplitter {
                 return;
         }
 
+        double distance = SphericalDistanceLibrary.distance(tstop.getCoordinate(), v.getCoordinate());
+        tstop.setClosestWay(distance, wayId);
+
         new StreetTransitLink(tstop, v, tstop.hasWheelchairEntrance());
         new StreetTransitLink(v, tstop, tstop.hasWheelchairEntrance());
     }
+
 
     /** Make link edges for bike rental */
     private void makeBikeRentalLinkEdges (BikeRentalStationVertex from, StreetVertex to) {

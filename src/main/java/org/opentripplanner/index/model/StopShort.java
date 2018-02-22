@@ -32,6 +32,12 @@ public class StopShort {
 
     /** Walking time, if returned from a search-based query */
     @JsonInclude(Include.NON_NULL) public Long walkTime;
+
+    /** OSM Way ID this stop is linked to, if returning debug information. */
+    @JsonInclude(Include.NON_NULL) public Long wayId;
+
+    /** distance to OSM way */
+    @JsonInclude(Include.NON_NULL) public Double distance;
     
     public StopShort (Stop stop) {
         id = stop.getId();

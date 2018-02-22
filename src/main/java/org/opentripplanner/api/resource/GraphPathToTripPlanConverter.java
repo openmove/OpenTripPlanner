@@ -742,6 +742,9 @@ public abstract class GraphPathToTripPlanConverter {
             if (leg.headsign == null) {
                 leg.headsign = trip.getTripHeadsign();
             }
+
+            leg.stopHeadsign = states[1].getBackDirection();
+            leg.tripHeadsign = trip.getTripHeadsign();
         }
     }
 

@@ -45,6 +45,9 @@ public class StreetTransitLink extends Edge {
 
     private TransitStop transitStop;
 
+    // osm way ID this was linked from
+    private long wayId = -1;
+
     public StreetTransitLink(StreetVertex fromv, TransitStop tov, boolean wheelchairAccessible) {
     	super(fromv, tov);
     	transitStop = tov;
@@ -225,4 +228,5 @@ public class StreetTransitLink extends Edge {
         }
         return false;
     }
+
 }

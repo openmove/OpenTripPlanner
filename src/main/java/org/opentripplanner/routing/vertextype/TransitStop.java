@@ -106,4 +106,26 @@ public class TransitStop extends TransitStationStop {
     public boolean shouldLinkToStreet() {
         return isStreetLinkable();
     }
+
+    // for reporting, keep track of closest osmWay and the distance to it.
+
+    private double distance = Double.MAX_VALUE;
+
+    private long osmWay;
+
+    public void setClosestWay(double distance, long osmWay) {
+        if (distance < this.distance) {
+            this.distance = distance;
+            this.osmWay = osmWay;
+        }
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public long getOsmWay() {
+        return osmWay;
+    }
+
 }

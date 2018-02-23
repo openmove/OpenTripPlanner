@@ -14,10 +14,13 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
+import org.opentripplanner.common.geometry.Subgraph;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.extra_graph.SubgraphForVertex;
 import org.opentripplanner.graph_builder.annotation.BikeParkUnlinked;
 import org.opentripplanner.graph_builder.annotation.BikeRentalStationUnlinked;
+import org.opentripplanner.graph_builder.annotation.StopLinkedToSubgraph;
 import org.opentripplanner.graph_builder.annotation.StopUnlinked;
 import org.opentripplanner.graph_builder.annotation.StopLinkedTooFar;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -86,6 +89,8 @@ public class SimpleStreetSplitter {
     //If true edges are split and new edges are created (used when linking transit stops etc. during graph building)
     //If false new temporary edges are created and no edges are deleted (Used when searching for origin/destination)
     private final boolean destructiveSplitting;
+
+    private SubgraphForVertex subgraphs;
 
     /**
      * Construct a new SimpleStreetSplitter. Be aware that only one SimpleStreetSplitter should be
@@ -204,6 +209,13 @@ public class SimpleStreetSplitter {
             int distance = (int)SphericalDistanceLibrary.degreesToMeters(distances.get(candidateEdges.get(0).getId()));
             if (distance > MIN_SNAP_DISTANCE_WARNING) {
                 LOG.info(String.format(graph.addBuilderAnnotation(new StopLinkedTooFar((TransitStop)vertex, distance))));
+            }
+            if (subgraphs != null) {
+                Vertex v = candidateEdges.get(0).getFromVertex();
+                Subgraph sg = subgraphs.getSubgraph(v);
+                if (sg != null && sg.streetSize() < 1000) {
+                    LOG.info(String.format(graph.addBuilderAnnotation(new StopLinkedToSubgraph((TransitStop)vertex, sg))));
+                }
             }
         }
 
@@ -548,5 +560,9 @@ public class SimpleStreetSplitter {
         }
         return closest;
 
+    }
+
+    public void setSubgraphs(SubgraphForVertex subgraphs) {
+        this.subgraphs = subgraphs;
     }
 }

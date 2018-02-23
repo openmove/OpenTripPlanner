@@ -18,18 +18,13 @@ import java.util.TreeSet;
 
 /** StopTimes, all with same route and headsign */
 public class StopTimesByRouteAndHeadsign {
-    /**
-     * Route which these arrival-departures are associated with.
-     */
+
     private RouteShort route;
 
-    /** Upcoming arrivals/departures at stop, ordered by earliest arrival */
     private SortedSet<TripTimeShort> times = new TreeSet<>(Comparator.comparingInt(TripTimeShort::getRealtimeArrival));
 
-    /** Headsign of this group */
     private String headsign;
 
-    /** Is the grouping headsign a stopHeadsign or tripHeadsign */
     private boolean isStopHeadsign;
 
     public StopTimesByRouteAndHeadsign(RouteShort route, String headsign, boolean isStopHeadsign) {
@@ -42,18 +37,22 @@ public class StopTimesByRouteAndHeadsign {
         times.add(tripTime);
     }
 
+    /** Route which these arrival-departures are associated with. */
     public RouteShort getRoute() {
         return route;
     }
 
+    /** Upcoming arrivals/departures at stop, ordered by earliest arrival */
     public SortedSet<TripTimeShort> getTimes() {
         return times;
     }
 
+    /** Headsign of this group */
     public String getHeadsign() {
         return headsign;
     }
 
+    /** Is the grouping headsign a stopHeadsign or tripHeadsign */
     public boolean isStopHeadsign() {
         return isStopHeadsign;
     }

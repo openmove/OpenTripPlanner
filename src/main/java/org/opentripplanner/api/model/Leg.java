@@ -319,6 +319,7 @@ public class Leg {
     @JsonSerialize
     public Boolean rentedBike;
 
+    /** Upcoming arrival/departures at this stop grouped by route and headsign */
     public Collection<StopTimesByRouteAndHeadsign> upcomingStopTimes;
 
      /**

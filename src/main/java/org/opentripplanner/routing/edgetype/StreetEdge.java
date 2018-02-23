@@ -103,7 +103,7 @@ public class StreetEdge extends Edge implements Cloneable {
     private StreetTraversalPermission permission;
 
     /** The OSM way ID from whence this came - needed to reference traffic data */
-    public long wayId;
+    public final long wayId;
 
     private int streetClass = CLASS_OTHERPATH;
     
@@ -124,7 +124,7 @@ public class StreetEdge extends Edge implements Cloneable {
 
     public StreetEdge(StreetVertex v1, StreetVertex v2, LineString geometry,
                       I18NString name, double length,
-                      StreetTraversalPermission permission, boolean back) {
+                      StreetTraversalPermission permission, boolean back, long wayId) {
         super(v1, v2);
         this.setBack(back);
         this.setGeometry(geometry);
@@ -160,6 +160,7 @@ public class StreetEdge extends Edge implements Cloneable {
                 outAngle = 0;
             }
         }
+        this.wayId = wayId;
     }
 
 
@@ -167,7 +168,7 @@ public class StreetEdge extends Edge implements Cloneable {
     public StreetEdge(StreetVertex v1, StreetVertex v2, LineString geometry,
                       String name, double length,
                       StreetTraversalPermission permission, boolean back) {
-        this(v1, v2, geometry, new NonLocalizedString(name), length, permission, back);
+        this(v1, v2, geometry, new NonLocalizedString(name), length, permission, back, -1);
     }
 
 
@@ -834,12 +835,9 @@ public class StreetEdge extends Edge implements Cloneable {
         StreetEdge e2 = null;
 
         if (destructive) {
-            e1 = new StreetEdge((StreetVertex) fromv, v, geoms.first, name, 0, permission, this.isBack());
-            e2 = new StreetEdge(v, (StreetVertex) tov, geoms.second, name, 0, permission, this.isBack());
-
             // copy the wayId to the split edges, so we can trace them back to their parent if need be
-            e1.wayId = this.wayId;
-            e2.wayId = this.wayId;
+            e1 = new StreetEdge((StreetVertex) fromv, v, geoms.first, name, 0, permission, this.isBack(), wayId);
+            e2 = new StreetEdge(v, (StreetVertex) tov, geoms.second, name, 0, permission, this.isBack(), wayId);
 
             // figure the lengths, ensuring that they sum to the length of this edge
             e1.calculateLengthFromGeometry();

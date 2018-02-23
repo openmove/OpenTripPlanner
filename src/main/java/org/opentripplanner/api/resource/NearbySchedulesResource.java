@@ -258,14 +258,14 @@ public class NearbySchedulesResource {
                         coords.addFirst(s.getVertex().getCoordinate());
                     }
                     long time = state.getElapsedTimeSeconds();
-                    stopTimes = new StopTimesByStop(stop, distance, time, coords, groupByParent, stopTimesPerPattern);
+                    stopTimes = new StopTimesByStop(stop, distance, time, coords, groupByParent);
                 } else {
-                    stopTimes = new StopTimesByStop(stop, groupByParent, stopTimesPerPattern);
+                    stopTimes = new StopTimesByStop(stop, groupByParent);
                 }
                 stopIdAndStopTimesMap.put(key, stopTimes);
-            } else {
-                stopTimes.addPatterns(stopTimesPerPattern);
             }
+            stopTimes.addPatterns(stopTimesPerPattern);
+
 
             addAlertsToStopTimes(stop, stopTimes);
         }

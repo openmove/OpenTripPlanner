@@ -23,6 +23,7 @@ import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.index.model.StopTimesByStop;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
@@ -904,14 +905,12 @@ public abstract class GraphPathToTripPlanConverter {
             LOG.error("Unexpected edge {}", states[0].backEdge);
             return;
         }
-        leg.nextDepartures = new ArrayList<>();
         Stop stop = pattern.getStop(stopIndex);
         RouteMatcher matcher = RouteMatcher.emptyMatcher();
         matcher.addRouteId(pattern.route.getId());
         List<StopTimesInPattern> stips = index.stopTimesForStop(stop, time, options.nextDepartureWindow, 3, true, matcher,
                 pattern.directionId, leg.headsign, null, null);
-
-        leg.nextDepartures = stips;
+        leg.upcomingStopTimes = new StopTimesByStop(stop, stips).getGroups();
     }
 
     /**

@@ -8,6 +8,7 @@ import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
+import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
 
@@ -82,10 +83,13 @@ public class TripTimeShort {
     /** track number, if available */
     public Integer peakOffpeak;
 
+    /** Pattern information for this stop-time */
+    public PatternShort pattern;
+
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.
      */
-    public TripTimeShort(TripTimes tt, int i, Stop stop) {
+    public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop) {
         stopId = stop.getId();
         stopIndex          = i;
         stopCount          = tt.getNumStops();
@@ -103,10 +107,11 @@ public class TripTimeShort {
         stopHeadsign       = tt.hasStopHeadsigns() ? tt.getHeadsign(i) : null;
         track              = tt.getTrack(i);
         peakOffpeak        = tt.trip.getPeakOffpeak();
+        pattern            = new PatternShort(tripPattern);
     }
 
-    public TripTimeShort(TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz) {
-        this(tt, i, stop);
+    public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz) {
+        this(tripPattern, tt, i, stop);
         tripId = tt.trip.getId();
         serviceDay = sd.time(0);
         arrivalFmt = formatDateIso(serviceDay + realtimeArrival, tz);
@@ -121,8 +126,16 @@ public class TripTimeShort {
         List<TripTimeShort> out = Lists.newArrayList();
         // one per stop, not one per hop, thus the <= operator
         for (int i = 0; i < times.getNumStops(); ++i) {
-            out.add(new TripTimeShort(times, i, table.pattern.getStop(i)));
+            out.add(new TripTimeShort(table.pattern, times, i, table.pattern.getStop(i)));
         }
         return out;
+    }
+
+    public int getRealtimeArrival() {
+        return realtimeArrival;
+    }
+
+    public int getRealtimeDeparture() {
+        return realtimeDeparture;
     }
 }

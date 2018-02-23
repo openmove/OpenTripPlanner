@@ -13,7 +13,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 package org.opentripplanner.index.model;
 
-import com.google.common.collect.Lists;
 import com.vividsolutions.jts.geom.Coordinate;
 import org.onebusaway.gtfs.model.Stop;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
@@ -21,9 +20,11 @@ import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.util.PolylineEncoder;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-
+import java.util.Map;
 /**
  * Some stopTimes all from the same stop.
  */
@@ -31,11 +32,13 @@ public class StopTimesByStop {
 
     private StopShort stop;
 
-    private List<StopTimesInPattern> patterns = Lists.newArrayList();
+    /** Upcoming arrivals and departures, grouped by route and headsign */
+    private Map<String, StopTimesByRouteAndHeadsign> groupsByKey;
 
+    /** Alerts for stop */
     public List<LocalizedAlert> alerts;
 
-    public StopTimesByStop(Stop stop, double distance, long walkTime, Iterable<Coordinate> coordinates, boolean groupByParent, List<StopTimesInPattern> stopTimesInPattern) {
+    public StopTimesByStop(Stop stop, double distance, long walkTime, Iterable<Coordinate> coordinates, boolean groupByParent) {
         this.stop = new StopShort(stop);
         if (distance >= 0) {
             this.stop.dist = (int) Math.round(distance);
@@ -51,11 +54,16 @@ public class StopTimesByStop {
             this.stop.cluster = null;
             // TODO we only know lat and lon match because it's an MTA convention
         }
-        this.patterns = stopTimesInPattern;
+        groupsByKey = new HashMap<>();
     }
 
-    public StopTimesByStop(Stop stop, boolean groupByParent, List<StopTimesInPattern> stopTimesInPattern) {
-        this(stop, -1, -1, null, groupByParent, stopTimesInPattern);
+    public StopTimesByStop(Stop stop,  List<StopTimesInPattern> stips) {
+        this(stop, -1, -1, null, true);
+        addPatterns(stips);
+    }
+
+    public StopTimesByStop(Stop stop, boolean groupByParent) {
+        this(stop, -1, -1, null, groupByParent);
     }
 
         /**
@@ -67,14 +75,25 @@ public class StopTimesByStop {
     }
 
     /**
-     * List of groups of arrival-departures, separated out by TripPattern
+     * List of groups of arrival-departures, grouped by route and headsign
      */
-    public List<StopTimesInPattern> getPatterns() {
-        return patterns;
+    public Collection<StopTimesByRouteAndHeadsign> getGroups() {
+        return groupsByKey.values();
     }
 
     public void addPatterns(List<StopTimesInPattern> stip) {
-        patterns.addAll(stip);
+        for (StopTimesInPattern s : stip) {
+            RouteShort route = s.route;
+            for (TripTimeShort tt : s.times) {
+                boolean isStopHeadsign = tt.stopHeadsign != null;
+                String headsign = isStopHeadsign ? tt.stopHeadsign : tt.tripHeadsign;
+                String key = key(route, headsign);
+                StopTimesByRouteAndHeadsign group = groupsByKey.computeIfAbsent(key,
+                        k -> new StopTimesByRouteAndHeadsign(route, headsign, isStopHeadsign)
+                );
+                group.addTime(tt);
+            }
+        }
     }
 
     public void addAlert(Alert alert, Locale locale) {
@@ -87,5 +106,9 @@ public class StopTimesByStop {
             }
         }
         alerts.add(new LocalizedAlert(alert, locale));
+    }
+
+    private String key(RouteShort route, String headsign) {
+        return route.id.toString() + "#" + headsign;
     }
 }

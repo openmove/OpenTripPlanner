@@ -15,6 +15,7 @@ package org.opentripplanner.api.model;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -25,7 +26,8 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
-import org.opentripplanner.index.model.StopTimesInPattern;
+import org.opentripplanner.index.model.StopTimesByRouteAndHeadsign;
+import org.opentripplanner.index.model.StopTimesByStop;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.util.model.EncodedPolylineBean;
@@ -317,7 +319,7 @@ public class Leg {
     @JsonSerialize
     public Boolean rentedBike;
 
-    public List<StopTimesInPattern> nextDepartures;
+    public Collection<StopTimesByRouteAndHeadsign> upcomingStopTimes;
 
      /**
       * Information about whether a trip is peak or off-peak

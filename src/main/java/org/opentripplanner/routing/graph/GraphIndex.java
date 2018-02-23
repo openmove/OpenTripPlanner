@@ -478,7 +478,7 @@ public class GraphIndex {
                             if (headsign != null && !t.getHeadsign(sidx).equals(headsign)) continue;
                             if (t.getDepartureTime(sidx) != -1 &&
                                     t.getDepartureTime(sidx) >= secondsSinceMidnight) {
-                                pq.insertWithOverflow(new TripTimeShort(t, sidx, stop, sd, graph.getTimeZone()));
+                                pq.insertWithOverflow(new TripTimeShort(pattern, t, sidx, stop, sd, graph.getTimeZone()));
                             }
                         }
 
@@ -491,7 +491,7 @@ public class GraphIndex {
                                     freq.tripTimes.getDepartureTime(0);
                             int i = 0;
                             while (departureTime <= lastDeparture && i < numberOfDepartures) {
-                                pq.insertWithOverflow(new TripTimeShort(freq.materialize(sidx, departureTime, true), sidx, stop, sd, graph.getTimeZone()));
+                                pq.insertWithOverflow(new TripTimeShort(pattern, freq.materialize(sidx, departureTime, true), sidx, stop, sd, graph.getTimeZone()));
                                 departureTime += freq.headway;
                                 i++;
                             }
@@ -550,7 +550,7 @@ public class GraphIndex {
                     if(omitNonPickups && pattern.stopPattern.pickups[sidx] == pattern.stopPattern.PICKDROP_NONE) continue;
                     for (TripTimes t : tt.tripTimes) {
                         if (!sd.serviceRunning(t.serviceCode)) continue;
-                        stopTimes.times.add(new TripTimeShort(t, sidx, stop, sd, graph.getTimeZone()));
+                        stopTimes.times.add(new TripTimeShort(pattern, t, sidx, stop, sd, graph.getTimeZone()));
                     }
                 }
                 sidx++;

@@ -40,7 +40,7 @@ public class StopShort {
     @JsonInclude(Include.NON_NULL) public Double distance;
     
     public StopShort (Stop stop) {
-        id = stop.getId();
+        id = new AgencyAndId(stop.getId().getAgencyId(), stop.getId().getId()); // copy
         code = stop.getCode();
         name = stop.getName();
         lat = stop.getLat();

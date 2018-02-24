@@ -32,6 +32,9 @@ public class RouteShort {
     /** use this parameter for bannedRoutes, preferredRoutes, etc in the /plan call */
     public String paramId;
 
+    /** sort order parameter */
+    public int sortOrder;
+
     public RouteShort (Route route) {
         id = route.getId();
         shortName = route.getShortName();
@@ -40,6 +43,7 @@ public class RouteShort {
         color = route.getColor();
         agencyName = route.getAgency().getName();
         paramId = id.getAgencyId() + "__" + id.getId();
+        sortOrder = route.getSortOrder();
     }
 
     public static List<RouteShort> list (Collection<Route> in) {

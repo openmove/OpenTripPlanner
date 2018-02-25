@@ -206,7 +206,10 @@ public class GraphPathFinder {
                     // This path does not use transit (is entirely on-street). Do not repeatedly find the same one.
                     options.onlyTransitTrips = true;
                 } else if (options.hardPathBanning) {
-                    options.banPath(path);
+                    if (options.isPathBanned(path))
+                        continue;
+                    else
+                        options.banPath(path);
                 }
                 // add consequences
                 path.setRealtimeConsequences(realtimeConsequences);

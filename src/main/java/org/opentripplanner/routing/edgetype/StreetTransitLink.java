@@ -113,11 +113,6 @@ public class StreetTransitLink extends Edge {
             return null;
         }
 
-        // check if path is banned
-        if (isLeavingTransitNetwork(req) && req.isPathBanned(s0)) {
-            return null;
-        }
-
         // Do not check here whether any transit modes are selected. A check for the presence of
         // transit modes will instead be done in the following PreBoard edge.
         // This allows searching for nearby transit stops using walk-only options.

@@ -276,10 +276,6 @@ public class State implements Cloneable {
      * @return True if the state at vertex can be the end of path.
      */
     public boolean isFinal() {
-        // Sufficiently different trip results, if we never leave the transit network
-        if (vertex instanceof TransitVertex && getOptions().isPathBanned(this)) {
-            return false;
-        }
         // When drive-to-transit is enabled, we need to check whether the car has been parked (or whether it has been picked up in reverse).
         boolean parkAndRide = stateData.opt.parkAndRide || stateData.opt.kissAndRide;
         boolean bikeParkAndRide = stateData.opt.bikeParkAndRide;

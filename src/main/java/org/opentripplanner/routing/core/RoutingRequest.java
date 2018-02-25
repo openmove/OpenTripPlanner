@@ -1502,11 +1502,7 @@ public class RoutingRequest implements Cloneable, Serializable {
         bannedPaths.add(path.getRoutePatternHash());
     }
 
-    public boolean isPathBanned(State s0) {
-        if (bannedPaths.isEmpty()) {
-            return false;
-        }
-        GraphPath path = new GraphPath(s0, false);
+    public boolean isPathBanned(GraphPath path) {
         String hash = path.getRoutePatternHash();
         if (bannedPaths.contains(hash)) {
             return true;

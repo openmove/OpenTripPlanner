@@ -304,6 +304,7 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
     private TObjectDoubleMap<Vertex> streetSearch (RoutingRequest rr, boolean fromTarget, long abortTime, boolean kissAndRide) {
         LOG.debug("Heuristic street search around the {}.", fromTarget ? "target" : "origin");
         rr = rr.clone();
+        rr.softWalkLimiting = true;
         if (fromTarget) {
             rr.setArriveBy(!rr.arriveBy);
         }

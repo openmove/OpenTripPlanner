@@ -514,6 +514,10 @@ public abstract class RoutingResource {
     @QueryParam("smartKissAndRide")
     private Boolean smartKissAndRide;
 
+    /** Whether to use soft walk limiting or hard walk limiting */
+    @QueryParam("softWalkLimiting")
+    private Boolean softWalkLimiting;
+
     /* 
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones. 
      * this should ideally be done when setting the routing context, but at present departure/
@@ -803,6 +807,9 @@ public abstract class RoutingResource {
 
         if (smartKissAndRide != null)
             request.smartKissAndRide = smartKissAndRide;
+
+        if (softWalkLimiting != null)
+            request.softWalkLimiting = softWalkLimiting;
 
         //getLocale function returns defaultLocale if locale is null
         request.locale = ResourceBundleSingleton.INSTANCE.getLocale(locale);

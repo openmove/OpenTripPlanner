@@ -849,4 +849,11 @@ public class State implements Cloneable {
     public boolean isTransferPermissible() {
         return stateData.transferPermissible || backEdge == null;
     }
+
+    // allow one transfer, needed for DirectTransferGenerator
+    public static State stateAllowingTransfer(Vertex v, RoutingRequest options) {
+        State s = new State(v, options);
+        s.stateData.transferPermissible = true;
+        return s;
+    }
 }

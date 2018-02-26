@@ -3,6 +3,7 @@ package org.opentripplanner.routing.spt;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TimedTransferEdge;
 import org.opentripplanner.routing.edgetype.TransferEdge;
 
 import java.io.Serializable;
@@ -51,6 +52,13 @@ public abstract class DominanceFunction implements Serializable {
         if ((a.backEdge instanceof TransferEdge) != (b.backEdge instanceof TransferEdge)) {
             return false;
         }
+
+        // A TimedTransferEdge cannot be trusted to dominate another state, since its resulting state can be invalidated
+        // when checking the specificity of the transfer
+        if ((a.backEdge instanceof TimedTransferEdge) || (b.backEdge instanceof TimedTransferEdge)) {
+            return false;
+        }
+
 
         // Does one state represent riding a rented bike and the other represent walking before/after rental?
         if (a.isBikeRenting() != b.isBikeRenting()) {

@@ -46,7 +46,8 @@ public class RouteShort {
         color = route.getColor();
         agencyName = route.getAgency().getName();
         paramId = id.getAgencyId() + "__" + id.getId();
-        sortOrder = route.getSortOrder();
+        if (route.getSortOrder() >= 0)
+            sortOrder = route.getSortOrder();
         routeType = route.getType();
     }
 

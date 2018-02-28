@@ -336,9 +336,13 @@ public class IndexAPI {
         }
     }
     
-   /** Return a list of all routes in the graph. */
-   // with mode paramter, only return routes within the comma-seperated list e.g., "SUBWAY,TRAM" etc.
-   // with repeated hasStop parameters, replaces old routesBetweenStops
+    /**
+     *  Return a list of all routes in the graph.
+     *
+     * @param mode only return routes of these modes. Comma-separated list. Valid values are TRAM, SUBWAY, RAIL, BUS, FERRY, CABLE_CAR, GONDOLA, FUNICULAR. (optional)
+     * @param stopIds only return routes which include the stops (optional)
+     * @return
+     */
    @GET
    @Path("/routes")
    public Response getRoutes (@QueryParam("mode") String mode, @QueryParam("hasStop") List<String> stopIds) {

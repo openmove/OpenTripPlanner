@@ -335,7 +335,7 @@ public class IndexAPI {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
         }
     }
-    
+
     /**
      *  Return a list of all routes in the graph.
      *

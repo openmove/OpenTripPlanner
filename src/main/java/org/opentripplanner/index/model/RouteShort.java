@@ -35,6 +35,9 @@ public class RouteShort {
     /** sort order parameter */
     public int sortOrder;
 
+    /** route type */
+    public int routeType;
+
     public RouteShort (Route route) {
         id = route.getId();
         shortName = route.getShortName();
@@ -44,6 +47,7 @@ public class RouteShort {
         agencyName = route.getAgency().getName();
         paramId = id.getAgencyId() + "__" + id.getId();
         sortOrder = route.getSortOrder();
+        routeType = route.getType();
     }
 
     public static List<RouteShort> list (Collection<Route> in) {

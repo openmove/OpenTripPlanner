@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
+import org.opentripplanner.index.model.FrequencyDetail;
 import org.opentripplanner.index.model.StopTimesByRouteAndHeadsign;
 import org.opentripplanner.index.model.StopTimesByStop;
 import org.opentripplanner.routing.alertpatch.Alert;
@@ -328,6 +329,13 @@ public class Leg {
      @XmlAttribute
      @JsonSerialize
      public Integer peakOffpeak;
+
+     /**
+       * For transit legs which reflect frequency-based trips, the frequency service parameters for this trip.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public FrequencyDetail frequencyDetail;
 
     /**
      * Whether this leg is a transit leg or not.

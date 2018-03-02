@@ -23,6 +23,7 @@ import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.index.model.FrequencyDetail;
 import org.opentripplanner.index.model.StopTimesByStop;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.profile.BikeRentalStationInfo;
@@ -712,6 +713,7 @@ public abstract class GraphPathToTripPlanConverter {
      */
     private static void addTripFields(Leg leg, State[] states, Locale requestedLocale) {
         Trip trip = states[states.length - 1].getBackTrip();
+        TripTimes tripTimes = states[states.length - 1].getTripTimes();
 
         if (trip != null) {
             Route route = trip.getRoute();
@@ -746,6 +748,10 @@ public abstract class GraphPathToTripPlanConverter {
 
             leg.stopHeadsign = states[1].getBackDirection();
             leg.tripHeadsign = trip.getTripHeadsign();
+
+            if (tripTimes.isFrequencyBased()) {
+                leg.frequencyDetail = new FrequencyDetail(tripTimes.getFrequencyEntry());
+            }
         }
     }
 
@@ -882,6 +888,9 @@ public abstract class GraphPathToTripPlanConverter {
      * @param states The states that go with the leg
      */
     private static void addNextDepartures(Leg leg, State[] states) {
+        // Don't include next departures for frequency-based trips.
+        if (leg.frequencyDetail != null)
+            return;
         State state = states[0].getBackState();
         if (state == null) {
             // potentially OnBoardDepart itinerary

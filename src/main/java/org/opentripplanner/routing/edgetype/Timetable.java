@@ -224,7 +224,7 @@ public class Timetable implements Serializable {
         if (bestFreq != null) {
             // A FrequencyEntry beat all the TripTimes.
             // Materialize that FrequencyEntry entry at the given time.
-            bestTrip = bestFreq.tripTimes.timeShift(stopIndex, bestTime, boarding);
+            bestTrip = bestFreq.tripTimes.timeShift(stopIndex, bestTime, boarding, bestFreq);
         }
         return bestTrip;
     }

@@ -124,6 +124,9 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     /** Track information, if available */
     private String[] tracks;
 
+    /** For materialized TripTimes, save the FrequencyEntry which the TripTimes was materialized from. */
+    private transient FrequencyEntry frequencyEntry;
+
     /**
      * The provided stopTimes are assumed to be pre-filtered, valid, and monotonically increasing.
      * The non-interpolated stoptimes should already be marked at timepoints by a previous filtering step.
@@ -460,13 +463,16 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     * index (not stop sequence number) at the given time. We only have a mechanism to shift the
     * scheduled stoptimes, not the real-time stoptimes. Therefore, this only works on trips
     * without updates for now (frequency trips don't have updates).
+    *
+    * When a TripTimes is materialized, save the frequency entry so we can access it later.
     */
-    public TripTimes timeShift (final int stop, final int time, final boolean depart) {
+    public TripTimes timeShift (final int stop, final int time, final boolean depart, final FrequencyEntry frequencyEntry) {
         if (arrivalTimes != null || departureTimes != null) return null;
         final TripTimes shifted = this.clone();
         // Adjust 0-based times to match desired stoptime.
         final int shift = time - (depart ? getDepartureTime(stop) : getArrivalTime(stop));
         shifted.timeShift += shift; // existing shift should usually (always?) be 0 on freqs
+        shifted.frequencyEntry = frequencyEntry;
         return shifted;
     }
 
@@ -508,5 +514,13 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
 
     public boolean hasStopHeadsigns() {
         return headsigns != null;
+    }
+
+    public boolean isFrequencyBased() {
+        return frequencyEntry != null;
+    }
+
+    public FrequencyEntry getFrequencyEntry() {
+        return frequencyEntry;
     }
 }

@@ -15,6 +15,7 @@ package org.opentripplanner.api.util;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.routing.algorithm.TraverseVisitor;
 import org.opentripplanner.routing.algorithm.strategies.SearchTerminationStrategy;
+import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -44,11 +45,14 @@ public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
 
     private boolean groupByParent;
 
-    public StopFinder(double radius, int minStops, int maxStops, boolean groupByParent) {
+    private Set<TraverseMode> modes;
+
+    public StopFinder(double radius, int minStops, int maxStops, boolean groupByParent, Set<TraverseMode> modes) {
         this.radius = radius;
         this.minStops = minStops;
         this.maxStops = maxStops;
         this.groupByParent = groupByParent;
+        this.modes = modes;
     }
 
     @Override
@@ -60,7 +64,7 @@ public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
         distSearched = Math.max(distSearched, state.getWalkDistance());
         if (state.getVertex() instanceof TransitStop) {
             TransitStop tstop = (TransitStop) state.getVertex();
-            if (!tstop.isEntrance() && !tstop.isExtendedLocationType()) {
+            if (!tstop.isEntrance() && !tstop.isExtendedLocationType() && hasMode(tstop)) {
                 transitStopStates.put(tstop, state);
 
                 // for termination condition, could be a parent stop
@@ -90,5 +94,16 @@ public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
 
     public Map<TransitStop, State> getStops() {
         return transitStopStates;
+    }
+
+    private boolean hasMode(TransitStop tstop) {
+        if (modes == null)
+            return true;
+        for (TraverseMode mode : modes) {
+            if (tstop.getModes().contains(mode)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

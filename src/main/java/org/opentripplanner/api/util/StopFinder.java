@@ -12,17 +12,22 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package org.opentripplanner.api.util;
 
+import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.routing.algorithm.TraverseVisitor;
 import org.opentripplanner.routing.algorithm.strategies.SearchTerminationStrategy;
+import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
 
@@ -36,10 +41,18 @@ public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
 
     private double distSearched = 0;
 
-    public StopFinder(double radius, int minStops, int maxStops) {
+    private Set<AgencyAndId> stops = new HashSet<>();
+
+    private boolean groupByParent;
+
+    private Set<TraverseMode> modes;
+
+    public StopFinder(double radius, int minStops, int maxStops, boolean groupByParent, Set<TraverseMode> modes) {
         this.radius = radius;
         this.minStops = minStops;
         this.maxStops = maxStops;
+        this.groupByParent = groupByParent;
+        this.modes = modes;
     }
 
     @Override
@@ -51,8 +64,15 @@ public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
         distSearched = Math.max(distSearched, state.getWalkDistance());
         if (state.getVertex() instanceof TransitStop) {
             TransitStop tstop = (TransitStop) state.getVertex();
-            if (!tstop.isEntrance() && !tstop.isExtendedLocationType()) {
+            if (!tstop.isEntrance() && !tstop.isExtendedLocationType() && hasMode(tstop)) {
                 transitStopStates.put(tstop, state);
+
+                // for termination condition, could be a parent stop
+                AgencyAndId stopId = tstop.getStopId();
+                if (groupByParent && tstop.getStop().getParentStation() != null) {
+                    stopId = new AgencyAndId(stopId.getAgencyId(), tstop.getStop().getParentStation());
+                }
+                stops.add(stopId);
             }
         }
     }
@@ -63,10 +83,10 @@ public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
 
     @Override
     public boolean shouldSearchTerminate(Vertex origin, Vertex target, State current, ShortestPathTree spt, RoutingRequest traverseOptions) {
-        if (transitStopStates.size() >= maxStops) {
+        if (stops.size() >= maxStops) {
             return true;
         }
-        if (distSearched > radius && transitStopStates.size() >= minStops) {
+        if (distSearched > radius && stops.size() >= minStops) {
             return true;
         }
         return false;
@@ -74,5 +94,16 @@ public class StopFinder implements TraverseVisitor, SearchTerminationStrategy {
 
     public Map<TransitStop, State> getStops() {
         return transitStopStates;
+    }
+
+    private boolean hasMode(TransitStop tstop) {
+        if (modes == null)
+            return true;
+        for (TraverseMode mode : modes) {
+            if (tstop.getModes().contains(mode)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -21,7 +21,7 @@ public class StopTimesByRouteAndHeadsign {
 
     private RouteShort route;
 
-    private SortedSet<TripTimeShort> times = new TreeSet<>(Comparator.comparingInt(TripTimeShort::getRealtimeArrival));
+    private SortedSet<TripTimeShort> times = new TreeSet<>(Comparator.<TripTimeShort>comparingLong(tt -> (tt.serviceDay+tt.realtimeArrival) ));
 
     private String headsign;
 

@@ -82,6 +82,8 @@ public class AlertPatch implements Serializable {
     /** Whether alert affects routing (only elevator alerts) */
     private boolean routingConsequence = false;
 
+    private String elevatorId;
+
     @XmlElement
     public Alert getAlert() {
         return alert;
@@ -169,8 +171,8 @@ public class AlertPatch implements Serializable {
             }
         }
 
-        if (route == null && trip == null && stop == null && this.stop != null) {
-            for (Edge edge : graph.index.pathwayForElevator.get(this.stop.getId())) {
+        if (elevatorId != null) {
+            for (Edge edge : graph.index.pathwayForElevator.get(elevatorId)) {
                 routingConsequence = true;
                 graph.addAlertPatch(edge, this);
             }
@@ -237,8 +239,8 @@ public class AlertPatch implements Serializable {
             }
         }
 
-        if (route == null && trip == null && stop == null && this.stop != null) {
-            for (Edge edge : graph.index.pathwayForElevator.get(this.stop.getId())) {
+        if (elevatorId != null) {
+            for (Edge edge : graph.index.pathwayForElevator.get(elevatorId)) {
                 graph.removeAlertPatch(edge, this);
             }
         }
@@ -329,6 +331,14 @@ public class AlertPatch implements Serializable {
 
     public boolean isRoutingConsequence() {
         return routingConsequence;
+    }
+
+    public String getElevatorId() {
+        return elevatorId;
+    }
+
+    public void setElevatorId(String elevatorId) {
+        this.elevatorId = elevatorId;
     }
 
     public boolean equals(Object o) {

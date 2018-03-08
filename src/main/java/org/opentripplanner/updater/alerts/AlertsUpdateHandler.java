@@ -15,6 +15,7 @@ package org.opentripplanner.updater.alerts;
 
 import java.util.*;
 
+import com.google.transit.realtime.GtfsRealtimeOneBusAway;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -134,6 +135,15 @@ public class AlertsUpdateHandler {
                 agencyId = informed.getAgencyId().intern();
             }
 
+            String elevatorId = null;
+            if (informed.hasExtension(GtfsRealtimeOneBusAway.obaEntitySelector)) {
+                GtfsRealtimeOneBusAway.OneBusAwayEntitySelector entitySelector =
+                        informed.getExtension(GtfsRealtimeOneBusAway.obaEntitySelector);
+                if (entitySelector.hasElevatorId()) {
+                    elevatorId = entitySelector.getElevatorId();
+                }
+            }
+
             AlertPatch patch = new AlertPatch();
             patch.setFeedId(feedId);
             if (routeId != null) {
@@ -151,6 +161,9 @@ public class AlertsUpdateHandler {
             }
             if (agencyId != null && routeId == null && tripId == null && stopId == null) {
                 patch.setAgencyId(agencyId);
+            }
+            if (elevatorId != null) {
+                patch.setElevatorId(elevatorId);
             }
             patch.setTimePeriods(periods);
             patch.setAlert(alertText);

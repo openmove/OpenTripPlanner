@@ -19,7 +19,9 @@ import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.spt.GraphPath;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ElevatorConsequencesStrategy extends SingleOptionStrategy<Boolean> {
 
@@ -34,7 +36,8 @@ public class ElevatorConsequencesStrategy extends SingleOptionStrategy<Boolean> 
 
     @Override
     public List<Alert> getConsequences(List<GraphPath> paths) {
-        List<Alert> consequences = new ArrayList<>();
+        // an edge may have multiple AlertPatches for the outage, if it affects, say, uptown and downtown stop
+        Set<Alert> consequences = new HashSet<>();
         for (GraphPath path : paths) {
             for (State s : path.states) {
                 if (s.getBackEdge() != null) {
@@ -46,6 +49,11 @@ public class ElevatorConsequencesStrategy extends SingleOptionStrategy<Boolean> 
                 }
             }
         }
-        return consequences;
+        return new ArrayList<>(consequences);
+    }
+
+    @Override
+    public boolean shouldRun() {
+        return options.wheelchairAccessible;
     }
 }

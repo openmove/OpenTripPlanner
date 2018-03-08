@@ -144,6 +144,11 @@ public class GraphPathFinder {
         boolean findRealtimeConsequences = options.rctx.graph.consequencesStrategy != null && options.findRealtimeConsequences && options.modes.isTransit();
         if (findRealtimeConsequences) {
             consequencesStrategy = options.rctx.graph.consequencesStrategy.create(options);
+            // consequences strategy can determine there is no value in running (e.g. elevator outage effects for non-wheelchair trip)
+            if (!consequencesStrategy.shouldRun()) {
+                consequencesStrategy.postprocess();
+                findRealtimeConsequences = false;
+            }
         }
 
         /* In long distance mode, maxWalk has a different meaning than it used to.

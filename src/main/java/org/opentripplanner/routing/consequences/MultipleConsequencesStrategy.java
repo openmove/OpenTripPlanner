@@ -29,10 +29,15 @@ public class MultipleConsequencesStrategy implements ConsequencesStrategy {
         List<ConsequencesStrategy> strategyList = new ArrayList<>();
         for (ConsequencesStrategyFactory factory : factories) {
             ConsequencesStrategy strategy = factory.create(options);
-            strategyList.add(strategy);
+            if (strategy.shouldRun())
+                strategyList.add(strategy);
+            else
+                strategy.postprocess();
         }
         this.strategies = strategyList.iterator();
-        this.current = strategies.next();
+        if (strategies.hasNext()) {
+            this.current = strategies.next();
+        }
     }
 
     @Override
@@ -42,7 +47,9 @@ public class MultipleConsequencesStrategy implements ConsequencesStrategy {
 
     @Override
     public void postprocess() {
-        current.postprocess();
+        if (current != null) {
+            current.postprocess();
+        }
         if (strategies.hasNext()) {
             current = strategies.next();
         }
@@ -51,5 +58,10 @@ public class MultipleConsequencesStrategy implements ConsequencesStrategy {
     @Override
     public List<Alert> getConsequences(List<GraphPath> paths) {
         return current.getConsequences(paths);
+    }
+
+    @Override
+    public boolean shouldRun() {
+        return current != null;
     }
 }

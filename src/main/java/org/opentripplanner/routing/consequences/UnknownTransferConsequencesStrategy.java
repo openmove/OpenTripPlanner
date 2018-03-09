@@ -77,6 +77,11 @@ public class UnknownTransferConsequencesStrategy extends SingleOptionStrategy<Bo
         return alerts;
     }
 
+    @Override
+    public boolean shouldRun() {
+        return !mainSearchUnknownTransfers;
+    }
+
     private static String itineraryString(GraphPath path) {
         return path.getRoutes().stream().map(AgencyAndId::getId).collect(Collectors.joining(" → "));
     }

@@ -144,6 +144,11 @@ public class GraphPathFinder {
         boolean findRealtimeConsequences = options.rctx.graph.consequencesStrategy != null && options.findRealtimeConsequences && options.modes.isTransit();
         if (findRealtimeConsequences) {
             consequencesStrategy = options.rctx.graph.consequencesStrategy.create(options);
+            // consequences strategy can determine there is no value in running (e.g. elevator outage effects for non-wheelchair trip)
+            if (!consequencesStrategy.shouldRun()) {
+                consequencesStrategy.postprocess();
+                findRealtimeConsequences = false;
+            }
         }
 
         /* In long distance mode, maxWalk has a different meaning than it used to.
@@ -211,6 +216,23 @@ public class GraphPathFinder {
                     else
                         options.banPath(path);
                 }
+
+                // If this Path Violates the End Route Preference, Keep Looking
+                if (!options.preferredEndRoutes.isEmpty()) {
+                    AgencyAndId final_route = path.getRoutes().get(path.getRoutes().size() - 1);
+                    if (!options.preferredEndRoutes.matchesAgencyAndId(final_route)) {
+                        continue;
+                    }
+                }
+
+                // If this Path Violates the Start Route Preference, Keep Looking
+                if (!options.preferredStartRoutes.isEmpty()) {
+                  AgencyAndId first_route = path.getRoutes().get(0);
+                  if (!options.preferredStartRoutes.matchesAgencyAndId(first_route)){
+                    continue;
+                  }
+                }
+
                 // add consequences
                 path.setRealtimeConsequences(realtimeConsequences);
 

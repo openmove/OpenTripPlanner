@@ -701,6 +701,19 @@ public abstract class GraphPathToTripPlanConverter {
                             "This vehicle may depart up to " + Math.round(bufferSec / 60) + " minutes earlier than the scheduled time.");
                     leg.addAlert(alert, requestedLocale);
                 }
+                int fromIndex = leg.from.stopIndex;
+                int toIndex = leg.to.stopIndex;
+                TripPattern pattern = ((TablePatternEdge) firstEdge).getPattern();
+                for (Edge edge : Arrays.asList(pattern.boardEdges[fromIndex], pattern.alightEdges[toIndex])) {
+                    for (AlertPatch alertPatch : graph.getAlertPatches(edge)) {
+                        State state = ((TransitBoardAlight) edge).boarding ? states[0] : states[states.length - 1];
+                        if (disableAlertFiltering || alertPatch.displayDuring(state)) {
+                            if (alertPatch.isStopSpecific()) {
+                                leg.addAlert(alertPatch.getAlert(), requestedLocale);
+                            }
+                        }
+                    }
+                }
             }
         }
     }

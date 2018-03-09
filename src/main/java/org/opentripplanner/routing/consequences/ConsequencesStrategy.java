@@ -21,4 +21,5 @@ public interface ConsequencesStrategy {
     boolean hasAnotherStrategy();
     void postprocess();
     List<Alert> getConsequences(List<GraphPath> paths);
+    boolean shouldRun();
 }

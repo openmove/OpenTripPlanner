@@ -31,6 +31,7 @@ import org.opentripplanner.api.adapters.AgencyAndIdAdapter;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.edgetype.PreAlightEdge;
 import org.opentripplanner.routing.edgetype.PreBoardEdge;
+import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -81,6 +82,8 @@ public class AlertPatch implements Serializable {
 
     /** Whether alert affects routing (only elevator alerts) */
     private boolean routingConsequence = false;
+
+    private String elevatorId;
 
     @XmlElement
     public Alert getAlert() {
@@ -154,23 +157,21 @@ public class AlertPatch implements Serializable {
         } else if (stop != null) {
             TransitStop transitStop = graph.index.stopVertexForStop.get(stop);
 
-            for (Edge edge : transitStop.getOutgoing()) {
-                if (edge instanceof PreBoardEdge) {
+            for (Edge edge : transitStop.departVertex.getOutgoing()) {
+                if (edge instanceof TransitBoardAlight) {
                     graph.addAlertPatch(edge, this);
-                    break;
                 }
             }
 
-            for (Edge edge : transitStop.getIncoming()) {
-                if (edge instanceof PreAlightEdge) {
+            for (Edge edge : transitStop.arriveVertex.getIncoming()) {
+                if (edge instanceof TransitBoardAlight) {
                     graph.addAlertPatch(edge, this);
-                    break;
                 }
             }
         }
 
-        if (route == null && trip == null && stop == null && this.stop != null) {
-            for (Edge edge : graph.index.pathwayForElevator.get(this.stop.getId())) {
+        if (elevatorId != null) {
+            for (Edge edge : graph.index.pathwayForElevator.get(elevatorId)) {
                 routingConsequence = true;
                 graph.addAlertPatch(edge, this);
             }
@@ -222,23 +223,21 @@ public class AlertPatch implements Serializable {
         } else if (stop != null) {
             TransitStop transitStop = graph.index.stopVertexForStop.get(stop);
 
-            for (Edge edge : transitStop.getOutgoing()) {
-                if (edge instanceof PreBoardEdge) {
+            for (Edge edge : transitStop.departVertex.getOutgoing()) {
+                if (edge instanceof TransitBoardAlight) {
                     graph.removeAlertPatch(edge, this);
-                    break;
                 }
             }
 
-            for (Edge edge : transitStop.getIncoming()) {
-                if (edge instanceof PreAlightEdge) {
+            for (Edge edge : transitStop.arriveVertex.getIncoming()) {
+                if (edge instanceof TransitBoardAlight) {
                     graph.removeAlertPatch(edge, this);
-                    break;
                 }
             }
         }
 
-        if (route == null && trip == null && stop == null && this.stop != null) {
-            for (Edge edge : graph.index.pathwayForElevator.get(this.stop.getId())) {
+        if (elevatorId != null) {
+            for (Edge edge : graph.index.pathwayForElevator.get(elevatorId)) {
                 graph.removeAlertPatch(edge, this);
             }
         }
@@ -329,6 +328,18 @@ public class AlertPatch implements Serializable {
 
     public boolean isRoutingConsequence() {
         return routingConsequence;
+    }
+
+    public String getElevatorId() {
+        return elevatorId;
+    }
+
+    public void setElevatorId(String elevatorId) {
+        this.elevatorId = elevatorId;
+    }
+
+    public boolean isStopSpecific() {
+        return  route == null && trip == null && agency == null && stop != null;
     }
 
     public boolean equals(Object o) {

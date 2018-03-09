@@ -328,7 +328,7 @@ public class NearbySchedulesResource {
         options.setFrom(lat, lon);
         options.setRoutingContext(index.graph);
         AStar search = new AStar();
-        StopFinder finder = new StopFinder(radius, minStops, maxStops);
+        StopFinder finder = new StopFinder(radius, minStops, maxStops, groupByParent, getModes());
         search.setTraverseVisitor(finder);
         search.getShortestPathTree(options, -1, finder);
         return finder.getStops();

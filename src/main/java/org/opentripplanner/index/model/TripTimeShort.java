@@ -114,8 +114,10 @@ public class TripTimeShort {
         this(tripPattern, tt, i, stop);
         tripId = tt.trip.getId();
         serviceDay = sd.time(0);
-        arrivalFmt = formatDateIso(serviceDay + realtimeArrival, tz);
-        departureFmt = formatDateIso(serviceDay + realtimeDeparture, tz);
+        if (realtimeArrival != TripTimes.UNAVAILABLE)
+            arrivalFmt = formatDateIso(serviceDay + realtimeArrival, tz);
+        if (realtimeDeparture != TripTimes.UNAVAILABLE)
+            departureFmt = formatDateIso(serviceDay + realtimeDeparture, tz);
     }
 
     /**

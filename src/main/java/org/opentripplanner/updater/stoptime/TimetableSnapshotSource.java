@@ -195,6 +195,13 @@ public class TimetableSnapshotSource {
         int totalUpdates = updates.size();
         long start = System.currentTimeMillis();
 
+        int addedUpdates = 0;
+        int addedSuccess = 0;
+        int scheduledUpdates = 0;
+        int scheduledSuccess = 0;
+        int cancelledUpdates = 0;
+        int cancelledSuccess = 0;
+
         // Acquire lock on buffer
         bufferLock.lock();
 
@@ -244,15 +251,21 @@ public class TimetableSnapshotSource {
                 switch (tripScheduleRelationship) {
                     case SCHEDULED:
                         applied = handleScheduledTrip(tripUpdate, feedId, serviceDate);
+                        if(applied) { scheduledSuccess++; }
+                        scheduledUpdates++;
                         break;
                     case ADDED:
                         applied = validateAndHandleAddedTrip(graph, tripUpdate, feedId, serviceDate);
+                        if(applied) { addedSuccess++; }
+                        addedUpdates++;
                         break;
                     case UNSCHEDULED:
                         applied = handleUnscheduledTrip(tripUpdate, feedId, serviceDate);
                         break;
                     case CANCELED:
                         applied = handleCanceledTrip(tripUpdate, feedId, serviceDate);
+                        if(applied) { cancelledSuccess++; }
+                        cancelledUpdates++;
                         break;
 //                    case MODIFIED:
 //                        applied = validateAndHandleModifiedTrip(graph, tripUpdate, feedId, serviceDate);
@@ -291,9 +304,15 @@ public class TimetableSnapshotSource {
 
             if(_cloudWatchService.enabled()){
                 CountMetrics countMetrics = new CountMetrics();
-                countMetrics.addCountMetric("appliedTripUpdates", appliedUpdates, "Feed Id", feedId);
-                countMetrics.addCountMetric("failedTripUpdates", totalUpdates - appliedUpdates, "Feed Id", feedId);
+                countMetrics.addCountMetric("totalTripUpdatesSuccess", appliedUpdates, "Feed Id", feedId);
+                countMetrics.addCountMetric("totalTripUpdatesFailed", totalUpdates - appliedUpdates, "Feed Id", feedId);
                 countMetrics.addCountMetric("totalTripUpdates", totalUpdates, "Feed Id", feedId);
+                countMetrics.addCountMetric("scheduledSuccess", scheduledSuccess, "Feed Id", feedId);
+                countMetrics.addCountMetric("scheduledUpdates", scheduledUpdates, "Feed Id", feedId);
+                countMetrics.addCountMetric("addedSuccess", scheduledSuccess, "Feed Id", feedId);
+                countMetrics.addCountMetric("addedUpdates", scheduledSuccess, "Feed Id", feedId);
+                countMetrics.addCountMetric("cancelledSuccess", scheduledSuccess, "Feed Id", feedId);
+                countMetrics.addCountMetric("cancelledUpdates", scheduledSuccess, "Feed Id", feedId);
                 _cloudWatchService.publishMetric("OpenTripPlanner", countMetrics);
             }
         }

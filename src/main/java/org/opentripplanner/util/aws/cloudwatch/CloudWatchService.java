@@ -186,11 +186,14 @@ public class CloudWatchService {
                 }
 
                 if (oldestInstance != null && oldestInstance.equals(EC2MetadataUtils.getInstanceId())) {
+                    _log.warn("This is the primary instance.");
                     _primary = true;
                 } else {
+                    _log.warn("This is not the primary instance. Oldest Instance Id is {}, this Instance Id is {}", oldestInstance, EC2MetadataUtils.getInstanceId());
                     _primary = false;
                 }
             } else {
+                _log.warn("Not the primary instance, no autoScaling group found.");
                 _primary = false;
             }
         }

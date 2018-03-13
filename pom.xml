@@ -481,6 +481,11 @@
             <artifactId>aws-java-sdk-cloudwatch</artifactId>
             <version>${aws.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-autoscaling</artifactId>
+            <version>${aws.version}</version>
+        </dependency>
         <!-- Fast drop-in serialization including compound value types (structs) for Java -->
         <dependency>
             <groupId>de.ruedigermoeller</groupId>

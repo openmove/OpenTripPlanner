@@ -427,7 +427,11 @@ public class GraphIndex {
         Date date = new Date(startTime * 1000);
         ServiceDate[] serviceDates = {new ServiceDate(date).previous(), new ServiceDate(date), new ServiceDate(date).next()};
 
-        for (TripPattern pattern : patternsForStop.get(stop)) {
+        List<TripPattern> tripPatterns = new ArrayList<>(patternsForStop.get(stop));
+        if (snapshot != null) {
+            tripPatterns.addAll(snapshot.getTripPatternsForStop(stop));
+        }
+        for (TripPattern pattern : tripPatterns) {
 
             if (!routeMatcher.isEmpty() && !routeMatcher.matches(pattern.route)) {
                 continue;

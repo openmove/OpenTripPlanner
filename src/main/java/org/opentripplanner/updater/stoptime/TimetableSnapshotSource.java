@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.transit.realtime.GtfsRealtimeNYCT;
+import com.google.transit.realtime.GtfsRealtimeOneBusAway;
+import org.eclipse.jetty.util.StringUtil;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
@@ -626,8 +628,8 @@ public class TimetableSnapshotSource {
             route.setLongName(tripId);
         }
 
-        // Create new Trip
 
+        // Create new Trip
         final Trip trip = new Trip();
         // TODO: which Agency ID to use? Currently use feed id.
         trip.setId(new AgencyAndId(feedId, tripUpdate.getTrip().getTripId()));
@@ -642,6 +644,12 @@ public class TimetableSnapshotSource {
         } else {
             // Just use first service id of set
             trip.setServiceId(serviceIds.iterator().next());
+        }
+
+        // Add Trip Headsign
+        String tripHeadsign = tripUpdate.getExtension(GtfsRealtimeOneBusAway.obaTripUpdate).getTripHeadsign();
+        if(StringUtil.isNotBlank(tripHeadsign)){
+            trip.setTripHeadsign(tripHeadsign);
         }
 
         final boolean success = addTripToGraphAndBuffer(feedId, graph, trip, tripUpdate, stops, serviceDate, RealTimeState.ADDED);
@@ -725,6 +733,12 @@ public class TimetableSnapshotSource {
                     stopTime.setDropOffType(1); // No drop off available
                 } else {
                     stopTime.setDropOffType(0); // Regularly scheduled drop off
+                }
+
+                // Stop headsign
+                String stopHeadsign = stopTimeUpdate.getExtension(GtfsRealtimeOneBusAway.obaStopTimeUpdate).getStopHeadsign();
+                if(StringUtil.isNotBlank(stopHeadsign)){
+                    stopTime.setStopHeadsign(stopHeadsign);
                 }
 
                 // Add stop time to list

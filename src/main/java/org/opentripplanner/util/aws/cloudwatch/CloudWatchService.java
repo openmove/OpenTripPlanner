@@ -208,19 +208,24 @@ public class CloudWatchService {
             DescribeAutoScalingGroupsResult result = _autoScale.describeAutoScalingGroups(
                     new DescribeAutoScalingGroupsRequest());
             return result.getAutoScalingGroups().stream()
-                    .filter(group -> group.getAutoScalingGroupName().matches(_autoScalingGroupName))
+                    .filter(group -> group.getAutoScalingGroupName().startsWith(_autoScalingGroupName))
                     .findFirst().orElse(null);
         }
 
         private List<Instance> getInstances(List<String> instanceIds){
-            DescribeInstancesRequest request = new DescribeInstancesRequest();
-            request.setInstanceIds(instanceIds);
-            DescribeInstancesResult result = _ec2.describeInstances(request);
-            List<Instance> instances = new ArrayList();
-            for(Reservation reservation : result.getReservations()){
-                instances.addAll(reservation.getInstances());
+            try {
+                DescribeInstancesRequest request = new DescribeInstancesRequest();
+                request.setInstanceIds(instanceIds);
+                DescribeInstancesResult result = _ec2.describeInstances(request);
+                List<Instance> instances = new ArrayList();
+                for (Reservation reservation : result.getReservations()) {
+                    instances.addAll(reservation.getInstances());
+                }
+                return instances;
+            } catch (Exception e){
+                _log.error("Unable to retreive instances", e);
+                return Collections.EMPTY_LIST;
             }
-            return instances;
         }
     }
 

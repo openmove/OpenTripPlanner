@@ -311,10 +311,10 @@ public class TimetableSnapshotSource {
                 countMetrics.addCountMetric("totalTripUpdates", totalUpdates, "Feed Id", feedId);
                 countMetrics.addCountMetric("scheduledSuccess", scheduledSuccess, "Feed Id", feedId);
                 countMetrics.addCountMetric("scheduledUpdates", scheduledUpdates, "Feed Id", feedId);
-                countMetrics.addCountMetric("addedSuccess", scheduledSuccess, "Feed Id", feedId);
-                countMetrics.addCountMetric("addedUpdates", scheduledSuccess, "Feed Id", feedId);
-                countMetrics.addCountMetric("cancelledSuccess", scheduledSuccess, "Feed Id", feedId);
-                countMetrics.addCountMetric("cancelledUpdates", scheduledSuccess, "Feed Id", feedId);
+                countMetrics.addCountMetric("addedSuccess", addedSuccess, "Feed Id", feedId);
+                countMetrics.addCountMetric("addedUpdates", addedUpdates, "Feed Id", feedId);
+                countMetrics.addCountMetric("cancelledSuccess", cancelledSuccess, "Feed Id", feedId);
+                countMetrics.addCountMetric("cancelledUpdates", cancelledUpdates, "Feed Id", feedId);
                 _cloudWatchService.publishMetric("OpenTripPlanner", countMetrics);
             }
         }

@@ -51,6 +51,10 @@ public class CloudWatchService {
 
     private String _env;
 
+    private String _accessKey;
+
+    private String _secretKey;
+
     private AmazonCloudWatchAsync _client;
 
     private AsyncHandler<PutMetricDataRequest, PutMetricDataResult> _handler;
@@ -60,9 +64,11 @@ public class CloudWatchService {
     public synchronized void init(String configFile){
         try {
             _awsConfig = OTPMain.loadJson(new File(configFile));
-            String accessKey = getConfigValue("accessKey");
-            String secretKey = getConfigValue("secretKey");
-            BasicAWSCredentials cred = new BasicAWSCredentials(accessKey, secretKey);
+            _accessKey = getConfigValue("accessKey");
+            _secretKey = getConfigValue("secretKey");
+            _env = getConfigValue("environment");
+
+            BasicAWSCredentials cred = new BasicAWSCredentials(_accessKey, _secretKey);
             _client = AmazonCloudWatchAsyncClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(cred)).build();
             _handler = new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
@@ -77,7 +83,6 @@ public class CloudWatchService {
                 }
             };
             _enabled = true;
-            _env = getConfigValue("environment");
             scheduleLeadershipElection();
         } catch(Exception e){
             _log.warn("Unable to connect to CloudWatch", e);
@@ -154,8 +159,9 @@ public class CloudWatchService {
 
         public LeadershipElectionTask(){
             try {
-                _ec2 = AmazonEC2ClientBuilder.defaultClient();
-                _autoScale = AmazonAutoScalingClientBuilder.defaultClient();
+                BasicAWSCredentials cred = new BasicAWSCredentials(_accessKey, _secretKey);
+                _ec2 = AmazonEC2ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(cred)).build();
+                _autoScale = AmazonAutoScalingClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(cred)).build();;
                 _autoScalingGroupName = getConfigValue("autoScaleGroup");
             } catch(Exception e){
                 _log.warn("Unable to create AWS Clients", e);

@@ -36,6 +36,8 @@ import org.onebusaway.gtfs.services.GtfsRelationalDao;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.index.model.StopTimesInPattern;
+import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
@@ -101,6 +103,7 @@ public class TimetableSnapshotSourceTest {
 
         GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
         factory.run(graph);
+        graph.putService(CalendarServiceData.class, GtfsLibrary.createCalendarServiceData(context.getDao()));
         graph.index(new DefaultStreetVertexIndexFactory());
 
         final TripDescriptor.Builder tripDescriptorBuilder = TripDescriptor.newBuilder();
@@ -120,6 +123,7 @@ public class TimetableSnapshotSourceTest {
         graph.putService(CalendarServiceData.class,
                 GtfsLibrary.createCalendarServiceData(context.getDao()));
         updater = new TimetableSnapshotSource(graph);
+        graph.timetableSnapshotSource = updater;
     }
 
     @Test
@@ -225,6 +229,9 @@ public class TimetableSnapshotSourceTest {
 
         final String addedTripId = "added_trip";
 
+        final Calendar calendar = serviceDate.getAsCalendar(graph.getTimeZone());
+        final long midnightSecondsSinceEpoch = new ServiceDate(calendar).getAsDate().getTime() / 1000;
+
         TripUpdate tripUpdate;
         {
             final TripDescriptor.Builder tripDescriptorBuilder = TripDescriptor.newBuilder();
@@ -232,9 +239,6 @@ public class TimetableSnapshotSourceTest {
             tripDescriptorBuilder.setTripId(addedTripId);
             tripDescriptorBuilder.setScheduleRelationship(TripDescriptor.ScheduleRelationship.ADDED);
             tripDescriptorBuilder.setStartDate(serviceDate.getAsString());
-
-            final Calendar calendar = serviceDate.getAsCalendar(graph.getTimeZone());
-            final long midnightSecondsSinceEpoch = calendar.getTimeInMillis() / 1000;
 
             final TripUpdate.Builder tripUpdateBuilder = TripUpdate.newBuilder();
 
@@ -300,6 +304,7 @@ public class TimetableSnapshotSourceTest {
         // WHEN
         updater.applyTripUpdates(graph, fullDataset, Arrays.asList(tripUpdate), feedId);
 
+
         // THEN
         // Find new pattern in graph starting from stop A
         Stop stopA = graph.index.stopForId.get(new AgencyAndId(feedId, "A"));
@@ -321,6 +326,15 @@ public class TimetableSnapshotSourceTest {
 
         final int scheduleTripIndex = schedule.getTripIndex(addedTripId);
         assertEquals("Added trip should not be found in scheduled time table", -1, scheduleTripIndex);
+
+        // find next trip time at stop A, ensure it is correct
+        List<StopTimesInPattern> stopTimes = graph.index.stopTimesForStop(stopA, midnightSecondsSinceEpoch + (8 * 3600) + (25 * 60), 10 * 60, 1, false);
+        assertFalse(stopTimes.isEmpty());
+        StopTimesInPattern stip = stopTimes.get(0);
+        assertFalse(stip.times.isEmpty());
+        TripTimeShort tts = stip.times.get(0);
+        assertEquals(tts.getRealtimeArrival(), (8 * 3600) + (30 * 60));
+        assertEquals(tts.realtimeState, RealTimeState.ADDED);
     }
 
 //    @Test

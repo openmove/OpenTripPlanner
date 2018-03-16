@@ -24,6 +24,7 @@ import org.opentripplanner.routing.impl.AlertPatchServiceImpl;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.routing.spt.ShortestPathTree;
+import org.opentripplanner.routing.transfers.MTATransferPermissionStrategy;
 import org.opentripplanner.updater.alerts.AlertsUpdateHandler;
 
 import java.io.File;
@@ -55,6 +56,7 @@ public class MTAGraphTest {
         CrossFeedTransferGenerator transfers = new CrossFeedTransferGenerator(new File(FEED_TRANSFERS));
         transfers.buildGraph(graph, new HashMap<>());
         graph.index(new DefaultStreetVertexIndexFactory());
+        graph.transferPermissionStrategy = new MTATransferPermissionStrategy(graph);
 
         alertsUpdateHandler = new AlertsUpdateHandler();
         alertPatchServiceImpl = new AlertPatchServiceImpl(graph);

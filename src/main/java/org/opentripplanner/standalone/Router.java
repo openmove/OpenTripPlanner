@@ -19,6 +19,7 @@ import org.opentripplanner.routing.consequences.ConsequencesStrategyFactory;
 import org.opentripplanner.routing.consequences.ElevatorConsequencesStrategy;
 import org.opentripplanner.routing.consequences.MultipleConsequencesStrategy;
 import org.opentripplanner.routing.consequences.UnknownTransferConsequencesStrategy;
+import org.opentripplanner.routing.transfers.MTATransferPermissionStrategy;
 import org.opentripplanner.updater.GraphUpdaterConfigurator;
 import org.opentripplanner.util.ElevationUtils;
 import org.opentripplanner.util.WorldEnvelope;
@@ -193,7 +194,14 @@ public class Router {
         }
 
         graph.consequencesStrategy = getConsequencesStrategyConfig(config.get("consequences"));
-        
+
+        JsonNode transferPermissionStrategy = config.get("transferPermissionStrategy");
+        if (transferPermissionStrategy != null) {
+            if (transferPermissionStrategy.asText().equals("mta")) {
+                graph.transferPermissionStrategy = new MTATransferPermissionStrategy(graph);
+            }
+        }
+
         /* Create Graph updater modules from JSON config. */
         GraphUpdaterConfigurator.setupGraph(this.graph, config);
 

@@ -249,6 +249,10 @@ public class Timetable implements Serializable {
         }
         TransferTable transferTable = state.getOptions().getRoutingContext().transferTable;
         int transferTime = transferTable.getTransferTime(state.getPreviousStop(), currentStop, state.getPreviousTrip(), trip, boarding);
+        if (!state.getOptions().getRoutingContext().graph.transferPermissionStrategy.isTransferAllowed(
+                state, state.getPreviousStop(), currentStop, state.getPreviousTrip(), trip, boarding, transferTime)) {
+            return -1;
+        }
         // Check whether back edge is TimedTransferEdge
         if (state.getBackEdge() instanceof TimedTransferEdge) {
             // Transfer must be of type TIMED_TRANSFER
@@ -257,13 +261,7 @@ public class Timetable implements Serializable {
             }
         }
         if (transferTime == StopTransfer.UNKNOWN_TRANSFER) {
-            String fromFeed = state.getPreviousStop().getId().getAgencyId();
-            String toFeed = currentStop.getId().getAgencyId();
-            if (!state.getOptions().allowUnknownTransfers && transferTable.hasFeedTransfers(fromFeed, toFeed, boarding)) {
-                return -1;
-            } else {
-                return t0; // no special rules, just board
-            }
+            return t0; // no special rules, just board
         }
         if (transferTime == StopTransfer.FORBIDDEN_TRANSFER) {
             // This transfer is forbidden

@@ -151,7 +151,7 @@ public class PathwayEdge extends Edge {
         return s1.makeState();
     }
 
-    private boolean elevatorIsOutOfService(State s0) {
+    public boolean elevatorIsOutOfService(State s0) {
         Set<String> outages = new HashSet<>();
         for (AlertPatch alert : s0.getOptions().rctx.graph.getAlertPatches(this)) {
             if (alert.displayDuring(s0) && alert.getElevatorId() != null) {

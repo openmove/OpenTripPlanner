@@ -932,7 +932,9 @@ public abstract class GraphPathToTripPlanConverter {
         matcher.addRouteId(pattern.route.getId());
         List<StopTimesInPattern> stips = index.stopTimesForStop(stop, time, options.nextDepartureWindow, 3, true, matcher,
                 pattern.directionId, leg.headsign, null, null);
-        leg.upcomingStopTimes = new StopTimesByStop(stop, stips).getGroups();
+        StopTimesByStop stbs = new StopTimesByStop(stop, stips);
+        stbs.limitTimes(time, options.nextDepartureWindow, 3);
+        leg.upcomingStopTimes = stbs.getGroups();
     }
 
     /**

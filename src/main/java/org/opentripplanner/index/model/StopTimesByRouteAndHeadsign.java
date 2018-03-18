@@ -12,7 +12,10 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package org.opentripplanner.index.model;
 
+import org.opentripplanner.routing.trippattern.TripTimes;
+
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -56,4 +59,18 @@ public class StopTimesByRouteAndHeadsign {
     public boolean isStopHeadsign() {
         return isStopHeadsign;
     }
+
+    public void limitTimes(long startTime, int timeRange, int numberOfDepartures) {
+        Iterator<TripTimeShort> timesIter = times.iterator();
+        int seen = 0;
+        long timeLimit = startTime + timeRange;
+        while(timesIter.hasNext()) {
+            TripTimeShort tt = timesIter.next();
+            long departure = tt.serviceDay + (tt.realtimeDeparture == TripTimes.UNAVAILABLE ? tt.scheduledDeparture : tt.realtimeDeparture);
+            if (seen >= numberOfDepartures || departure > timeLimit)
+                timesIter.remove();
+            seen++;
+        }
+    }
+
 }

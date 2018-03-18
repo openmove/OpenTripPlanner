@@ -108,6 +108,12 @@ public class StopTimesByStop {
         alerts.add(new LocalizedAlert(alert, locale));
     }
 
+    public void limitTimes(long startTime, int timeRange, int numberOfDepartures) {
+        for (StopTimesByRouteAndHeadsign st : groupsByKey.values()) {
+            st.limitTimes(startTime, timeRange, numberOfDepartures);
+        }
+    }
+
     private String key(RouteShort route, String headsign) {
         return route.id.toString() + "#" + headsign;
     }

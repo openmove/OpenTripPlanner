@@ -138,7 +138,7 @@ public class NearbySchedulesResource {
      * Maximum number of departures to return per TripPattern, per stop
      */
     @QueryParam("numberOfDepartures")
-    @DefaultValue("10")
+    @DefaultValue("3")
     private int numberOfDepartures;
 
     /**
@@ -223,6 +223,10 @@ public class NearbySchedulesResource {
             throw new IllegalArgumentException("Must supply lat/lon/radius, or list of stops.");
         }
         Map<AgencyAndId, StopTimesByStop> stopIdAndStopTimesMap = getStopTimesByParentStop(transitStops, startTime, transitStopStates);
+        Collection<StopTimesByStop> stopTimesByStops = stopIdAndStopTimesMap.values();
+        for (StopTimesByStop stbs : stopTimesByStops) {
+            stbs.limitTimes(startTime, timeRange, numberOfDepartures);
+        }
 
         return stopIdAndStopTimesMap.values();
     }
@@ -318,7 +322,8 @@ public class NearbySchedulesResource {
             }
             return d.getTime() / 1000;
         }
-        return 0; // index.stopTimesForStop will treat this as current time
+        // this calculation is done by index.stopTimesForStop if time=0, but do it here so we can reuse value
+        return System.currentTimeMillis() / 1000;
     }
 
     private Map<TransitStop, State> getNearbyStops(double lat, double lon, double radius) {

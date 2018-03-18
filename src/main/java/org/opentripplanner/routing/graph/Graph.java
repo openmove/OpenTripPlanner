@@ -52,6 +52,8 @@ import org.opentripplanner.routing.consequences.ConsequencesStrategyFactory;
 import org.opentripplanner.routing.services.StreetVertexIndexFactory;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
 import org.opentripplanner.routing.services.notes.StreetNotesService;
+import org.opentripplanner.routing.transfers.DefaultTransferPermissionStrategy;
+import org.opentripplanner.routing.transfers.TransferPermissionStrategy;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.vertextype.PatternArriveVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
@@ -219,6 +221,9 @@ public class Graph implements Serializable {
 
     /** Consequences strategy */
     public ConsequencesStrategyFactory consequencesStrategy;
+
+    /** Optionally apply more complex transfer rules */
+    public transient TransferPermissionStrategy transferPermissionStrategy = new DefaultTransferPermissionStrategy();
 
     public GraphVersion graphVersion = null;
 

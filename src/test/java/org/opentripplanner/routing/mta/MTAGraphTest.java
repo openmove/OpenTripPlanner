@@ -74,8 +74,8 @@ public class MTAGraphTest {
 
     protected GraphPath search(String from, String to, String date, String time, RoutingRequest options) {
         AStar aStar = new AStar();
-        options.setRoutingContext(graph, FEED_ID+":" + from, FEED_ID + ":" + to);
         options.setDateTime(date, time, graph.getTimeZone());
+        options.setRoutingContext(graph, FEED_ID+":" + from, FEED_ID + ":" + to);
         ShortestPathTree spt = aStar.getShortestPathTree(options);
         return spt.getPath(graph.getVertex(FEED_ID+":" + to), true);
     }

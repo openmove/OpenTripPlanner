@@ -512,6 +512,9 @@ public class RoutingRequest implements Cloneable, Serializable {
     /** Whether to apply "hard path banning", where after a sequence of routes is used, it can't be used again */
     public boolean hardPathBanning = true;
 
+    /** What agencies to apply hard path banning to */
+    public HashSet<String> hardPathBanningAgencies = new HashSet<>();
+
     /** Saves split edge which can be split on origin/destination search
      *
      * This is used so that TrivialPathException is thrown if origin and destination search would split the same edge
@@ -790,6 +793,12 @@ public class RoutingRequest implements Cloneable, Serializable {
             bannedAgencies = new HashSet<String>(Arrays.asList(s.split(",")));
     }
 
+    public void setHardPathBanningAgencies(String s) {
+        if (s != null && !s.equals("")) {
+            hardPathBanningAgencies = new HashSet<>(Arrays.asList(s.split(",")));
+        }
+    }
+
     public final static int MIN_SIMILARITY = 1000;
 
     public void setFromString(String from) {
@@ -974,6 +983,7 @@ public class RoutingRequest implements Cloneable, Serializable {
                 clone.bikeWalkingOptions = this.bikeWalkingOptions.clone();
             else
                 clone.bikeWalkingOptions = clone;
+            clone.hardPathBanningAgencies = (HashSet<String>) hardPathBanningAgencies.clone();
             return clone;
         } catch (CloneNotSupportedException e) {
             /* this will never happen since our super is the cloneable object */
@@ -1128,7 +1138,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && smartKissAndRide == other.smartKissAndRide
                 && kissAndRideWhitelist.equals(other.kissAndRideWhitelist)
                 && kissAndRideOverrides.equals(other.kissAndRideOverrides)
-                && maxWalkDistanceHeuristic == other.maxWalkDistanceHeuristic;
+                && maxWalkDistanceHeuristic == other.maxWalkDistanceHeuristic
+                && hardPathBanningAgencies.equals(other.hardPathBanningAgencies);
     }
 
     /**
@@ -1165,7 +1176,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 + Boolean.hashCode(smartKissAndRide) * 10169
                 + kissAndRideWhitelist.hashCode() * 63061489
                 + kissAndRideOverrides.hashCode() * 731980
-                + Double.hashCode(maxWalkDistanceHeuristic) * 731980;
+                + Double.hashCode(maxWalkDistanceHeuristic) * 731980
+                + hardPathBanningAgencies.hashCode() * 209477;
         if (batch) {
             hashCode *= -1;
             // batch mode, only one of two endpoints matters
@@ -1471,6 +1483,13 @@ public class RoutingRequest implements Cloneable, Serializable {
     }
 
     public boolean isPathBanned(GraphPath path) {
+        if (hardPathBanningAgencies != null && !hardPathBanningAgencies.isEmpty()) {
+            for (AgencyAndId id : path.getRoutes()) {
+                if (!hardPathBanningAgencies.contains(id.getAgencyId())) {
+                   return false;
+                }
+            }
+        }
         String hash = path.getRoutePatternHash();
         if (bannedPaths.contains(hash)) {
             return true;

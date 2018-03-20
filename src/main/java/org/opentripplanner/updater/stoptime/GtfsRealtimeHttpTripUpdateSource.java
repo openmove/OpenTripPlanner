@@ -51,6 +51,8 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
 
     private String url;
 
+    private long timestamp;
+
     static {
         _extensionRegistry = ExtensionRegistry.newInstance();
         GtfsRealtimeExtensions.registerExtensions(_extensionRegistry);
@@ -87,7 +89,9 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
                                 .equals(GtfsRealtime.FeedHeader.Incrementality.DIFFERENTIAL)) {
                     fullDataset = false;
                 }
-                
+
+                timestamp = feedMessage.getHeader().getTimestamp();
+
                 // Create List of TripUpdates
                 updates = new ArrayList<TripUpdate>(feedEntityList.size());
                 for (FeedEntity feedEntity : feedEntityList) {
@@ -115,5 +119,10 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
     @Override
     public String getFeedId() {
         return this.feedId;
+    }
+
+    @Override
+    public long getTimestamp() {
+        return timestamp;
     }
 }

@@ -118,6 +118,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
      */
     private RealTimeState realTimeState = RealTimeState.SCHEDULED;
 
+    /**
+     * timestamp of when this TripTimes was updated, if realTimeState != SCHEDULED
+     */
+    private long timestamp = UNAVAILABLE;
+
     /** A Set of stop indexes that are marked as timepoints in the GTFS input. */
     private final BitSet timepoints;
 
@@ -326,6 +331,14 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
 
     public void setRealTimeState(final RealTimeState realTimeState) {
         this.realTimeState = realTimeState;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     /** Used in debugging / dumping times. */

@@ -171,24 +171,26 @@ public class TimetableSnapshotSource {
         return snapshot;
     }
 
+    // for testing - no timestamp
+    public void applyTripUpdates(final Graph graph, final boolean fullDataset, final List<TripUpdate> updates, final String feedId) {
+        applyTripUpdates(graph, fullDataset, updates, feedId, -1);
+    }
+
     /**
      * Method to apply a trip update list to the most recent version of the timetable snapshot. A
      * GTFS-RT feed is always applied against a single static feed (indicated by feedId).
-<<<<<<< HEAD
-     * 
-=======
      *
      * However, multi-feed support is not completed and we currently assume there is only one static
      * feed when matching IDs.
      *
->>>>>>> 7296be8ffd532a13afb0bec263a9f436ab787022
      * @param graph graph to update (needed for adding/changing stop patterns)
      * @param fullDataset true iff the list with updates represent all updates that are active right
      *        now, i.e. all previous updates should be disregarded
      * @param updates GTFS-RT TripUpdate's that should be applied atomically
-     * @param feedId
+     * @param feedId feed to add TripUpdates to
+     * @param timestamp timestamp of FeedMessage, if given
      */
-    public void applyTripUpdates(final Graph graph, final boolean fullDataset, final List<TripUpdate> updates, final String feedId) {
+    public void applyTripUpdates(final Graph graph, final boolean fullDataset, final List<TripUpdate> updates, final String feedId, final long timestamp) {
         if (updates == null) {
             LOG.warn("updates is null");
             return;
@@ -250,22 +252,23 @@ public class TimetableSnapshotSource {
                 boolean applied = false;
                 final TripDescriptor.ScheduleRelationship tripScheduleRelationship = determineTripScheduleRelationship(
                         tripUpdate);
+                long tripTimestamp = tripUpdate.hasTimestamp() ? tripUpdate.getTimestamp() : timestamp;
                 switch (tripScheduleRelationship) {
                     case SCHEDULED:
-                        applied = handleScheduledTrip(tripUpdate, feedId, serviceDate);
+                        applied = handleScheduledTrip(tripUpdate, feedId, serviceDate, tripTimestamp);
                         if(applied) { scheduledSuccess++; }
                         scheduledUpdates++;
                         break;
                     case ADDED:
-                        applied = validateAndHandleAddedTrip(graph, tripUpdate, feedId, serviceDate);
+                        applied = validateAndHandleAddedTrip(graph, tripUpdate, feedId, serviceDate, tripTimestamp);
                         if(applied) { addedSuccess++; }
                         addedUpdates++;
                         break;
                     case UNSCHEDULED:
-                        applied = handleUnscheduledTrip(tripUpdate, feedId, serviceDate);
+                        applied = handleUnscheduledTrip(tripUpdate, feedId, serviceDate, tripTimestamp);
                         break;
                     case CANCELED:
-                        applied = handleCanceledTrip(tripUpdate, feedId, serviceDate);
+                        applied = handleCanceledTrip(tripUpdate, feedId, serviceDate, tripTimestamp);
                         if(applied) { cancelledSuccess++; }
                         cancelledUpdates++;
                         break;
@@ -362,7 +365,7 @@ public class TimetableSnapshotSource {
         return tripScheduleRelationship;
     }
 
-    private boolean handleScheduledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate) {
+    private boolean handleScheduledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate, final long timestamp) {
         final TripDescriptor tripDescriptor = tripUpdate.getTrip();
         // This does not include Agency ID or feed ID, trips are feed-unique and we currently assume a single static feed.
         final String tripId = tripDescriptor.getTripId();
@@ -388,6 +391,7 @@ public class TimetableSnapshotSource {
 
         // Make sure that updated trip times have the correct real time state
         updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
+        updatedTripTimes.setTimestamp(timestamp);
 
         final boolean success = buffer.update(feedId, pattern, updatedTripTimes, serviceDate);
         return success;
@@ -403,7 +407,7 @@ public class TimetableSnapshotSource {
      * @return true iff successful
      */
     private boolean validateAndHandleAddedTrip(final Graph graph, final TripUpdate tripUpdate,
-            final String feedId, final ServiceDate serviceDate) {
+            final String feedId, final ServiceDate serviceDate, long timestamp) {
         // Preconditions
         Preconditions.checkNotNull(graph);
         Preconditions.checkNotNull(tripUpdate);
@@ -453,7 +457,7 @@ public class TimetableSnapshotSource {
         // Handle added trip
         //
 
-        final boolean success = handleAddedTrip(graph, tripUpdate, stops, feedId, serviceDate);
+        final boolean success = handleAddedTrip(graph, tripUpdate, stops, feedId, serviceDate, timestamp);
         return success;
     }
 
@@ -591,7 +595,7 @@ public class TimetableSnapshotSource {
      * @return true iff successful
      */
     private boolean handleAddedTrip(final Graph graph, final TripUpdate tripUpdate, final List<Stop> stops,
-            final String feedId, final ServiceDate serviceDate) {
+            final String feedId, final ServiceDate serviceDate, final long timestamp) {
         // Preconditions
         Preconditions.checkNotNull(stops);
         Preconditions.checkArgument(tripUpdate.getStopTimeUpdateCount() == stops.size(),
@@ -600,7 +604,7 @@ public class TimetableSnapshotSource {
         // Check whether trip id has been used for previously ADDED trip message and cancel
         // previously created trip
         final String tripId = tripUpdate.getTrip().getTripId();
-        cancelPreviouslyAddedTrip(feedId, tripId, serviceDate);
+        cancelPreviouslyAddedTrip(feedId, tripId, serviceDate, timestamp);
 
         //
         // Create added trip
@@ -652,7 +656,7 @@ public class TimetableSnapshotSource {
             trip.setTripHeadsign(tripHeadsign);
         }
 
-        final boolean success = addTripToGraphAndBuffer(feedId, graph, trip, tripUpdate, stops, serviceDate, RealTimeState.ADDED);
+        final boolean success = addTripToGraphAndBuffer(feedId, graph, trip, tripUpdate, stops, serviceDate, RealTimeState.ADDED, timestamp);
         return success;
     }
 
@@ -669,7 +673,7 @@ public class TimetableSnapshotSource {
      */
     private boolean addTripToGraphAndBuffer(final String feedId, final Graph graph, final Trip trip,
             final TripUpdate tripUpdate, final List<Stop> stops, final ServiceDate serviceDate,
-            final RealTimeState realTimeState) {
+            final RealTimeState realTimeState, final long timestamp) {
 
         // Preconditions
         Preconditions.checkNotNull(stops);
@@ -793,6 +797,7 @@ public class TimetableSnapshotSource {
 
         // Make sure that updated trip times have the correct real time state
         newTripTimes.setRealTimeState(realTimeState);
+        newTripTimes.setTimestamp(timestamp);
 
         // Add new trip times to the buffer
         final boolean success = buffer.update(feedId, pattern, newTripTimes, serviceDate);
@@ -806,7 +811,7 @@ public class TimetableSnapshotSource {
      * @param serviceDate service date
      * @return true if scheduled trip was cancelled
      */
-    private boolean cancelScheduledTrip(String feedId, String tripId, final ServiceDate serviceDate) {
+    private boolean cancelScheduledTrip(String feedId, String tripId, final ServiceDate serviceDate, long timestamp) {
         boolean success = false;
         
         final TripPattern pattern = getPatternForTripId(feedId, tripId);
@@ -820,6 +825,7 @@ public class TimetableSnapshotSource {
             } else {
                 final TripTimes newTripTimes = new TripTimes(timetable.getTripTimes(tripIndex));
                 newTripTimes.cancel();
+                newTripTimes.setTimestamp(timestamp);
                 buffer.update(feedId, pattern, newTripTimes, serviceDate);
                 success = true;
             }
@@ -837,7 +843,7 @@ public class TimetableSnapshotSource {
      * @param serviceDate service date
      * @return true if a previously added trip was cancelled
      */
-    private boolean cancelPreviouslyAddedTrip(final String feedId, final String tripId, final ServiceDate serviceDate) {
+    private boolean cancelPreviouslyAddedTrip(final String feedId, final String tripId, final ServiceDate serviceDate, final long timestamp) {
         boolean success = false;
 
         final TripPattern pattern = buffer.getLastAddedTripPattern(feedId, tripId, serviceDate);
@@ -850,6 +856,7 @@ public class TimetableSnapshotSource {
             } else {
                 final TripTimes newTripTimes = new TripTimes(timetable.getTripTimes(tripIndex));
                 newTripTimes.cancel();
+                newTripTimes.setTimestamp(timestamp);
                 buffer.update(feedId, pattern, newTripTimes, serviceDate);
                 success = true;
             }
@@ -858,7 +865,7 @@ public class TimetableSnapshotSource {
         return success;
     }
 
-    private boolean handleUnscheduledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate) {
+    private boolean handleUnscheduledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate, long timestamp) {
         // TODO: Handle unscheduled trip
         LOG.warn("Unscheduled trips are currently unsupported. Skipping TripUpdate.");
         return false;
@@ -873,7 +880,7 @@ public class TimetableSnapshotSource {
      * @param serviceDate
      * @return true iff successful
      */
-    private boolean validateAndHandleModifiedTrip(final Graph graph, final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate) {
+    private boolean validateAndHandleModifiedTrip(final Graph graph, final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate, final long timestamp) {
         // Preconditions
         Preconditions.checkNotNull(graph);
         Preconditions.checkNotNull(tripUpdate);
@@ -930,7 +937,7 @@ public class TimetableSnapshotSource {
         // Handle modified trip
         //
 
-        final boolean success = handleModifiedTrip(graph, trip, tripUpdate, stops, feedId, serviceDate);
+        final boolean success = handleModifiedTrip(graph, trip, tripUpdate, stops, feedId, serviceDate, timestamp);
 
         return success;
     }
@@ -947,7 +954,7 @@ public class TimetableSnapshotSource {
      * @return true iff successful
      */
     private boolean handleModifiedTrip(final Graph graph, final Trip trip, final TripUpdate tripUpdate, final List<Stop> stops,
-            final String feedId, final ServiceDate serviceDate) {
+            final String feedId, final ServiceDate serviceDate, long timestamp) {
         // Preconditions
         Preconditions.checkNotNull(stops);
         Preconditions.checkArgument(tripUpdate.getStopTimeUpdateCount() == stops.size(),
@@ -956,27 +963,27 @@ public class TimetableSnapshotSource {
         // Cancel scheduled trip
 
         final String tripId = tripUpdate.getTrip().getTripId();
-        cancelScheduledTrip(feedId, tripId, serviceDate);
+        cancelScheduledTrip(feedId, tripId, serviceDate, timestamp);
 
         // Check whether trip id has been used for previously ADDED/MODIFIED trip message and cancel
         // previously created trip
-        cancelPreviouslyAddedTrip(feedId, tripId, serviceDate);
+        cancelPreviouslyAddedTrip(feedId, tripId, serviceDate, timestamp);
 
         // Add new trip
         final boolean success =
-                addTripToGraphAndBuffer(feedId, graph, trip, tripUpdate, stops, serviceDate, RealTimeState.MODIFIED);
+                addTripToGraphAndBuffer(feedId, graph, trip, tripUpdate, stops, serviceDate, RealTimeState.MODIFIED, timestamp);
         return success;
     }
 
-    private boolean handleCanceledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate) {
+    private boolean handleCanceledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate, final long timestamp) {
         boolean success = false;
         if (tripUpdate.getTrip().hasTripId()) {
             // Try to cancel scheduled trip
             final String tripId = tripUpdate.getTrip().getTripId();
-            final boolean cancelScheduledSuccess = cancelScheduledTrip(feedId, tripId, serviceDate);
+            final boolean cancelScheduledSuccess = cancelScheduledTrip(feedId, tripId, serviceDate, timestamp);
 
             // Try to cancel previously added trip
-            final boolean cancelPreviouslyAddedSuccess = cancelPreviouslyAddedTrip(feedId, tripId, serviceDate);
+            final boolean cancelPreviouslyAddedSuccess = cancelPreviouslyAddedTrip(feedId, tripId, serviceDate, timestamp);
 
             if (cancelScheduledSuccess || cancelPreviouslyAddedSuccess) {
                 success = true;

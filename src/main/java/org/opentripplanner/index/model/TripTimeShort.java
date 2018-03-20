@@ -86,6 +86,9 @@ public class TripTimeShort {
     /** Pattern information for this stop-time */
     public PatternShort pattern;
 
+    /** time the realtime information was updated (given by the realtime source), if realtimeState != SCHEDULED */
+    public Long timestamp = null;
+
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.
      */
@@ -108,6 +111,7 @@ public class TripTimeShort {
         track              = tt.getTrack(i);
         peakOffpeak        = tt.trip.getPeakOffpeak();
         pattern            = new PatternShort(tripPattern);
+        timestamp          = tt.getRealTimeState().equals(RealTimeState.SCHEDULED) ? null : tt.getTimestamp();
     }
 
     public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz) {

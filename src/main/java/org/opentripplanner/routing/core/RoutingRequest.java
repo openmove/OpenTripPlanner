@@ -456,6 +456,8 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     public boolean walkingBike;
 
+    public boolean walkLimitingByLeg = false;
+
     public boolean softWalkLimiting = true;
     public boolean softPreTransitLimiting = true;
 

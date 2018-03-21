@@ -822,7 +822,7 @@ public abstract class RoutingResource {
         if (hardPathBanningAgencies != null)
             request.setHardPathBanningAgencies(hardPathBanningAgencies);
 
-        if (walkLimitingByLeg)
+        if (walkLimitingByLeg != null)
             request.walkLimitingByLeg = walkLimitingByLeg;
 
         //getLocale function returns defaultLocale if locale is null

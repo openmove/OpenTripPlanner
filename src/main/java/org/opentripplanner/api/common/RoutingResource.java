@@ -518,6 +518,10 @@ public abstract class RoutingResource {
     @QueryParam("softWalkLimiting")
     private Boolean softWalkLimiting;
 
+    /** Whether walk limiting is per-leg or overall */
+    @QueryParam("walkLimitingByLeg")
+    private Boolean walkLimitingByLeg;
+
     /** Which agencies to use hard path banning with */
     @QueryParam("hardPathBanningAgencies")
     private String hardPathBanningAgencies;
@@ -817,6 +821,9 @@ public abstract class RoutingResource {
 
         if (hardPathBanningAgencies != null)
             request.setHardPathBanningAgencies(hardPathBanningAgencies);
+
+        if (walkLimitingByLeg)
+            request.walkLimitingByLeg = walkLimitingByLeg;
 
         //getLocale function returns defaultLocale if locale is null
         request.locale = ResourceBundleSingleton.INSTANCE.getLocale(locale);

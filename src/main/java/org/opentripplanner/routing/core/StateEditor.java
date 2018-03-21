@@ -552,4 +552,7 @@ public class StateEditor {
         return child.hasEnteredNoThruTrafficArea();
     }
 
+    public double getWalkSinceLastTransit() {
+        return child.walkDistance - child.stateData.lastTransitWalk;
+    }
 }

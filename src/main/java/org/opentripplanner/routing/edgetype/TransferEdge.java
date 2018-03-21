@@ -79,6 +79,10 @@ public class TransferEdge extends Edge {
            but the default Pathparser is currently very hard to read because
            we need a complement operator. */
 
+        RoutingRequest options = s0.getOptions();
+        int time = getTime(options);
+        double weight = time * options.walkReluctance;
+
         // Forbid taking shortcuts composed of two transfers in a row
         if (s0.backEdge instanceof TransferEdge) {
             return null;
@@ -92,16 +96,21 @@ public class TransferEdge extends Edge {
         if (distance > s0.getOptions().maxTransferWalkDistance) {
             return null;
         }
+        if (distance > s0.getOptions().maxWalkDistance && s0.getOptions().walkLimitingByLeg) {
+            double beforeStateWalk = s0.getWalkSinceLastTransit();
+            double afterStateWalk =  beforeStateWalk + getDistance();
+            weight += calculateOverageWeight(beforeStateWalk, afterStateWalk,
+                    options.getMaxWalkDistance(), options.softWalkPenalty,
+                    options.softWalkOverageRate);
+        }
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
             return null;
         }
         // Only transfer right after riding a vehicle.
-        RoutingRequest rr = s0.getOptions();
         StateEditor se = s0.edit(this);
         se.setBackMode(TraverseMode.WALK);
-        int time = getTime(rr);
         se.incrementTimeInSeconds(time);
-        se.incrementWeight(time * rr.walkReluctance);
+        se.incrementWeight(weight);
         se.incrementWalkDistance(distance);
         se.setTransferNotPermissible();
         return se.makeState();
@@ -130,5 +139,23 @@ public class TransferEdge extends Edge {
      */
     private int getTime(RoutingRequest rr) {
         return (int) Math.ceil(distance / rr.walkSpeed) + 2 * StreetTransitLink.STL_TRAVERSE_COST;
+    }
+
+    // borrowed from StreetEdge
+    private double calculateOverageWeight(double firstValue, double secondValue, double maxValue,
+                                          double softPenalty, double overageRate) {
+        // apply penalty if we stepped over the limit on this traversal
+        boolean applyPenalty = false;
+        double overageValue;
+
+        if(firstValue <= maxValue && secondValue > maxValue){
+            applyPenalty = true;
+            overageValue = secondValue - maxValue;
+        } else {
+            overageValue = secondValue - firstValue;
+        }
+
+        // apply overage and add penalty if necessary
+        return (overageRate * overageValue) + (applyPenalty ? softPenalty : 0.0);
     }
 }

@@ -40,6 +40,6 @@ public class TripUpdateGraphWriterRunnableTest {
 
         tripUpdateGraphWriterRunnable.run(graph);
 
-        verify(timetableSnapshotSource).applyTripUpdates(graph, fullDataset, updates, agencyId);
+        verify(timetableSnapshotSource).applyTripUpdates(graph, fullDataset, updates, agencyId, -1);
     }
 }

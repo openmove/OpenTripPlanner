@@ -30,7 +30,7 @@ public class MtaPathComparator extends PathComparator {
             return 1;
         if (!o1NoTransit && o2NoTransit)
             return -1;
-        return super.compare(o1, o2);
+        return o1.getWeight() - o2.getWeight() > 0 ? 1 : -1;
     }
 
 }

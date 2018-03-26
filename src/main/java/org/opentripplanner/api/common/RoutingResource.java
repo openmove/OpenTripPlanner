@@ -526,6 +526,17 @@ public abstract class RoutingResource {
     @QueryParam("hardPathBanningAgencies")
     private String hardPathBanningAgencies;
 
+    /** Penalty for jumping over the maxWalkLimit if softWalkLimiting = true */
+    @QueryParam("softWalkPenalty")
+    private Double softWalkPenalty;
+
+    /** Additional reluctance multiplier when over the maxWalkLimit if softWalkLimiting = true.
+     * options.softWalkOverageRate = walkReluctance * softWalkOverageMultiplier
+     */
+    @QueryParam("softWalkOverageMultiplier")
+    private Double softWalkOverageMultiplier;
+
+
     /* 
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones. 
      * this should ideally be done when setting the routing context, but at present departure/
@@ -824,6 +835,13 @@ public abstract class RoutingResource {
 
         if (walkLimitingByLeg != null)
             request.walkLimitingByLeg = walkLimitingByLeg;
+
+        if (softWalkPenalty != null)
+            request.softWalkPenalty = softWalkPenalty;
+
+        if (softWalkOverageMultiplier != null)
+            request.softWalkOverageRate = request.walkReluctance * softWalkOverageMultiplier;
+
 
         //getLocale function returns defaultLocale if locale is null
         request.locale = ResourceBundleSingleton.INSTANCE.getLocale(locale);

@@ -510,6 +510,10 @@ public abstract class RoutingResource {
     @QueryParam("nextDepartureWindow")
     private Integer nextDepartureWindow = 1800;
 
+    /** How many upcoming departures to add. Defaults to 3 */
+    @QueryParam("numberOfDepartures")
+    private Integer numberOfDepartures = 3;
+
     /** Whether to turn on "smart kiss-an-ride" */
     @QueryParam("smartKissAndRide")
     private Boolean smartKissAndRide;
@@ -535,7 +539,6 @@ public abstract class RoutingResource {
      */
     @QueryParam("softWalkOverageMultiplier")
     private Double softWalkOverageMultiplier;
-
 
     /* 
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones. 
@@ -823,6 +826,9 @@ public abstract class RoutingResource {
 
         if (nextDepartureWindow != null)
             request.nextDepartureWindow = nextDepartureWindow;
+
+        if (numberOfDepartures != null)
+            request.numberOfDepartures = numberOfDepartures;
 
         if (smartKissAndRide != null)
             request.smartKissAndRide = smartKissAndRide;

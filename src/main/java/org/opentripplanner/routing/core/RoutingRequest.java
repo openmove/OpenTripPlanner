@@ -511,6 +511,9 @@ public class RoutingRequest implements Cloneable, Serializable {
     /** How far to look out, in seconds, to add upcoming trips. Defaults to half an hour. */
     public int nextDepartureWindow = 1800;
 
+    /** How many upcoming departures to add. Defaults to 3 */
+    public int numberOfDepartures = 3;
+
     /** Whether to apply "hard path banning", where after a sequence of routes is used, it can't be used again */
     public boolean hardPathBanning = true;
 
@@ -1141,7 +1144,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && kissAndRideWhitelist.equals(other.kissAndRideWhitelist)
                 && kissAndRideOverrides.equals(other.kissAndRideOverrides)
                 && maxWalkDistanceHeuristic == other.maxWalkDistanceHeuristic
-                && hardPathBanningAgencies.equals(other.hardPathBanningAgencies);
+                && hardPathBanningAgencies.equals(other.hardPathBanningAgencies)
+                && numberOfDepartures == other.numberOfDepartures;
     }
 
     /**
@@ -1179,7 +1183,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 + kissAndRideWhitelist.hashCode() * 63061489
                 + kissAndRideOverrides.hashCode() * 731980
                 + Double.hashCode(maxWalkDistanceHeuristic) * 731980
-                + hardPathBanningAgencies.hashCode() * 209477;
+                + hardPathBanningAgencies.hashCode() * 209477
+                + numberOfDepartures * 15485863;
         if (batch) {
             hashCode *= -1;
             // batch mode, only one of two endpoints matters

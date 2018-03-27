@@ -265,6 +265,9 @@ public abstract class GraphPathToTripPlanConverter {
 
             if (backMode == null || forwardMode == null) continue;
 
+            if (states[i].getBackEdge() instanceof TimedTransferEdge)
+                continue;
+
             Edge edge = states[i + 1].getBackEdge();
 
             // Ignore spurious transitions when there is a StreetTransitLink followed by walking pathways. TODO does this work with bikes?

@@ -49,7 +49,7 @@ public class VersionModule implements GraphBuilderModule {
             graphVersion = mapper.readValue(versionFile, GraphVersion.class);
             LOG.info("graphVersion created=" + graphVersion);
         } catch (IOException ex) {
-            LOG.info("Error reading landmarks file: " + ex);
+            LOG.info("Error reading version file: " + ex);
         }
         graph.setGraphVersion(graphVersion);
     }

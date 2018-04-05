@@ -116,6 +116,10 @@ public class TripTimeShort {
         pattern            = new PatternShort(tripPattern);
         timestamp          = tt.getRealTimeState().equals(RealTimeState.SCHEDULED) ? null : tt.getTimestamp();
         directionId        = tt.trip.getDirectionId();
+        // use final stop if no trip_headsign
+        if (tripHeadsign == null) {
+            tripHeadsign = tripPattern.getStop(tripPattern.getStops().size() - 1).getName();
+        }
     }
 
     public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz) {

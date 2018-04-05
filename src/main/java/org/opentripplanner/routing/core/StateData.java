@@ -101,6 +101,9 @@ public class StateData implements Cloneable {
 
     protected boolean transferPermissible;
 
+    /* This is like carParked, but for smartKissAndRide */
+    protected CarState carState = CarState.UNUSED;
+
     public StateData(RoutingRequest options) {
         TraverseModeSet modes = options.modes;
         if (modes.getCar())
@@ -125,4 +128,5 @@ public class StateData implements Cloneable {
         return numBoardings;
     }
 
+    protected enum CarState { UNUSED, USING, USED }
 }

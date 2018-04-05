@@ -146,20 +146,17 @@ public class StreetTransitLink extends Edge {
                 return null;
             }
         }
-        if (req.preTransitKissAndRide && !leavingTransit) {
+        if (req.preTransitKissAndRide && !leavingTransit && !s0.isCarUnused()) {
             if (!req.canUseStopForKissAndRide(getTransitStop().getStop())) {
                 return null;
             } else {
-                s1.setCarParked(true);
+                s1.setUsedCar();
+                s1.setNonTransitMode(TraverseMode.WALK);
             }
         }
-        if (req.postTransitKissAndRide && leavingTransit) {
-            if (!req.canUseStopForKissAndRide(getTransitStop().getStop())) {
-                return null;
-            }
-            else {
-                s1.setCarParked(false);
-            }
+        if (leavingTransit) {
+            s1.setUnusedCar();
+            s1.setNonTransitMode(TraverseMode.WALK);
         }
 
         s1.incrementTimeInSeconds(transitStop.getStreetToStopTime() + STL_TRAVERSE_COST);

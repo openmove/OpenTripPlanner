@@ -30,7 +30,11 @@ public class MtaPathComparator extends PathComparator {
             return 1;
         if (!o1NoTransit && o2NoTransit)
             return -1;
-        return o1.getWeight() - o2.getWeight() > 0 ? 1 : -1;
+        long roundedWeight0 = Math.round(o1.getWeight() / 60);
+        long roundedWeight1 = Math.round(o1.getWeight() / 60);
+        if (roundedWeight0 == roundedWeight1)
+            return super.compare(o1, o2);
+        return roundedWeight0 - roundedWeight1 > 0 ? 1 : -1;
     }
 
 }

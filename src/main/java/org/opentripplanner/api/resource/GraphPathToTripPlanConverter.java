@@ -916,7 +916,7 @@ public abstract class GraphPathToTripPlanConverter {
         GraphIndex index = options.rctx.graph.index;
         if (options.nextDepartureWindow <= 0 || index == null)
             return;
-        long time = state.getTimeSeconds();
+        long time = leg.startTime.getTimeInMillis()/1000;
         int stopIndex;
         TripPattern pattern;
         if (states[0].backEdge instanceof TransitBoardAlight) {
@@ -933,7 +933,7 @@ public abstract class GraphPathToTripPlanConverter {
         Stop stop = pattern.getStop(stopIndex);
         RouteMatcher matcher = RouteMatcher.emptyMatcher();
         matcher.addRouteId(pattern.route.getId());
-        List<StopTimesInPattern> stips = index.stopTimesForStop(stop, time, options.nextDepartureWindow, options.numberOfDepartures, true, matcher,
+        List<StopTimesInPattern> stips = index.stopTimesForStop(stop, time + 60, options.nextDepartureWindow, options.numberOfDepartures, true, matcher,
                 pattern.directionId, leg.headsign, null, null);
         StopTimesByStop stbs = new StopTimesByStop(stop, stips);
         stbs.limitTimes(time, options.nextDepartureWindow, options.numberOfDepartures);

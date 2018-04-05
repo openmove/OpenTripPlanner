@@ -15,6 +15,7 @@ package org.opentripplanner.routing.algorithm.strategies;
 
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import org.onebusaway.gtfs.model.Route;
 import org.opentripplanner.common.pqueue.BinHeap;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
@@ -29,6 +30,7 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -355,6 +357,9 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
                 // We don't want to continue into the transit network yet, but when searching around the target
                 // place vertices on the transit queue so we can explore the transit network backward later.
                 TransitStop tstop = (TransitStop) v;
+                // TODO: mode/agency checks
+                if (routingRequest.bannedRouteTypes.containsAll(getRouteTypes(tstop)))
+                    continue;
                 if (fromTarget) {
                     double weight = s.getWeight();
                     transitQueue.insert(v, weight);
@@ -430,5 +435,13 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
             }
         }
         return false;
+    }
+
+    private Collection<Integer> getRouteTypes(TransitStop tstop) {
+        Set<Integer> routeTypes = new HashSet<>();
+        for (Route route : routingRequest.rctx.graph.index.routesForStop(tstop.getStop())) {
+            routeTypes.add(route.getType());
+        }
+        return routeTypes;
     }
 }

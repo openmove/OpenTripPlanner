@@ -407,16 +407,18 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
     }
 
     private void modifyForSmartKissAndRide(RoutingRequest request) {
-        if (shouldUseKissAndRide(preTransitStopsByDistance, request.kissAndRideOverrides)) {
+        if (shouldUseKissAndRide(preTransitStopsByDistance, request.kissAndRideOverrides, false)) {
             request.preTransitKissAndRide = true;
+            LOG.debug("should use pre-transit k&r");
         }
-        if (shouldUseKissAndRide(postTransitStopByDistance, request.kissAndRideOverrides)) {
+        if (shouldUseKissAndRide(postTransitStopByDistance, request.kissAndRideOverrides, true)) {
             request.postTransitKissAndRide = true;
+            LOG.debug("should use post-transit k&r, stops to find: " + kissAndRideStopsToFind);
         }
         request.smartKissAndRide = request.preTransitKissAndRide || request.postTransitKissAndRide;
     }
 
-    private boolean shouldUseKissAndRide(BinHeap<TransitStop> heap,  Set<String> feedOverrides) {
+    private boolean shouldUseKissAndRide(BinHeap<TransitStop> heap,  Set<String> feedOverrides, boolean fromTarget) {
         boolean exceedThreshold = false;
         boolean foundWhitelistedStop = false;
         while (!heap.empty()) {
@@ -428,7 +430,8 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
             }
             if (routingRequest.canUseStopForKissAndRide(stop.getStop())) {
                 foundWhitelistedStop |= true;
-                kissAndRideStopsToFind.add(stop);
+                if (fromTarget)
+                    kissAndRideStopsToFind.add(stop);
             }
             if (exceedThreshold && foundWhitelistedStop) {
                 return true;

@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.impl;
 
+import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.spt.GraphPath;
 
 public class MtaPathComparator extends PathComparator {
@@ -30,7 +31,21 @@ public class MtaPathComparator extends PathComparator {
             return 1;
         if (!o1NoTransit && o2NoTransit)
             return -1;
-        return o1.getWeight() - o2.getWeight() > 0 ? 1 : -1;
+        return weight(o1) - weight(o2) > 0 ? 1 : -1;
+    }
+
+    private double weight(GraphPath path) {
+        RoutingRequest options = path.states.iterator().next().getOptions();
+        long startTime = path.getStartTime();
+        long endTime = path.getEndTime();
+        long waitTime;
+        if (compareStartTimes) {
+            // arriveBy = true (reverse search)
+            waitTime = options.dateTime - endTime;
+        } else {
+            waitTime = startTime - options.dateTime;
+        }
+        return (waitTime * options.waitAtBeginningFactor) + path.getWeight();
     }
 
 }

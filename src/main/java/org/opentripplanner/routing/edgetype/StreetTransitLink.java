@@ -123,7 +123,7 @@ public class StreetTransitLink extends Edge {
         // intervening pathways.
         boolean leavingTransit = isLeavingTransitNetwork(req);
 
-        boolean firstLink = s0.getPreTransitNumBoardings() == 0 && s0.getOptions().rctx.origin instanceof TransitVertex;
+        boolean firstLink = s0.getPreTransitNumBoardings() == 0 && s0.isStartTransitVertex();
         if (s0.getPreTransitNumBoardings() >= 0 && leavingTransit && !firstLink) {
             if (s0.getNumBoardings() == s0.getPreTransitNumBoardings()) {
                 return null;

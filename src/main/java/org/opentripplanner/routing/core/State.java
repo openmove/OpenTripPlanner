@@ -25,6 +25,7 @@ import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -851,13 +852,12 @@ public class State implements Cloneable {
      * Check that transfer is allowed - after transit, or if we've started at a TransitVertex.
      */
     public boolean isTransferPermissible() {
-        return stateData.transferPermissible || backEdge == null;
+        return stateData.transferPermissible;
     }
 
-    // allow one transfer, needed for DirectTransferGenerator
-    public static State stateAllowingTransfer(Vertex v, RoutingRequest options) {
-        State s = new State(v, options);
-        s.stateData.transferPermissible = true;
-        return s;
+    public boolean isStartTransitVertex() {
+        Vertex v = getOptions().arriveBy ? getOptions().rctx.toVertex : getOptions().rctx.fromVertex;
+        return v instanceof TransitStop;
     }
+
 }

@@ -120,7 +120,7 @@ public class DirectTransferGenerator implements GraphBuilderModule {
 
     private Set<TransitStop> findPathwayDestinations(TransitStop ts0) {
         RoutingRequest options = new RoutingRequest();
-        State s0 = State.stateAllowingTransfer(ts0, options);
+        State s0 = new State(ts0, options);
         GenericDijkstra search = new GenericDijkstra(options);
         search.setSkipEdgeStrategy(new SkipEdgeStrategy() {
             @Override

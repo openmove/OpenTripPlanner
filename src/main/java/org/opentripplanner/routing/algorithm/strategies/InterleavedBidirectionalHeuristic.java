@@ -353,13 +353,14 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
             Vertex v = s.getVertex();
             // At this point the vertex is closed (pulled off heap).
             // This is the lowest cost we will ever see for this vertex. We can record the cost to reach it.
-            if (v instanceof TransitStop) {
+            if (v instanceof TransitStop && !((TransitStop) v).isEntrance() && !((TransitStop) v).isExtendedLocationType()) {
                 // We don't want to continue into the transit network yet, but when searching around the target
                 // place vertices on the transit queue so we can explore the transit network backward later.
                 TransitStop tstop = (TransitStop) v;
                 // TODO: mode/agency checks
-                if (routingRequest.bannedRouteTypes.containsAll(getRouteTypes(tstop)))
+                if (routingRequest.bannedRouteTypes.containsAll(getRouteTypes(tstop))) {
                     continue;
+                }
                 if (fromTarget) {
                     double weight = s.getWeight();
                     transitQueue.insert(v, weight);
@@ -382,7 +383,6 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
             }
             for (Edge e : rr.arriveBy ? v.getIncoming() : v.getOutgoing()) {
                 // arriveBy has been set to match actual directional behavior in this subsearch.
-                // Walk cutoff will happen in the street edge traversal method.
                 for (State s1 = e.traverse(s); s1 != null; s1 = s1.getNextResult()) {
                     if (searchShouldTerminate(rr, s1, foundOverrideStop, kissAndRide)) {
                         continue;

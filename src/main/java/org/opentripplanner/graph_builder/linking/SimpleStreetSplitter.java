@@ -52,6 +52,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory.STOP_LOCATION_TYPE;
+
 /**
  * This class links transit stops to streets by splitting the streets (unless the stop is extremely close to the street
  * intersection).
@@ -226,7 +228,8 @@ public class SimpleStreetSplitter {
         if (canFindTransitStops && options.stopLinking) {
             Envelope narrowEnv = new Envelope(vertex.getCoordinate());
             for (TransitStop tstop : (List<TransitStop>) transitStopIndex.query(narrowEnv)) {
-                if (tstop.getLat() == vertex.getLat() && tstop.getLon() == vertex.getLon()) {
+                if (SphericalDistanceLibrary.distance(tstop.getCoordinate(), vertex.getCoordinate()) < 1.0
+                        && tstop.getStop().getLocationType() == STOP_LOCATION_TYPE) {
                     candidateStops.add(tstop);
                 }
             }

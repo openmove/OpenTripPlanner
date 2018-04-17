@@ -40,6 +40,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory.STOP_LOCATION_TYPE;
+
 /**
  *  {@link org.opentripplanner.graph_builder.services.GraphBuilderModule} module that creates transfers
  *  based on a feed-external CSV file.
@@ -98,32 +100,36 @@ public class CrossFeedTransferGenerator implements GraphBuilderModule {
 
         for (Stop fromStop : resolver.getStops(feedTransfer.getFromStopId())) {
             for (Stop toStop : resolver.getStops(feedTransfer.getToStopId())) {
-                Transfer transfer = new Transfer();
-                String fromRoute = feedTransfer.getFromRouteId();
-                String toRoute = feedTransfer.getToRouteId();
-                String fromTrip = feedTransfer.getFromTripId();
-                String toTrip = feedTransfer.getToTripId();
+                if (fromStop.getLocationType() == STOP_LOCATION_TYPE
+                        && toStop.getLocationType() == STOP_LOCATION_TYPE) {
 
-                transfer.setFromStop(fromStop);
-                transfer.setToStop(toStop);
+                    Transfer transfer = new Transfer();
+                    String fromRoute = feedTransfer.getFromRouteId();
+                    String toRoute = feedTransfer.getToRouteId();
+                    String fromTrip = feedTransfer.getFromTripId();
+                    String toTrip = feedTransfer.getToTripId();
 
-                if (!TextUtils.isEmpty(fromRoute)) {
-                    transfer.setFromRoute(resolver.getRoute(fromRoute));
-                }
-                if (!TextUtils.isEmpty(toRoute)) {
-                    transfer.setToRoute(resolver.getRoute(toRoute));
-                }
-                if (!TextUtils.isEmpty(fromTrip)) {
-                    transfer.setFromTrip(resolver.getTrip(fromTrip));
-                }
-                if (!TextUtils.isEmpty(toTrip)) {
-                    transfer.setToTrip(resolver.getTrip(toTrip));
-                }
+                    transfer.setFromStop(fromStop);
+                    transfer.setToStop(toStop);
 
-                transfer.setMinTransferTime(feedTransfer.getMinTransferTime());
-                transfer.setTransferType(feedTransfer.getTransferType());
+                    if (!TextUtils.isEmpty(fromRoute)) {
+                        transfer.setFromRoute(resolver.getRoute(fromRoute));
+                    }
+                    if (!TextUtils.isEmpty(toRoute)) {
+                        transfer.setToRoute(resolver.getRoute(toRoute));
+                    }
+                    if (!TextUtils.isEmpty(fromTrip)) {
+                        transfer.setFromTrip(resolver.getTrip(fromTrip));
+                    }
+                    if (!TextUtils.isEmpty(toTrip)) {
+                        transfer.setToTrip(resolver.getTrip(toTrip));
+                    }
 
-                transfers.add(transfer);
+                    transfer.setMinTransferTime(feedTransfer.getMinTransferTime());
+                    transfer.setTransferType(feedTransfer.getTransferType());
+
+                    transfers.add(transfer);
+                }
             }
         }
         return transfers;

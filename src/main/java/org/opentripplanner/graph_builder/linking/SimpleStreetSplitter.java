@@ -225,7 +225,7 @@ public class SimpleStreetSplitter {
         }
 
         List<TransitStop> candidateStops = new ArrayList<>();
-        if (canFindTransitStops && options.stopLinking) {
+        if (canFindTransitStops && options != null && options.stopLinking) {
             Envelope narrowEnv = new Envelope(vertex.getCoordinate());
             for (TransitStop tstop : (List<TransitStop>) transitStopIndex.query(narrowEnv)) {
                 if (SphericalDistanceLibrary.distance(tstop.getCoordinate(), vertex.getCoordinate()) < 1.0

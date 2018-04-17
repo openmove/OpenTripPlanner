@@ -520,6 +520,9 @@ public class RoutingRequest implements Cloneable, Serializable {
     /** What agencies to apply hard path banning to */
     public HashSet<String> hardPathBanningAgencies = new HashSet<>();
 
+    /** Whether to try to link endpoints to stops with the same location */
+    public boolean stopLinking = false;
+
     /** Saves split edge which can be split on origin/destination search
      *
      * This is used so that TrivialPathException is thrown if origin and destination search would split the same edge
@@ -1145,7 +1148,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && kissAndRideOverrides.equals(other.kissAndRideOverrides)
                 && maxWalkDistanceHeuristic == other.maxWalkDistanceHeuristic
                 && hardPathBanningAgencies.equals(other.hardPathBanningAgencies)
-                && numberOfDepartures == other.numberOfDepartures;
+                && numberOfDepartures == other.numberOfDepartures
+                && stopLinking == other.stopLinking;
     }
 
     /**
@@ -1184,7 +1188,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 + kissAndRideOverrides.hashCode() * 731980
                 + Double.hashCode(maxWalkDistanceHeuristic) * 731980
                 + hardPathBanningAgencies.hashCode() * 209477
-                + numberOfDepartures * 15485863;
+                + numberOfDepartures * 15485863
+                + Boolean.hashCode(stopLinking) * 18253;
         if (batch) {
             hashCode *= -1;
             // batch mode, only one of two endpoints matters

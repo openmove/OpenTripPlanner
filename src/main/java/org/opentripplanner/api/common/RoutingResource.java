@@ -540,6 +540,10 @@ public abstract class RoutingResource {
     @QueryParam("softWalkOverageMultiplier")
     private Double softWalkOverageMultiplier;
 
+    /** Whether to try to link endpoints to stops with the same location */
+    @QueryParam("stopLinking")
+    private Boolean stopLinking;
+
     /* 
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones. 
      * this should ideally be done when setting the routing context, but at present departure/
@@ -848,6 +852,8 @@ public abstract class RoutingResource {
         if (softWalkOverageMultiplier != null)
             request.softWalkOverageRate = request.walkReluctance * softWalkOverageMultiplier;
 
+        if (stopLinking != null)
+            request.stopLinking = stopLinking;
 
         //getLocale function returns defaultLocale if locale is null
         request.locale = ResourceBundleSingleton.INSTANCE.getLocale(locale);

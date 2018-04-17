@@ -157,6 +157,9 @@ public class SimpleStreetSplitter {
         // TODO: we used to use an expanding-envelope search, which is more efficient in
         // dense areas. but first let's see how inefficient this is. I suspect it's not too
         // bad and the gains in simplicity are considerable.
+
+        boolean canFindTransitStops = !destructiveSplitting && transitStopIndex != null;
+
         final double radiusDeg = SphericalDistanceLibrary.metersToDegrees(MAX_SEARCH_RADIUS_METERS);
 
         Envelope env = new Envelope(vertex.getCoordinate());
@@ -219,19 +222,30 @@ public class SimpleStreetSplitter {
             }
         }
 
+        List<TransitStop> candidateStops = new ArrayList<>();
+        if (canFindTransitStops && options.stopLinking) {
+            Envelope narrowEnv = new Envelope(vertex.getCoordinate());
+            for (TransitStop tstop : (List<TransitStop>) transitStopIndex.query(narrowEnv)) {
+                if (tstop.getLat() == vertex.getLat() && tstop.getLon() == vertex.getLon()) {
+                    candidateStops.add(tstop);
+                }
+            }
+        }
+
         // find the closest candidate edges
-        if (candidateEdges.isEmpty() || distances.get(candidateEdges.get(0).getId()) > radiusDeg) {
+        if (candidateEdges.isEmpty() || distances.get(candidateEdges.get(0).getId()) > radiusDeg || !candidateStops.isEmpty()) {
             //We only link to stops if we are searching for origin/destination and for that we need transitStopIndex
-            if (destructiveSplitting || transitStopIndex == null) {
+            if (!canFindTransitStops) {
                 return false;
             }
             LOG.debug("No street edge was found for {}", vertex);
             //we search for closest stops (since this is only used in origin/destination linking if no edges were found)
             //in same way as closest edges are found
-            List<TransitStop> candidateStops = new ArrayList<>();
-            transitStopIndex.query(env).forEach(candidateStop ->
-                candidateStops.add((TransitStop) candidateStop)
-            );
+            if (candidateStops.isEmpty()) {
+                transitStopIndex.query(env).forEach(candidateStop ->
+                        candidateStops.add((TransitStop) candidateStop)
+                );
+            }
 
             final TIntDoubleMap stopDistances = new TIntDoubleHashMap();
 
@@ -267,7 +281,7 @@ public class SimpleStreetSplitter {
                         .get(candidateStops.get(i - 1).getIndex()) < duplicateDeg);
 
                 for (TransitStop stop: bestStops) {
-                    LOG.debug("Linking vertex to stop: {}", stop.getName());
+                    LOG.debug("Linking vertex {} to stop {}", vertex, stop.getStopId());
                     makeTemporaryEdges((TemporaryStreetLocation)vertex, stop);
                 }
                 return true;
@@ -289,6 +303,7 @@ public class SimpleStreetSplitter {
                     .get(candidateEdges.get(i - 1).getId()) < duplicateDeg);
 
             for (StreetEdge edge : bestEdges) {
+                LOG.debug("linking vertex {} to edge {}", vertex, edge);
                 link(vertex, edge, xscale, options);
             }
 

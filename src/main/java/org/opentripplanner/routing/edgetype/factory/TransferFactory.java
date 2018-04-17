@@ -179,10 +179,12 @@ public class TransferFactory {
 
             for (Stop expandedFromStop : fromStops) {
                 for (Stop expandedToStop : toStops) {
-                    Transfer expanded = new Transfer(source);
-                    expanded.setFromStop(expandedFromStop);
-                    expanded.setToStop(expandedToStop);
-                    expandedTransfers.add(expanded);
+                    if (expandedFromStop.getLocationType() == STOP_LOCATION_TYPE && expandedToStop.getLocationType() == STOP_LOCATION_TYPE) {
+                        Transfer expanded = new Transfer(source);
+                        expanded.setFromStop(expandedFromStop);
+                        expanded.setToStop(expandedToStop);
+                        expandedTransfers.add(expanded);
+                    }
                 }
             }
 

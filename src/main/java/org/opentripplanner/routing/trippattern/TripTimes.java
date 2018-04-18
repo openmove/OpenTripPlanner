@@ -152,7 +152,13 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         // Times are always shifted to zero. This is essential for frequencies and deduplication.
         timeShift = stopTimes.get(0).getArrivalTime();
         int s = 0;
+        int lastDepartureTime = -1;
         for (final StopTime st : stopTimes) {
+            // This should be filtered out by GTFSPatternHopFactory but just in case:
+            if (lastDepartureTime > 0 && st.getArrivalTime() - lastDepartureTime < 0)
+                throw new RuntimeException("Negative running time for trip " + trip);
+            if (st.getDepartureTime() - st.getArrivalTime() < 0)
+                throw new RuntimeException("Negative dwell time for trip " + trip);
             departures[s] = st.getDepartureTime() - timeShift;
             arrivals[s] = st.getArrivalTime() - timeShift;
             sequences[s] = st.getStopSequence();
@@ -163,6 +169,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             if (st.getTrack() != null) {
                 tracks[s] = st.getTrack();
             }
+            lastDepartureTime = st.getDepartureTime();
             s++;
         }
         if (hasDepartureBuffers) {

@@ -892,6 +892,7 @@ public class GTFSPatternHopFactory {
                 if (st0.getArrivalTime() > 23 * SECONDS_IN_HOUR && st0.getDepartureTime() < 1 * SECONDS_IN_HOUR
                         && st1.getArrivalTime() + 24 * SECONDS_IN_HOUR > st0.getDepartureTime()) {
                     midnightCrossed = true;
+                    st0.setArrivalTime(st0.getArrivalTime() + 24 * SECONDS_IN_HOUR);
                     st0.setDepartureTime(st0.getDepartureTime() + 24 * SECONDS_IN_HOUR);
                 } else {
                     st0.setDepartureTime(st0.getArrivalTime());
@@ -905,9 +906,10 @@ public class GTFSPatternHopFactory {
                 if (st0.getDepartureTime() > 23 * SECONDS_IN_HOUR && st1.getArrivalTime() < 1 * SECONDS_IN_HOUR
                         && st1.getArrivalTime() + 24 * SECONDS_IN_HOUR > st0.getDepartureTime()) {
                     st1.setArrivalTime(st1.getArrivalTime() + 24 * SECONDS_IN_HOUR);
+                    st1.setDepartureTime(st1.getDepartureTime() + 24 * SECONDS_IN_HOUR);
                     midnightCrossed = true;
                 } else {
-                    st1.setArrivalTime(st0.getDepartureTime());
+                    st1.setArrivalTime(st0.getDepartureTime()); // will be cleared out below...
                 }
             }
             double hopDistance = SphericalDistanceLibrary.fastDistance(

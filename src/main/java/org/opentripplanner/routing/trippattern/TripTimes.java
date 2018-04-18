@@ -155,10 +155,10 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         int lastDepartureTime = -1;
         for (final StopTime st : stopTimes) {
             // This should be filtered out by GTFSPatternHopFactory but just in case:
-            if (lastDepartureTime > 0 && st.getArrivalTime() - lastDepartureTime < 0)
-                throw new RuntimeException("Negative running time for trip " + trip);
-            if (st.getDepartureTime() - st.getArrivalTime() < 0)
-                throw new RuntimeException("Negative dwell time for trip " + trip);
+            if (s > 0 && st.getArrivalTime() - lastDepartureTime < 0)
+                throw new RuntimeException("Negative running time for trip " + trip.getId());
+            if (s > 0 && s < stopTimes.size() - 1 && st.getDepartureTime() - st.getArrivalTime() < 0)
+                throw new RuntimeException("Negative dwell time for trip " + trip.getId());
             departures[s] = st.getDepartureTime() - timeShift;
             arrivals[s] = st.getArrivalTime() - timeShift;
             sequences[s] = st.getStopSequence();

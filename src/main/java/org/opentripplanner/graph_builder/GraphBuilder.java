@@ -284,6 +284,8 @@ public class GraphBuilder implements Runnable {
             }
             GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
             gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
+            gtfsModule.setMaxHopTime(builderParams.maxHopTime);
+
             graphBuilder.addModule(gtfsModule);
             if ( hasOSM ) {
                 if (builderParams.matchBusRoutesToStreets) {

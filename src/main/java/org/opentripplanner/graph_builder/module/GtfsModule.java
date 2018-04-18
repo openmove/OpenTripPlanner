@@ -70,6 +70,8 @@ public class GtfsModule implements GraphBuilderModule {
 
     public List<GtfsBundle> gtfsBundles;
 
+    private long maxHopTime = Long.MAX_VALUE;
+
     public GtfsModule(List<GtfsBundle> bundles) { this.gtfsBundles = bundles; };
 
     public List<String> provides() {
@@ -112,6 +114,7 @@ public class GtfsModule implements GraphBuilderModule {
                 hf.setStopContext(stopContext);
                 hf.setFareServiceFactory(_fareServiceFactory);
                 hf.setMaxStopToShapeSnapDistance(gtfsBundle.getMaxStopToShapeSnapDistance());
+                hf.setMaxHopTime(maxHopTime);
 
                 loadBundle(gtfsBundle, graph, dao);
 
@@ -391,5 +394,9 @@ public class GtfsModule implements GraphBuilderModule {
 
     public void setIgnoreGtfsTransfers(boolean ignoreGtfsTransfers) {
         this.ignoreGtfsTransfers = ignoreGtfsTransfers;
+    }
+
+    public void setMaxHopTime(long maxHopTime) {
+        this.maxHopTime = maxHopTime;
     }
 }

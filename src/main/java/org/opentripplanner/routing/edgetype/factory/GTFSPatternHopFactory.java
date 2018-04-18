@@ -48,6 +48,7 @@ import org.opentripplanner.common.model.P2;
 import org.opentripplanner.graph_builder.annotation.BogusShapeDistanceTraveled;
 import org.opentripplanner.graph_builder.annotation.BogusShapeGeometry;
 import org.opentripplanner.graph_builder.annotation.BogusShapeGeometryCaught;
+import org.opentripplanner.graph_builder.annotation.HopLargeTime;
 import org.opentripplanner.graph_builder.annotation.HopSpeedFast;
 import org.opentripplanner.graph_builder.annotation.HopSpeedSlow;
 import org.opentripplanner.graph_builder.annotation.HopZeroTime;
@@ -299,6 +300,8 @@ public class GTFSPatternHopFactory {
     private Multimap<StopPattern, TripPattern> tripPatterns = HashMultimap.create();
 
     private GtfsStopContext context = new GtfsStopContext();
+
+    private long maxHopTime = Long.MAX_VALUE;
 
     private TransferFactory _transferFactory = new TransferFactory(new StopIndex() {
         @Override
@@ -834,7 +837,7 @@ public class GTFSPatternHopFactory {
      * @param graph the graph where annotations will be registered
      */
     private void filterStopTimes(List<StopTime> stopTimes, Graph graph) {
-        
+
         if (stopTimes.size() < 2) return;
         StopTime st0 = stopTimes.get(0);
 
@@ -934,6 +937,12 @@ public class GTFSPatternHopFactory {
                 // elapsed time of 0 will give speed of +inf
                 LOG.trace(graph.addBuilderAnnotation(new HopSpeedFast((float) hopSpeed, 
                         (float) hopDistance, st0.getTrip(), st0.getStopSequence())));
+            } else if (runningTime > maxHopTime) {
+                LOG.trace(graph.addBuilderAnnotation(new HopLargeTime(runningTime,
+                        hopDistance, st0.getTrip(), st0.getStopSequence())));
+                st1.clearArrivalTime();
+                st1.clearDepartureTime();
+                st1bogus = true;
             } else if (hopSpeed < 0.1) {
                 // 0.1 m/sec ~= 0.2 miles/hr
                 LOG.trace(graph.addBuilderAnnotation(new HopSpeedSlow((float) hopSpeed, 
@@ -1448,5 +1457,9 @@ public class GTFSPatternHopFactory {
 
     public void setIgnoreGtfsTransfers(boolean ignoreGtfsTransfers) {
         this.ignoreGtfsTransfers = ignoreGtfsTransfers;
+    }
+
+    public void setMaxHopTime(long maxHopTime) {
+        this.maxHopTime = maxHopTime;
     }
 }

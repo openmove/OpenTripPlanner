@@ -938,7 +938,7 @@ public class GTFSPatternHopFactory {
                 LOG.trace(graph.addBuilderAnnotation(new HopSpeedFast((float) hopSpeed, 
                         (float) hopDistance, st0.getTrip(), st0.getStopSequence())));
             } else if (runningTime > maxHopTime) {
-                LOG.trace(graph.addBuilderAnnotation(new HopLargeTime(runningTime,
+                LOG.info(graph.addBuilderAnnotation(new HopLargeTime(runningTime,
                         hopDistance, st0.getTrip(), st0.getStopSequence())));
                 st1.clearArrivalTime();
                 st1.clearDepartureTime();

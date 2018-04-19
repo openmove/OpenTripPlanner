@@ -17,6 +17,7 @@ import com.google.transit.realtime.GtfsRealtimeNYCT;
 import org.junit.BeforeClass;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.graph_builder.module.CrossFeedTransferGenerator;
+import org.opentripplanner.routing.accessibility.MTAStopAccessibilityStrategy;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Graph;
@@ -56,6 +57,7 @@ public class MTAGraphTest {
         CrossFeedTransferGenerator transfers = new CrossFeedTransferGenerator(new File(FEED_TRANSFERS));
         transfers.buildGraph(graph, new HashMap<>());
         graph.index(new DefaultStreetVertexIndexFactory());
+        graph.stopAccessibilityStrategy = new MTAStopAccessibilityStrategy(graph);
         graph.transferPermissionStrategy = new MTATransferPermissionStrategy(graph);
 
         alertsUpdateHandler = new AlertsUpdateHandler();

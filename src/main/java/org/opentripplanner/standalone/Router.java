@@ -12,6 +12,8 @@ import org.opentripplanner.analyst.request.*;
 import org.opentripplanner.analyst.scenario.ScenarioStore;
 import org.opentripplanner.inspector.TileRendererManager;
 import org.opentripplanner.reflect.ReflectiveInitializer;
+import org.opentripplanner.routing.accessibility.DefaultStopAccessibilityStrategy;
+import org.opentripplanner.routing.accessibility.MTAStopAccessibilityStrategy;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Graph;
@@ -19,6 +21,7 @@ import org.opentripplanner.routing.consequences.ConsequencesStrategyFactory;
 import org.opentripplanner.routing.consequences.ElevatorConsequencesStrategy;
 import org.opentripplanner.routing.consequences.MultipleConsequencesStrategy;
 import org.opentripplanner.routing.consequences.UnknownTransferConsequencesStrategy;
+import org.opentripplanner.routing.transfers.DefaultTransferPermissionStrategy;
 import org.opentripplanner.routing.transfers.MTATransferPermissionStrategy;
 import org.opentripplanner.updater.GraphUpdaterConfigurator;
 import org.opentripplanner.util.ElevationUtils;
@@ -195,6 +198,15 @@ public class Router {
 
         graph.consequencesStrategy = getConsequencesStrategyConfig(config.get("consequences"));
 
+        graph.stopAccessibilityStrategy = new DefaultStopAccessibilityStrategy();
+        JsonNode stopAccessibilityStrategy = config.get("stopAccessibilityStrategy");
+        if (stopAccessibilityStrategy != null) {
+            if (stopAccessibilityStrategy.asText().equals("mta")) {
+                graph.stopAccessibilityStrategy = new MTAStopAccessibilityStrategy(graph);
+            }
+        }
+
+        graph.transferPermissionStrategy = new DefaultTransferPermissionStrategy();
         JsonNode transferPermissionStrategy = config.get("transferPermissionStrategy");
         if (transferPermissionStrategy != null) {
             if (transferPermissionStrategy.asText().equals("mta")) {

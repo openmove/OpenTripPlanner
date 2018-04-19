@@ -14,20 +14,14 @@ package org.opentripplanner.routing.transfers;
 
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
+import org.opentripplanner.routing.accessibility.StopAccessibilityStrategy;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StopTransfer;
 import org.opentripplanner.routing.core.TransferTable;
-import org.opentripplanner.routing.edgetype.PathwayEdge;
-import org.opentripplanner.routing.edgetype.StreetTransitLink;
-import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
 
 public class MTATransferPermissionStrategy implements TransferPermissionStrategy {
 
@@ -35,9 +29,12 @@ public class MTATransferPermissionStrategy implements TransferPermissionStrategy
 
     private Graph graph;
 
+    private StopAccessibilityStrategy stopAccessibilityStrategy;
+
     public MTATransferPermissionStrategy(Graph graph) {
         this.graph = graph;
         transferTable = graph.getTransferTable();
+        stopAccessibilityStrategy = graph.stopAccessibilityStrategy;
     }
 
     @Override
@@ -52,7 +49,9 @@ public class MTATransferPermissionStrategy implements TransferPermissionStrategy
         // Don't apply transfer rules unless both stops are MTASBWY stops.
         if (fromStop.getId().getAgencyId().equals("MTASBWY") && toStop.getId().getAgencyId().equals("MTASBWY")) {
             if (options.wheelchairAccessible && !fromStop.equals(toStop)) {
-                if (!stopIsAccessibleFromStreet(state, fromStop) || !stopIsAccessibleFromStreet(state, toStop)) {
+                TransitStop fromTransitStop = graph.index.stopVertexForStop.get(fromStop);
+                TransitStop toTransitStop = graph.index.stopVertexForStop.get(toStop);
+                if (!stopAccessibilityStrategy.stopIsAccessible(state, fromTransitStop) || !stopAccessibilityStrategy.stopIsAccessible(state, toTransitStop)) {
                     return false;
                 }
             }
@@ -61,38 +60,4 @@ public class MTATransferPermissionStrategy implements TransferPermissionStrategy
         return true;
     }
 
-    private boolean stopIsAccessibleFromStreet(State state, Stop stop) {
-        TransitStop tstop = graph.index.stopVertexForStop.get(stop);
-        // only by traversing pathways, can we get to the street?
-        Set<Vertex> seen = new HashSet<>();
-        LinkedList<Vertex> queue = new LinkedList<>();
-        queue.push(tstop);
-        seen.add(tstop);
-        while (!queue.isEmpty()) {
-            Vertex v = queue.pop();
-            if (v instanceof TransitStop
-                && ((TransitStop) v).isEntrance() && ((TransitStop) v).hasWheelchairEntrance()) {
-                // success
-                return true;
-            }
-            for (Edge e : v.getOutgoing()) {
-                if (e instanceof PathwayEdge && canUsePathway(state, (PathwayEdge) e)) {
-                    Vertex w = e.getToVertex();
-                    if (!seen.contains(w)) {
-                        seen.add(w);
-                        queue.add(w);
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean canUsePathway(State state, PathwayEdge pathway) {
-        if (!pathway.isWheelchairAccessible())
-            return false;
-        if (!pathway.isElevator())
-            return true;
-        return !pathway.elevatorIsOutOfService(state);
-    }
 }

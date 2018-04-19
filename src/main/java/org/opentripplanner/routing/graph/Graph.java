@@ -40,6 +40,8 @@ import org.opentripplanner.graph_builder.annotation.NoFutureDates;
 import org.opentripplanner.graph_builder.model.GraphVersion;
 import org.opentripplanner.model.GraphBundle;
 import org.opentripplanner.model.Landmark;
+import org.opentripplanner.routing.accessibility.DefaultStopAccessibilityStrategy;
+import org.opentripplanner.routing.accessibility.StopAccessibilityStrategy;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.core.MortonVertexComparatorFactory;
 import org.opentripplanner.routing.core.TransferTable;
@@ -221,6 +223,9 @@ public class Graph implements Serializable {
 
     /** Consequences strategy */
     public ConsequencesStrategyFactory consequencesStrategy;
+
+    /** Apply more complex stop accessibility rules */
+    public transient StopAccessibilityStrategy stopAccessibilityStrategy = new DefaultStopAccessibilityStrategy();
 
     /** Optionally apply more complex transfer rules */
     public transient TransferPermissionStrategy transferPermissionStrategy = new DefaultTransferPermissionStrategy();

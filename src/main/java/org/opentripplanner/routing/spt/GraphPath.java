@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.spt;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -49,7 +50,7 @@ public class GraphPath {
     // don't really need to save this (available through State) but why not
     private RoutingContext rctx;
 
-    private List<Alert> realtimeConsequences = Collections.emptyList();
+    private List<Alert> planAlerts = new ArrayList<>();
 
     /**
      * Construct a GraphPath based on the given state by following back-edge fields all the way back
@@ -110,6 +111,7 @@ public class GraphPath {
             }
         }
         // dump();
+        addPlanAlerts(s.getOptions().planAlerts);
     }
 
     /**
@@ -252,12 +254,16 @@ public class GraphPath {
         return rctx;
     }
 
-    public List<Alert> getRealtimeConsequences() {
-        return realtimeConsequences;
+    public List<Alert> getPlanAlerts() {
+        return planAlerts;
     }
 
-    public void setRealtimeConsequences(List<Alert> realtimeConsequences) {
-        this.realtimeConsequences = realtimeConsequences;
+    public void addPlanAlerts(List<Alert> planAlerts) {
+        this.planAlerts.addAll(planAlerts);
+    }
+
+    public void addPlanAlert(Alert alert) {
+        planAlerts.add(alert);
     }
 
     public boolean pathIncludesMode(TraverseMode mode) {

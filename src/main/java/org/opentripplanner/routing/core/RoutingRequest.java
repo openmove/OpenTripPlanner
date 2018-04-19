@@ -22,6 +22,7 @@ import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
+import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
@@ -529,6 +530,9 @@ public class RoutingRequest implements Cloneable, Serializable {
      */
     private StreetEdge splitEdge = null;
 
+    /** Keep track of alerts to add to GraphPath */
+    public List<Alert> planAlerts = new ArrayList<>();
+
     /* CONSTRUCTORS */
 
     /** Constructor for options; modes defaults to walk and transit */
@@ -992,6 +996,7 @@ public class RoutingRequest implements Cloneable, Serializable {
             else
                 clone.bikeWalkingOptions = clone;
             clone.hardPathBanningAgencies = (HashSet<String>) hardPathBanningAgencies.clone();
+            clone.planAlerts = new ArrayList<>();
             return clone;
         } catch (CloneNotSupportedException e) {
             /* this will never happen since our super is the cloneable object */
@@ -1524,5 +1529,10 @@ public class RoutingRequest implements Cloneable, Serializable {
             return kissAndRideWhitelist.contains(id);
         }
         return false;
+    }
+
+    public void addPlanAlert(Alert alert) {
+        if (!planAlerts.contains(alert))
+            planAlerts.add(alert);
     }
 }

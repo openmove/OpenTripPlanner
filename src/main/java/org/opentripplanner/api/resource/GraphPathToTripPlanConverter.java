@@ -85,7 +85,7 @@ public abstract class GraphPathToTripPlanConverter {
 
         TripPlan plan = new TripPlan(from, to, request.getDateTime());
 
-        for (Alert alert : exemplar.getRealtimeConsequences()) {
+        for (Alert alert : exemplar.getPlanAlerts()) {
             plan.addAlert(alert, requestedLocale);
         }
 

@@ -20,6 +20,7 @@ import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
 import org.opentripplanner.routing.graph.Edge;
+import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -151,9 +152,13 @@ public class PathwayEdge extends Edge {
         return s1.makeState();
     }
 
-    public boolean elevatorIsOutOfService(State s0) {
+    private boolean elevatorIsOutOfService(State s0) {
+        return elevatorIsOutOfService(s0.getOptions().rctx.graph, s0);
+    }
+
+    public boolean elevatorIsOutOfService(Graph graph, State s0) {
         Set<String> outages = new HashSet<>();
-        for (AlertPatch alert : s0.getOptions().rctx.graph.getAlertPatches(this)) {
+        for (AlertPatch alert : graph.getAlertPatches(this)) {
             if (alert.displayDuring(s0) && alert.getElevatorId() != null) {
                 outages.add(alert.getElevatorId());
             }

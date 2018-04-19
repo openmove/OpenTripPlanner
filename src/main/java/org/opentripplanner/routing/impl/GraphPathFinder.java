@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * This class contains the logic for repeatedly building shortest path trees and accumulating paths through
@@ -250,7 +249,7 @@ public class GraphPathFinder {
                 }
 
                 // add consequences
-                path.setRealtimeConsequences(realtimeConsequences);
+                path.addPlanAlerts(realtimeConsequences);
 
                 double duration = options.useRequestedDateTimeInMaxHours
                         ? (options.arriveBy ? options.dateTime - path.getStartTime() : path.getEndTime() - options.dateTime)

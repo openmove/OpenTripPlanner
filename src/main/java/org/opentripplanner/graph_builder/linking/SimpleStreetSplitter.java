@@ -23,7 +23,9 @@ import org.opentripplanner.graph_builder.annotation.BikeRentalStationUnlinked;
 import org.opentripplanner.graph_builder.annotation.StopLinkedToSubgraph;
 import org.opentripplanner.graph_builder.annotation.StopUnlinked;
 import org.opentripplanner.graph_builder.annotation.StopLinkedTooFar;
+import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.edgetype.StreetBikeParkLink;
@@ -230,7 +232,16 @@ public class SimpleStreetSplitter {
             for (TransitStop tstop : (List<TransitStop>) transitStopIndex.query(narrowEnv)) {
                 if (SphericalDistanceLibrary.distance(tstop.getCoordinate(), vertex.getCoordinate()) < 1.0
                         && tstop.getStop().getLocationType() == STOP_LOCATION_TYPE) {
-                    candidateStops.add(tstop);
+                    if (options.wheelchairAccessible) {
+                        if (isWheelchairAccessible(tstop, options)) {
+                            candidateStops.add(tstop);
+                        } else {
+                            String message = String.format("%s is not wheelchair-accessible.", tstop.getName());
+                            options.addPlanAlert(Alert.createSimpleAlerts(message, message));
+                        }
+                    } else {
+                        candidateStops.add(tstop);
+                    }
                 }
             }
         }
@@ -360,6 +371,13 @@ public class SimpleStreetSplitter {
         }
     }
 
+    /**
+     * Determine if stop is wheelchair acccessible.
+     */
+    private boolean isWheelchairAccessible(TransitStop tstop, RoutingRequest options) {
+        State state = new State(tstop, options);
+        return graph.stopAccessibilityStrategy.stopIsAccessible(state, tstop);
+    }
 
     /**
      * Split the street edge at the given fraction

@@ -230,6 +230,8 @@ public class SimpleStreetSplitter {
         List<TransitStop> candidateStops = new ArrayList<>();
         if (canFindTransitStops && options != null && options.stopLinking) {
             Envelope narrowEnv = new Envelope(vertex.getCoordinate());
+            // Only show wheelchair messages if NO stops are accessible (e.g. uptown and downtown are both unusable)
+            List<String> messages = new ArrayList<>();
             for (TransitStop tstop : (List<TransitStop>) transitStopIndex.query(narrowEnv)) {
                 if (SphericalDistanceLibrary.distance(tstop.getCoordinate(), vertex.getCoordinate()) < 1.0
                         && tstop.getStop().getLocationType() == STOP_LOCATION_TYPE) {
@@ -238,17 +240,20 @@ public class SimpleStreetSplitter {
                         if (result.isAccessible()) {
                             candidateStops.add(tstop);
                         } else {
-                            String message;
                             if (!result.getAlerts().isEmpty())
-                                message = String.format("%s is not wheelchair-accessible: %s",
-                                        tstop.getName(), result.getAlerts().get(0).alertDescriptionText);
+                                messages.add(String.format("%s is not wheelchair-accessible: %s",
+                                        tstop.getName(), result.getAlerts().get(0).alertDescriptionText));
                             else
-                                message = String.format("%s is not wheelchair-accessible.", tstop.getName());
-                            options.addPlanAlert(Alert.createSimpleAlerts(message, message));
+                                messages.add(String.format("%s is not wheelchair-accessible.", tstop.getName()));
                         }
                     } else {
                         candidateStops.add(tstop);
                     }
+                }
+            }
+            if (!messages.isEmpty() && candidateStops.isEmpty()) {
+                for (String message : messages) {
+                    options.addPlanAlert(Alert.createSimpleAlerts(message, message));
                 }
             }
         }

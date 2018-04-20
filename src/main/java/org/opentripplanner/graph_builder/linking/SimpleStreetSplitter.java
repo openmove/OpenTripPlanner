@@ -23,6 +23,7 @@ import org.opentripplanner.graph_builder.annotation.BikeRentalStationUnlinked;
 import org.opentripplanner.graph_builder.annotation.StopLinkedToSubgraph;
 import org.opentripplanner.graph_builder.annotation.StopUnlinked;
 import org.opentripplanner.graph_builder.annotation.StopLinkedTooFar;
+import org.opentripplanner.routing.accessibility.AccessibilityResult;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
@@ -233,10 +234,16 @@ public class SimpleStreetSplitter {
                 if (SphericalDistanceLibrary.distance(tstop.getCoordinate(), vertex.getCoordinate()) < 1.0
                         && tstop.getStop().getLocationType() == STOP_LOCATION_TYPE) {
                     if (options.wheelchairAccessible) {
-                        if (isWheelchairAccessible(tstop, options)) {
+                        AccessibilityResult result = isWheelchairAccessible(tstop, options);
+                        if (result.isAccessible()) {
                             candidateStops.add(tstop);
                         } else {
-                            String message = String.format("%s is not wheelchair-accessible.", tstop.getName());
+                            String message;
+                            if (!result.getAlerts().isEmpty())
+                                message = String.format("%s is not wheelchair-accessible: %s",
+                                        tstop.getName(), result.getAlerts().get(0).alertDescriptionText);
+                            else
+                                message = String.format("%s is not wheelchair-accessible.", tstop.getName());
                             options.addPlanAlert(Alert.createSimpleAlerts(message, message));
                         }
                     } else {
@@ -374,7 +381,7 @@ public class SimpleStreetSplitter {
     /**
      * Determine if stop is wheelchair acccessible.
      */
-    private boolean isWheelchairAccessible(TransitStop tstop, RoutingRequest options) {
+    private AccessibilityResult isWheelchairAccessible(TransitStop tstop, RoutingRequest options) {
         State state = new State(tstop, options);
         return graph.stopAccessibilityStrategy.stopIsAccessible(state, tstop);
     }

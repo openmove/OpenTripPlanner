@@ -17,7 +17,7 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 
 public class DefaultStopAccessibilityStrategy implements StopAccessibilityStrategy {
     @Override
-    public boolean stopIsAccessible(State state, TransitStop stop) {
-        return stop.hasWheelchairEntrance();
+    public AccessibilityResult stopIsAccessible(State state, TransitStop stop) {
+        return stop.hasWheelchairEntrance() ? AccessibilityResult.ALWAYS_ACCESSIBLE : AccessibilityResult.NEVER_ACCESSIBLE;
     }
 }

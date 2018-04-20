@@ -16,6 +16,7 @@ package org.opentripplanner.routing.edgetype;
 import org.onebusaway.gtfs.model.Pathway;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
+import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
@@ -27,7 +28,9 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import org.opentripplanner.routing.core.TraverseMode;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -153,19 +156,17 @@ public class PathwayEdge extends Edge {
     }
 
     private boolean elevatorIsOutOfService(State s0) {
-        return elevatorIsOutOfService(s0.getOptions().rctx.graph, s0);
+        List<Alert> alerts = getElevatorIsOutOfServiceAlerts(s0.getOptions().rctx.graph, s0);
+        return !alerts.isEmpty();
     }
 
-    public boolean elevatorIsOutOfService(Graph graph, State s0) {
-        Set<String> outages = new HashSet<>();
+    public List<Alert> getElevatorIsOutOfServiceAlerts(Graph graph, State s0) {
+        List<Alert> alerts = new ArrayList<>();
         for (AlertPatch alert : graph.getAlertPatches(this)) {
-            if (alert.displayDuring(s0) && alert.getElevatorId() != null) {
-                outages.add(alert.getElevatorId());
+            if (alert.displayDuring(s0) && alert.getElevatorId() != null && pathwayCode.equals(alert.getElevatorId())) {
+                alerts.add(alert.getAlert());
             }
         }
-        if (outages.contains(pathwayCode)) {
-            return true;
-        }
-        return false;
+        return alerts;
     }
 }

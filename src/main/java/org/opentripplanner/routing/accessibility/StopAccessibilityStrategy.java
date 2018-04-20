@@ -16,5 +16,5 @@ import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
 public interface StopAccessibilityStrategy {
-    boolean stopIsAccessible(State state, TransitStop stop);
+    AccessibilityResult stopIsAccessible(State state, TransitStop stop);
 }

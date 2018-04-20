@@ -51,7 +51,8 @@ public class MTATransferPermissionStrategy implements TransferPermissionStrategy
             if (options.wheelchairAccessible && !fromStop.equals(toStop)) {
                 TransitStop fromTransitStop = graph.index.stopVertexForStop.get(fromStop);
                 TransitStop toTransitStop = graph.index.stopVertexForStop.get(toStop);
-                if (!stopAccessibilityStrategy.stopIsAccessible(state, fromTransitStop) || !stopAccessibilityStrategy.stopIsAccessible(state, toTransitStop)) {
+                if (!stopAccessibilityStrategy.stopIsAccessible(state, fromTransitStop).isAccessible()
+                        || !stopAccessibilityStrategy.stopIsAccessible(state, toTransitStop).isAccessible()) {
                     return false;
                 }
             }

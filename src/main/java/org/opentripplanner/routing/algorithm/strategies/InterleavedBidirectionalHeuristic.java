@@ -19,6 +19,7 @@ import org.onebusaway.gtfs.model.Route;
 import org.opentripplanner.common.pqueue.BinHeap;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.edgetype.PathwayEdge;
 import org.opentripplanner.routing.edgetype.StreetTransitLink;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -353,12 +355,11 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
             Vertex v = s.getVertex();
             // At this point the vertex is closed (pulled off heap).
             // This is the lowest cost we will ever see for this vertex. We can record the cost to reach it.
-            if (v instanceof TransitStop && !((TransitStop) v).isEntrance() && !((TransitStop) v).isExtendedLocationType()) {
+            if (v instanceof TransitStop) {
                 // We don't want to continue into the transit network yet, but when searching around the target
                 // place vertices on the transit queue so we can explore the transit network backward later.
                 TransitStop tstop = (TransitStop) v;
-                // TODO: mode/agency checks
-                if (routingRequest.bannedRouteTypes.containsAll(getRouteTypes(tstop))) {
+                if (stopIsBanned(tstop)) {
                     continue;
                 }
                 if (fromTarget) {
@@ -438,6 +439,38 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
             }
         }
         return false;
+    }
+
+    // For now just checks route_type. TODO agency, mode.
+    // This is necessary for the smart-kiss-and-ride checks
+    private boolean stopIsBanned(TransitStop tstop) {
+        if (routingRequest.bannedRouteTypes.isEmpty())
+            return false;
+        if (!tstop.isEntrance() && !tstop.isExtendedLocationType())
+            return routingRequest.bannedRouteTypes.containsAll(getRouteTypes(tstop));
+
+        // Find all "actual" TransitStops via Pathways
+        Set<TransitStop> seen = new HashSet<>();
+        LinkedList<TransitStop> queue = new LinkedList<>();
+        queue.push(tstop);
+        seen.add(tstop);
+        while (!queue.isEmpty()) {
+            TransitStop v = queue.pop();
+            if (!v.isEntrance() && !v.isExtendedLocationType()) {
+                if (!routingRequest.bannedRouteTypes.containsAll(getRouteTypes(v)))
+                    return false;
+            }
+            for (Edge e : v.getOutgoing()) {
+                if (e instanceof PathwayEdge) {
+                    TransitStop w = (TransitStop) e.getToVertex();
+                    if (!seen.contains(w)) {
+                        seen.add(w);
+                        queue.add(w);
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private Collection<Integer> getRouteTypes(TransitStop tstop) {

@@ -69,8 +69,9 @@ public class GrizzlyServer {
         }
         /* OTP is CPU-bound, so we want only as many worker threads as we have cores. */
         ThreadPoolConfig threadPoolConfig = ThreadPoolConfig.defaultConfig()
-            .setCorePoolSize(1)
-            .setMaxPoolSize(threadPoolMaxPoolSize);
+            .setCorePoolSize(threadPoolMaxPoolSize)
+            .setMaxPoolSize(threadPoolMaxPoolSize)
+             .setQueueLimit(-1); // coerce FixedThreadPool
 
         LOG.info("Thread pool size = " + threadPoolConfig.getMaxPoolSize());
 

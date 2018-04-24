@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -83,9 +82,6 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
     /** The vertex that the main search is working towards. */
     private Vertex target;
 
-    /** Or search works towards multiple targets (landmark support) */
-    private List<Vertex> targets;
-
     /** All vertices within walking distance of the origin (the vertex at which the main search begins). */
     private Set<Vertex> preTransitVertices;
 
@@ -129,8 +125,7 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
     @Override
     public void initialize(RoutingRequest request, long abortTime) {
         Vertex target = request.rctx.target;
-        List<Vertex> targets = request.rctx.targets;
-        if ((target != null && target == this.target || (targets != null && targets == this.targets))) {
+        if (target != null && target == this.target) {
             if (request.postTransitKissAndRide != this.postTransitKissAndRide) {
                 transitQueue = transitQueue_WALK;
                 maxWeightSeen = maxWeightSeen_WALK;
@@ -143,7 +138,6 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
         LOG.debug("Initializing heuristic computation.");
         long start = System.currentTimeMillis();
         this.target = target;
-        this.targets = targets;
         this.routingRequest = request;
         transitQueue = new BinHeap<>();
         maxWeightSeen = 0;
@@ -322,27 +316,9 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
         // TODO use normal OTP search for this.
         BinHeap<State> pq = new BinHeap<State>();
         Vertex initVertex = fromTarget ? rr.rctx.target : rr.rctx.origin;
-        if (initVertex != null) {
-            State initState = new State(initVertex, rr);
-            pq.insert(initState, 0);
-        }
 
-        if(fromTarget) {
-            // Add all the targets for trips with multiple possible targets.
-            for (int i = 0; i < rr.rctx.targets.size(); i++) {
-                Vertex anotherVertex = rr.rctx.targets.get(i);
-                State anotherState = new State(anotherVertex, rr);
-                pq.insert(anotherState, 0);
-            }
-        }
-        else{
-            // Add all the origins for trips with multiple possible targets.
-            for (int i = 0; i < rr.rctx.origins.size(); i++) {
-                Vertex anotherVertex = rr.rctx.origins.get(i);
-                State anotherState = new State(anotherVertex, rr);
-                pq.insert(anotherState, 0);
-            }
-        }
+        State initState = new State(initVertex, rr);
+        pq.insert(initState, 0);
 
         // override is irrelevant if not defined in request
         boolean foundOverrideStop = routingRequest.kissAndRideOverrides.isEmpty();

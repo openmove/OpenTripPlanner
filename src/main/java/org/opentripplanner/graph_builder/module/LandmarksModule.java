@@ -20,14 +20,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
 import org.opentripplanner.model.Landmark;
+import org.opentripplanner.routing.edgetype.LandmarkEdge;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.vertextype.LandmarkVertex;
 import org.opentripplanner.routing.vertextype.TransitStationStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 public class LandmarksModule implements GraphBuilderModule {
 
@@ -46,7 +53,10 @@ public class LandmarksModule implements GraphBuilderModule {
             @Override
             public TransitStationStop deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
                 String label = jsonParser.getValueAsString();
-                return (TransitStationStop) graph.getVertex(label);
+                TransitStationStop v =  (TransitStationStop) graph.getVertex(label);
+                if (v == null)
+                    LOG.error("no vertex found for label {}", label);
+                return v;
             }
         });
         ObjectMapper mapper = new ObjectMapper();
@@ -58,8 +68,33 @@ public class LandmarksModule implements GraphBuilderModule {
             LOG.info("Error reading landmarks file: " + ex);
         }
         for (Landmark landmark : landmarks) {
+            removeBadStops(landmark);
+            if (landmark.getStops().isEmpty())
+                continue;
             graph.addLandmark(landmark);
+            Vertex lv = makeLandmarkVertex(graph, landmark);
+            for (Vertex stop : landmark.getStops()) {
+                new LandmarkEdge(lv, stop);
+                new LandmarkEdge(stop, lv);
+            }
         }
+    }
+
+    private Vertex makeLandmarkVertex(Graph graph, Landmark landmark) {
+        List<TransitStationStop> stops = landmark.getStops();
+        Comparator<TransitStationStop> latcmp = Comparator.comparingDouble(Vertex::getLat);
+        Comparator<TransitStationStop> loncmp =  Comparator.comparingDouble(Vertex::getLon);
+        double minLat = Collections.min(stops, latcmp).getLat();
+        double maxLat = Collections.max(stops, latcmp).getLat();
+        double minLon = Collections.min(stops, loncmp).getLon();
+        double maxLon = Collections.max(stops, loncmp).getLon();
+        double lat = (minLat + maxLat) / 2;
+        double lon = (minLon + maxLon) / 2;
+        return new LandmarkVertex(graph, landmark.getName(), lon, lat);
+    }
+
+    private void removeBadStops(Landmark landmark) {
+        landmark.getStops().removeIf(Objects::isNull);
     }
 
     @Override

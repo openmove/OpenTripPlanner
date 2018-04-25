@@ -12,6 +12,7 @@ import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
+import org.glassfish.grizzly.strategies.SameThreadIOStrategy;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import org.glassfish.jersey.server.ContainerFactory;
 import org.slf4j.Logger;
@@ -87,6 +88,21 @@ public class GrizzlyServer {
         NetworkListener httpListener = new NetworkListener("otp_insecure", params.bindAddress, params.port);
         // OTP is CPU-bound, we don't want more threads than cores. TODO: We should switch to async handling.
         httpListener.setSecure(false);
+
+        if (System.getProperty("otp.transport_same_thread") != null
+                && "true".equalsIgnoreCase(System.getProperty("otp.transport_same_thread"))) {
+            // NOTE:  if this is set it undoes the pool configuration above
+            LOG.info("using SameThreadIOStrategy transport policy.  Thread Pool Config will be ignored");
+            httpListener.getTransport().setIOStrategy(SameThreadIOStrategy.getInstance());
+        } else {
+            LOG.info("defaulting to normal transport policy");
+        }
+
+        if (System.getProperty("otp.transport_backlog") != null) {
+            int backlog = Integer.parseInt(System.getProperty("otp.transport_backlog"));
+            LOG.info("setting transport backlog to {}", backlog);
+            httpListener.getTransport().setServerConnectionBackLog(backlog);
+        }
 
         /* HTTPS listener */
         NetworkListener httpsListener = new NetworkListener("otp_secure", params.bindAddress, params.securePort);

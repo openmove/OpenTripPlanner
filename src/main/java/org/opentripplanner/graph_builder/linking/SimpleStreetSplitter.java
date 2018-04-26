@@ -158,12 +158,17 @@ public class SimpleStreetSplitter {
 
     /** Link this vertex into the graph */
     public boolean link(Vertex vertex, TraverseMode traverseMode, RoutingRequest options) {
+        return link(vertex, traverseMode, options, true);
+    }
+
+    /** Link this vertex into the graph */
+    public boolean link(Vertex vertex, TraverseMode traverseMode, RoutingRequest options, boolean stopLinking) {
         // find nearby street edges
         // TODO: we used to use an expanding-envelope search, which is more efficient in
         // dense areas. but first let's see how inefficient this is. I suspect it's not too
         // bad and the gains in simplicity are considerable.
 
-        boolean canFindTransitStops = !destructiveSplitting && transitStopIndex != null;
+        boolean canFindTransitStops = !destructiveSplitting && transitStopIndex != null && stopLinking;
 
         final double radiusDeg = SphericalDistanceLibrary.metersToDegrees(MAX_SEARCH_RADIUS_METERS);
 
@@ -228,11 +233,17 @@ public class SimpleStreetSplitter {
         }
 
         List<TransitStop> candidateStops = new ArrayList<>();
+
+        // If we DO link to a transit stop at this location, we should ALSO link to a street vertex if there is a transit stop
+        // that's not accessible (ie downtown accessible, uptown not.)
+        boolean alsoLinkToStreets = false;
+
         if (canFindTransitStops && options != null && options.stopLinking) {
             Envelope narrowEnv = new Envelope(vertex.getCoordinate());
             // Only show wheelchair messages if NO stops are accessible (e.g. uptown and downtown are both unusable)
             List<String> messages = new ArrayList<>();
-            for (TransitStop tstop : (List<TransitStop>) transitStopIndex.query(narrowEnv)) {
+            List<TransitStop> stops = (List<TransitStop>) transitStopIndex.query(narrowEnv);
+            for (TransitStop tstop : stops) {
                 if (SphericalDistanceLibrary.distance(tstop.getCoordinate(), vertex.getCoordinate()) < 1.0
                         && tstop.getStop().getLocationType() == STOP_LOCATION_TYPE) {
                     if (options.wheelchairAccessible) {
@@ -245,6 +256,7 @@ public class SimpleStreetSplitter {
                                         tstop.getName(), result.getAlerts().get(0).alertDescriptionText));
                             else
                                 messages.add(String.format("%s is not wheelchair-accessible.", tstop.getName()));
+                            alsoLinkToStreets = true;
                         }
                     } else {
                         candidateStops.add(tstop);
@@ -309,6 +321,9 @@ public class SimpleStreetSplitter {
                 for (TransitStop stop: bestStops) {
                     LOG.debug("Linking vertex {} to stop {}", vertex, stop.getStopId());
                     makeTemporaryEdges((TemporaryStreetLocation)vertex, stop);
+                }
+                if (alsoLinkToStreets) {
+                    link(vertex, traverseMode, options, false);
                 }
                 return true;
             }

@@ -256,7 +256,7 @@ public class RoutingContext implements Cloneable {
         Edge fromBackEdge = null;
         Edge toBackEdge = null;
         if (findPlaces) {
-            if (opt.batch) {
+            if (opt.batch && !opt.stopLinking) {
                 // batch mode: find an OSM vertex, don't split
                 // We do this so that we are always linking to the same thing in analyst mode
                 // even if the transit network has changed.

@@ -53,6 +53,8 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
 
     private long timestamp;
 
+    private boolean matchStopSequence;
+
     static {
         _extensionRegistry = ExtensionRegistry.newInstance();
         GtfsRealtimeExtensions.registerExtensions(_extensionRegistry);
@@ -66,6 +68,7 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
         }
         this.url = url;
         this.feedId = config.path("feedId").asText();
+        this.matchStopSequence = config.path("matchStopSequence").asBoolean(true);
     }
 
     @Override
@@ -81,12 +84,12 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
                 // Decode message
                 feedMessage = FeedMessage.PARSER.parseFrom(is, _extensionRegistry);
                 feedEntityList = feedMessage.getEntityList();
-                
+
                 // Change fullDataset value if this is an incremental update
                 if (feedMessage.hasHeader()
                         && feedMessage.getHeader().hasIncrementality()
                         && feedMessage.getHeader().getIncrementality()
-                                .equals(GtfsRealtime.FeedHeader.Incrementality.DIFFERENTIAL)) {
+                        .equals(GtfsRealtime.FeedHeader.Incrementality.DIFFERENTIAL)) {
                     fullDataset = false;
                 }
 
@@ -102,7 +105,7 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
             LOG.warn("Failed to parse gtfs-rt feed from " + url + ":", e);
         } finally {
             long end = System.currentTimeMillis();
-            LOG.info("Feed " + this.feedId + " downloaded in " + (end-start) + "ms via url=" + url);
+            LOG.info("Feed " + this.feedId + " downloaded in " + (end - start) + "ms via url=" + url);
         }
         return updates;
     }
@@ -111,7 +114,7 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
     public boolean getFullDatasetValueOfLastUpdates() {
         return fullDataset;
     }
-    
+
     public String toString() {
         return "GtfsRealtimeHttpUpdateStreamer(" + url + ")";
     }
@@ -124,5 +127,10 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
     @Override
     public long getTimestamp() {
         return timestamp;
+    }
+
+    @Override
+    public boolean getMatchStopSequence() {
+        return matchStopSequence;
     }
 }

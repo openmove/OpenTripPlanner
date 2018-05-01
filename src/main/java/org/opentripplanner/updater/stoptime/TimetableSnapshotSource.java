@@ -173,7 +173,7 @@ public class TimetableSnapshotSource {
 
     // for testing - no timestamp
     public void applyTripUpdates(final Graph graph, final boolean fullDataset, final List<TripUpdate> updates, final String feedId) {
-        applyTripUpdates(graph, fullDataset, updates, feedId, -1);
+        applyTripUpdates(graph, fullDataset, updates, feedId, -1, true);
     }
 
     /**
@@ -189,8 +189,9 @@ public class TimetableSnapshotSource {
      * @param updates GTFS-RT TripUpdate's that should be applied atomically
      * @param feedId feed to add TripUpdates to
      * @param timestamp timestamp of FeedMessage, if given
+     * @param matchStopSequence whether to trust stop_sequence values from RT feed
      */
-    public void applyTripUpdates(final Graph graph, final boolean fullDataset, final List<TripUpdate> updates, final String feedId, final long timestamp) {
+    public void applyTripUpdates(final Graph graph, final boolean fullDataset, final List<TripUpdate> updates, final String feedId, final long timestamp, boolean matchStopSequence) {
         if (updates == null) {
             LOG.warn("updates is null");
             return;
@@ -255,7 +256,7 @@ public class TimetableSnapshotSource {
                 long tripTimestamp = tripUpdate.hasTimestamp() ? tripUpdate.getTimestamp() : timestamp;
                 switch (tripScheduleRelationship) {
                     case SCHEDULED:
-                        applied = handleScheduledTrip(tripUpdate, feedId, serviceDate, tripTimestamp);
+                        applied = handleScheduledTrip(tripUpdate, feedId, serviceDate, tripTimestamp, matchStopSequence);
                         if(applied) { scheduledSuccess++; }
                         scheduledUpdates++;
                         break;
@@ -365,7 +366,7 @@ public class TimetableSnapshotSource {
         return tripScheduleRelationship;
     }
 
-    private boolean handleScheduledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate, final long timestamp) {
+    private boolean handleScheduledTrip(final TripUpdate tripUpdate, final String feedId, final ServiceDate serviceDate, final long timestamp, boolean matchStopSequence) {
         final TripDescriptor tripDescriptor = tripUpdate.getTrip();
         // This does not include Agency ID or feed ID, trips are feed-unique and we currently assume a single static feed.
         final String tripId = tripDescriptor.getTripId();
@@ -383,7 +384,7 @@ public class TimetableSnapshotSource {
 
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
         final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(tripUpdate,
-                timeZone, serviceDate);
+                timeZone, serviceDate, matchStopSequence);
 
         if (updatedTripTimes == null) {
             return false;

@@ -50,10 +50,13 @@ public class GtfsRealtimeFileTripUpdateSource implements TripUpdateSource, JsonC
 
     private long timestamp;
 
+    private boolean matchStopSequence;
+
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         this.feedId = config.path("feedId").asText();
         this.file = new File(config.path("file").asText(""));
+        this.matchStopSequence = config.path("matchStopSequence").asBoolean(true);
     }
 
     @Override
@@ -108,5 +111,10 @@ public class GtfsRealtimeFileTripUpdateSource implements TripUpdateSource, JsonC
     @Override
     public long getTimestamp() {
         return timestamp;
+    }
+
+    @Override
+    public boolean getMatchStopSequence() {
+        return matchStopSequence;
     }
 }

@@ -206,7 +206,7 @@ public class WebsocketGtfsRealtimeUpdater implements GraphUpdater {
             if (updates != null) {
                 // Handle trip updates via graph writer runnable
                 TripUpdateGraphWriterRunnable runnable = new TripUpdateGraphWriterRunnable(
-                        fullDataset, updates, feedId, timestamp);
+                        fullDataset, updates, feedId, timestamp, true);
                 updaterManager.execute(runnable);
             }
         }

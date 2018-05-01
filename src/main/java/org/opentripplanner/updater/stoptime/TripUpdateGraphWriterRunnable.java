@@ -42,7 +42,9 @@ public class TripUpdateGraphWriterRunnable implements GraphWriterRunnable {
 
     private final long timestamp;
 
-    public TripUpdateGraphWriterRunnable(final boolean fullDataset, final List<TripUpdate> updates, final String feedId, final long timestamp) {
+    private final boolean matchStopSequence;
+
+    public TripUpdateGraphWriterRunnable(final boolean fullDataset, final List<TripUpdate> updates, final String feedId, final long timestamp, final boolean matchStopSequence) {
         // Preconditions
         Preconditions.checkNotNull(updates);
         Preconditions.checkNotNull(feedId);
@@ -52,6 +54,7 @@ public class TripUpdateGraphWriterRunnable implements GraphWriterRunnable {
         this.updates = updates;
         this.feedId = feedId;
         this.timestamp = timestamp;
+        this.matchStopSequence = matchStopSequence;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class TripUpdateGraphWriterRunnable implements GraphWriterRunnable {
         // Apply updates to graph using realtime snapshot source
         TimetableSnapshotSource snapshotSource = graph.timetableSnapshotSource;
         if (snapshotSource != null) {
-            snapshotSource.applyTripUpdates(graph, fullDataset, updates, feedId, timestamp);
+            snapshotSource.applyTripUpdates(graph, fullDataset, updates, feedId, timestamp, matchStopSequence);
         } else {
             LOG.error("Could not find realtime data snapshot source in graph."
                     + " The following updates are not applied: {}", updates);

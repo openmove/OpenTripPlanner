@@ -376,6 +376,10 @@ public class Timetable implements Serializable {
         return tripTimes.set(tripIndex, tt);
     }
 
+    public TripTimes createUpdatedTripTimes(TripUpdate tripUpdate, TimeZone timeZone, ServiceDate updateServiceDate) {
+        return createUpdatedTripTimes(tripUpdate, timeZone, updateServiceDate, true);
+    }
+
     /**
      * Apply the TripUpdate to the appropriate TripTimes from this Timetable. The existing TripTimes
      * must not be modified directly because they may be shared with the underlying
@@ -388,11 +392,12 @@ public class Timetable implements Serializable {
      * @param tripUpdate GTFS-RT trip update
      * @param timeZone time zone of trip update
      * @param updateServiceDate service date of trip update
+     * @param matchStopSequence whether to use stop_sequence in update
      * @return new copy of updated TripTimes after TripUpdate has been applied on TripTimes of trip
      *         with the id specified in the trip descriptor of the TripUpdate; null if something
      *         went wrong
      */
-    public TripTimes createUpdatedTripTimes(TripUpdate tripUpdate, TimeZone timeZone, ServiceDate updateServiceDate) {
+    public TripTimes createUpdatedTripTimes(TripUpdate tripUpdate, TimeZone timeZone, ServiceDate updateServiceDate, boolean matchStopSequence) {
         if (tripUpdate == null) {
             LOG.error("A null TripUpdate pointer was passed to the Timetable class update method.");
             return null;
@@ -435,12 +440,14 @@ public class Timetable implements Serializable {
             StopTimeUpdate update = updates.next();
 
             int numStops = newTimes.getNumStops();
+
             Integer delay = null;
+
 
             for (int i = 0; i < numStops; i++) {
                 boolean match = false;
                 if (update != null) {
-                    if (update.hasStopSequence()) {
+                    if (update.hasStopSequence() && matchStopSequence) {
                         match = update.getStopSequence() == newTimes.getStopSequence(i);
                     } else if (update.hasStopId()) {
                         match = pattern.getStop(i).getId().getId().equals(update.getStopId());

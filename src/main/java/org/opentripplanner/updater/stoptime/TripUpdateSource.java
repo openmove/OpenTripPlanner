@@ -34,4 +34,6 @@ public interface TripUpdateSource {
     public String getFeedId();
 
     public long getTimestamp();
+
+    public boolean getMatchStopSequence();
 }

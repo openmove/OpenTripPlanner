@@ -53,7 +53,7 @@ public class AddedTripsRoutingTest extends MTAGraphTest {
                 .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
                 .map(GtfsRealtime.FeedEntity::getTripUpdate)
                 .collect(Collectors.toList());
-        updater.applyTripUpdates(graph,  true, updates, FEED_ID, message.getHeader().getTimestamp());
+        updater.applyTripUpdates(graph,  true, updates, FEED_ID, message.getHeader().getTimestamp(), true);
     }
 
     @Test

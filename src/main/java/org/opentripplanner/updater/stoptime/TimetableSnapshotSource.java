@@ -310,6 +310,7 @@ public class TimetableSnapshotSource {
 
             if(_cloudWatchService.enabled()){
                 CountMetrics countMetrics = new CountMetrics();
+
                 countMetrics.addCountMetric("totalTripUpdatesSuccess", appliedUpdates, "Feed Id", feedId);
                 countMetrics.addCountMetric("totalTripUpdatesFailed", totalUpdates - appliedUpdates, "Feed Id", feedId);
                 countMetrics.addCountMetric("totalTripUpdates", totalUpdates, "Feed Id", feedId);
@@ -319,9 +320,21 @@ public class TimetableSnapshotSource {
                 countMetrics.addCountMetric("addedUpdates", addedUpdates, "Feed Id", feedId);
                 countMetrics.addCountMetric("cancelledSuccess", cancelledSuccess, "Feed Id", feedId);
                 countMetrics.addCountMetric("cancelledUpdates", cancelledUpdates, "Feed Id", feedId);
+
+                countMetrics.addPercentMetric("vehiclesInServicePct", getMetricPctValues(totalUpdates, appliedUpdates), "Feed Id", feedId);
+                countMetrics.addPercentMetric("scheduledTripsSuccessPct", getMetricPctValues(scheduledUpdates, scheduledSuccess), "Feed Id", feedId );
+                countMetrics.addPercentMetric("addedTripsSuccessPct", getMetricPctValues(addedUpdates, addedSuccess), "Feed Id", feedId);
+                countMetrics.addPercentMetric("cancelledTripsSuccessPct", getMetricPctValues(cancelledUpdates, cancelledSuccess), "Feed Id", feedId);
+
                 _cloudWatchService.publishMetric("OpenTripPlanner", countMetrics);
             }
         }
+    }
+
+    private double getMetricPctValues(int total, int successful){
+        if(total < 1)
+            return total;
+        return (total - successful)/total;
     }
 
 

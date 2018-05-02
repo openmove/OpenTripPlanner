@@ -1,6 +1,7 @@
 package org.opentripplanner.util.aws.cloudwatch.metrics;
 
 import com.amazonaws.services.cloudwatch.model.Dimension;
+import com.amazonaws.services.cloudwatch.model.Metric;
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import com.amazonaws.services.cloudwatch.model.StandardUnit;
 
@@ -12,26 +13,31 @@ public class CountMetrics implements CloudWatchMetrics {
 
     private Set<MetricDatum> metrics = new HashSet<>();
 
-    public void addCountMetric(String metricName, Integer count){
-        double countAsDouble = count;
-        final MetricDatum datum = new MetricDatum()
-                .withMetricName(metricName)
-                .withUnit(StandardUnit.Count)
-                .withValue(countAsDouble);
-        metrics.add(datum);
-    }
 
-    public void addCountMetric(String metricName, Integer count, String dimensionName, String dimensionVal){
+    public void addCountMetric(final String metricName, final Integer value, final String dimensionName, final String dimensionVal){
         Dimension dim = new Dimension()
                 .withName(dimensionName)
                 .withValue(dimensionVal);
         MetricDatum datum = new MetricDatum()
                 .withMetricName(metricName)
-                .withValue((double)count)
+                .withValue((double)value)
                 .withUnit(StandardUnit.Count)
                 .withDimensions(dim);
         metrics.add(datum);
     }
+
+    public void addPercentMetric(final String metricName, final double value, final String dimensionName, final String dimensionVal){
+        Dimension dim = new Dimension()
+                .withName(dimensionName)
+                .withValue(dimensionVal);
+        MetricDatum datum = new MetricDatum()
+                .withMetricName(metricName)
+                .withValue(value * 100.0)
+                .withUnit(StandardUnit.Percent)
+                .withDimensions(dim);
+        metrics.add(datum);
+    }
+
 
     @Override
     public Set<MetricDatum> getMetrics() {

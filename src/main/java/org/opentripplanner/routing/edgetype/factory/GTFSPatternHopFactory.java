@@ -854,7 +854,6 @@ public class GTFSPatternHopFactory {
                 break;
             }
         }
-
         // TODO verify that the first (and last?) stop should always be considered a timepoint.
         if (!hasTimepoints) st0.setTimepoint(1);
 
@@ -889,10 +888,8 @@ public class GTFSPatternHopFactory {
             int dwellTime = st0.getDepartureTime() - st0.getArrivalTime(); 
             if (dwellTime < 0) {
                 LOG.warn(graph.addBuilderAnnotation(new NegativeDwellTime(st0)));
-                if (st0.getArrivalTime() > 23 * SECONDS_IN_HOUR && st0.getDepartureTime() < 1 * SECONDS_IN_HOUR
-                        && st1.getArrivalTime() + 24 * SECONDS_IN_HOUR > st0.getDepartureTime()) {
+                if (st0.getArrivalTime() > 23 * SECONDS_IN_HOUR && st0.getDepartureTime() < 1 * SECONDS_IN_HOUR) {
                     midnightCrossed = true;
-                    st0.setArrivalTime(st0.getArrivalTime() + 24 * SECONDS_IN_HOUR);
                     st0.setDepartureTime(st0.getDepartureTime() + 24 * SECONDS_IN_HOUR);
                 } else {
                     st0.setDepartureTime(st0.getArrivalTime());
@@ -903,13 +900,11 @@ public class GTFSPatternHopFactory {
             if (runningTime < 0) {
                 LOG.warn(graph.addBuilderAnnotation(new NegativeHopTime(new StopTime(st0), new StopTime(st1))));
                 // negative hops are usually caused by incorrect coding of midnight crossings
-                if (st0.getDepartureTime() > 23 * SECONDS_IN_HOUR && st1.getArrivalTime() < 1 * SECONDS_IN_HOUR
-                        && st1.getArrivalTime() + 24 * SECONDS_IN_HOUR > st0.getDepartureTime()) {
+                midnightCrossed = true;
+                if (st0.getDepartureTime() > 23 * SECONDS_IN_HOUR && st1.getArrivalTime() < 1 * SECONDS_IN_HOUR) {
                     st1.setArrivalTime(st1.getArrivalTime() + 24 * SECONDS_IN_HOUR);
-                    st1.setDepartureTime(st1.getDepartureTime() + 24 * SECONDS_IN_HOUR);
-                    midnightCrossed = true;
                 } else {
-                    st1.setArrivalTime(st0.getDepartureTime()); // will be cleared out below...
+                    st1.setArrivalTime(st0.getDepartureTime());
                 }
             }
             double hopDistance = SphericalDistanceLibrary.fastDistance(
@@ -933,8 +928,9 @@ public class GTFSPatternHopFactory {
                 LOG.trace(graph.addBuilderAnnotation(new HopZeroTime((float) hopDistance, 
                           st1.getTrip(), st1.getStopSequence())));
                 // clear stoptimes that are obviously wrong, causing them to later be interpolated
-                st1.clearArrivalTime();
-                st1.clearDepartureTime();
+/* FIXME (lines commented out because they break routability in multi-feed NYC for some reason -AMB) */
+//                st1.clearArrivalTime();
+//                st1.clearDepartureTime();
                 st1bogus = true;
             } else if (hopSpeed > 45) {
                 // 45 m/sec ~= 100 miles/hr
@@ -942,7 +938,7 @@ public class GTFSPatternHopFactory {
                 LOG.trace(graph.addBuilderAnnotation(new HopSpeedFast((float) hopSpeed, 
                         (float) hopDistance, st0.getTrip(), st0.getStopSequence())));
             } else if (runningTime > maxHopTime) {
-                LOG.info(graph.addBuilderAnnotation(new HopLargeTime(runningTime,
+                LOG.trace(graph.addBuilderAnnotation(new HopLargeTime(runningTime,
                         hopDistance, st0.getTrip(), st0.getStopSequence())));
                 st1.clearArrivalTime();
                 st1.clearDepartureTime();
@@ -1079,7 +1075,7 @@ public class GTFSPatternHopFactory {
                 interpStep = (arrivalTime - prevDepartureTime) / (numInterpStops + 1);
                 if (interpStep < 0) {
                     throw new RuntimeException(
-                            "trip " + st.getTrip().getId().getId() + "goes backwards for some reason");
+                            "trip goes backwards for some reason");
                 }
                 for (j = i; j < i + numInterpStops; ++j) {
                     //System.out.println("interpolating " + j + " between " + prevDepartureTime + " and " + arrivalTime);

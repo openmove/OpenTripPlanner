@@ -139,9 +139,11 @@ public class AStar {
         runState.targetAcceptedStates = Lists.newArrayList();
         
         if (addToQueue) {
-            State initialState = new State(options);
-            runState.spt.add(initialState);
-            runState.pq.insert(initialState, 0);
+            if (options.rctx.origin != null) {
+                State initialState = new State(options);
+                runState.spt.add(initialState);
+                runState.pq.insert(initialState, 0);
+            }
         }
     }
 

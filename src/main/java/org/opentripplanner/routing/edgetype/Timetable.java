@@ -14,11 +14,14 @@
 package org.opentripplanner.routing.edgetype;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.onebusaway.gtfs.model.AgencyAndId;
@@ -427,12 +430,27 @@ public class Timetable implements Serializable {
 
         TripTimes newTimes = new TripTimes(getTripTimes(tripIndex));
 
+        // If we're ignoring stop_sequence, we may as well clean input data - remove STUs that don't appear
+        // in static feed to be resistent to data mismatches.
+        List<StopTimeUpdate> stopTimeUpdates = new ArrayList<>(tripUpdate.getStopTimeUpdateList());
+        if (!matchStopSequence) {
+            Set<String> stopIds = pattern.getStops().stream()
+                    .map(s -> s.getId().getId()).collect(Collectors.toSet());
+            Iterator<StopTimeUpdate> iter = stopTimeUpdates.iterator();
+            while (iter.hasNext()) {
+                String stopId = iter.next().getStopId();
+                if (!stopIds.contains(stopId)) {
+                    iter.remove();
+                }
+            }
+        }
+
         if (tripDescriptor.hasScheduleRelationship() && tripDescriptor.getScheduleRelationship()
                 == TripDescriptor.ScheduleRelationship.CANCELED) {
             newTimes.cancel();
         } else {
             // The GTFS-RT reference specifies that StopTimeUpdates are sorted by stop_sequence.
-            Iterator<StopTimeUpdate> updates = tripUpdate.getStopTimeUpdateList().iterator();
+            Iterator<StopTimeUpdate> updates = stopTimeUpdates.iterator();
             if (!updates.hasNext()) {
                 LOG.warn("Won't apply zero-length trip update to trip {}.", tripId);
                 return null;

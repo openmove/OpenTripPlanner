@@ -334,7 +334,7 @@ public class TimetableSnapshotSource {
     private double getMetricPctValues(int total, int successful){
         if(total < 1)
             return total;
-        return (total - successful)/total;
+        return (double)(total - (total-successful))/total;
     }
 
 

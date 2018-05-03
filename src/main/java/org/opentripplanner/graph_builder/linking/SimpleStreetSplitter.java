@@ -234,11 +234,12 @@ public class SimpleStreetSplitter {
 
         List<TransitStop> candidateStops = new ArrayList<>();
 
-        // If we DO link to a transit stop at this location, we should ALSO link to a street vertex if there is a transit stop
-        // that's not accessible (ie downtown accessible, uptown not.)
-        boolean alsoLinkToStreets = false;
+        // If we DO link to a transit stop(s) at this location, we should ALSO link to a street vertex, so things work for:
+        // * trips which shouldn't use this transit stop
+        // * one (or both) stop is not accessible (ie downtown accessible, uptown not.)
+        boolean stopAndStreetLink = canFindTransitStops && options != null && options.stopLinking;
 
-        if (canFindTransitStops && options != null && options.stopLinking) {
+        if (stopAndStreetLink) {
             Envelope narrowEnv = new Envelope(vertex.getCoordinate());
             // Only show wheelchair messages if NO stops are accessible (e.g. uptown and downtown are both unusable)
             List<String> messages = new ArrayList<>();
@@ -256,7 +257,6 @@ public class SimpleStreetSplitter {
                                         tstop.getName(), result.getAlerts().get(0).alertDescriptionText));
                             else
                                 messages.add(String.format("%s is not wheelchair-accessible.", tstop.getName()));
-                            alsoLinkToStreets = true;
                         }
                     } else {
                         candidateStops.add(tstop);
@@ -322,7 +322,7 @@ public class SimpleStreetSplitter {
                     LOG.debug("Linking vertex {} to stop {}", vertex, stop.getStopId());
                     makeTemporaryEdges((TemporaryStreetLocation)vertex, stop);
                 }
-                if (alsoLinkToStreets) {
+                if (stopAndStreetLink) {
                     link(vertex, traverseMode, options, false);
                 }
                 return true;

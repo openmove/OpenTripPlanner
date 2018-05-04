@@ -106,6 +106,13 @@ public class TransferEdge extends Edge {
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
             return null;
         }
+        if (s0.getOptions().getRoutingContext() != null && s0.getOptions().getRoutingContext().graph.transferPermissionStrategy != null) {
+            if (!s0.getOptions().getRoutingContext().graph.transferPermissionStrategy.isTransferAllowed(
+                    s0, ((TransitStationStop) fromv).getStop(), ((TransitStationStop) tov).getStop(),
+                    !s0.getOptions().arriveBy, time)) {
+                return null;
+            }
+        }
         // Only transfer right after riding a vehicle.
         StateEditor se = s0.edit(this);
         se.setBackMode(TraverseMode.WALK);

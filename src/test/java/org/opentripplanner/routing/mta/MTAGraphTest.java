@@ -21,6 +21,7 @@ import org.opentripplanner.routing.accessibility.MTAStopAccessibilityStrategy;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.AlertPatchServiceImpl;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.spt.GraphPath;
@@ -80,6 +81,14 @@ public class MTAGraphTest {
         options.setRoutingContext(graph, FEED_ID+":" + from, FEED_ID + ":" + to);
         ShortestPathTree spt = aStar.getShortestPathTree(options);
         return spt.getPath(graph.getVertex(FEED_ID+":" + to), true);
+    }
+
+    protected GraphPath search(Vertex from, Vertex to, String date, String time, RoutingRequest options) {
+        AStar aStar = new AStar();
+        options.setDateTime(date, time, graph.getTimeZone());
+        options.setRoutingContext(graph,  from, to);
+        ShortestPathTree spt = aStar.getShortestPathTree(options);
+        return spt.getPath(to, true);
     }
 
     protected RoutingRequest getOptions() {

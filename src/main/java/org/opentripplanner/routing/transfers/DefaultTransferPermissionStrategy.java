@@ -13,12 +13,11 @@
 package org.opentripplanner.routing.transfers;
 
 import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.core.State;
 
 public class DefaultTransferPermissionStrategy implements TransferPermissionStrategy {
     @Override
-    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip, boolean boarding, int transferTime) {
+    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop,  boolean boarding, int transferTime) {
         return true;
     }
 }

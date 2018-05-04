@@ -13,7 +13,6 @@
 package org.opentripplanner.routing.transfers;
 
 import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.accessibility.StopAccessibilityStrategy;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
@@ -38,7 +37,7 @@ public class MTATransferPermissionStrategy implements TransferPermissionStrategy
     }
 
     @Override
-    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip, boolean boarding, int transferTime) {
+    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop, boolean boarding, int transferTime) {
         RoutingRequest options = state.getOptions();
         String fromFeed = fromStop.getId().getAgencyId();
         String toFeed = toStop.getId().getAgencyId();

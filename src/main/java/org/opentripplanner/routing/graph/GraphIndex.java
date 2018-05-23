@@ -479,7 +479,7 @@ public class GraphIndex {
                         if(omitNonPickups && pattern.stopPattern.pickups[sidx] == pattern.stopPattern.PICKDROP_NONE) continue;
                         for (TripTimes t : tt.tripTimes) {
                             if (!sd.serviceRunning(t.serviceCode)) continue;
-                            if (headsign != null && !t.getHeadsign(sidx).equals(headsign)) continue;
+                            if (headsign != null && !headsign.equals(t.getHeadsign(sidx))) continue;
                             if (t.getDepartureTime(sidx) != -1 &&
                                     t.getDepartureTime(sidx) >= secondsSinceMidnight) {
                                 pq.insertWithOverflow(new TripTimeShort(pattern, t, sidx, stop, sd, graph.getTimeZone()));

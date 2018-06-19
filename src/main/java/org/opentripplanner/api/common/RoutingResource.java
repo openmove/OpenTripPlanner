@@ -719,14 +719,19 @@ public abstract class RoutingResource {
         // The "Least transfers" optimization is accomplished via an increased transfer penalty.
         // See comment on RoutingRequest.transferPentalty.
         if (transferPenalty != null) request.transferPenalty = transferPenalty;
+
+        if ("mta".equals(request.pathComparator)) {
+            if (optimize == OptimizeType.TRANSFERS || optimize == OptimizeType.QUICK) {
+                request.pathComparator = "mta_quick";
+            }
+        }
+
         if (optimize == OptimizeType.TRANSFERS) {
             optimize = OptimizeType.QUICK;
             request.transferPenalty += 1800;
         } else if (optimize == OptimizeType.WALKING) {
             optimize = OptimizeType.QUICK;
             request.walkReluctance *= request.optimizeWalkMultiplier;
-        } else if (optimize == OptimizeType.QUICK && "mta".equals(request.pathComparator)) {
-            request.pathComparator = "mta_quick";
         }
 
         if (batch != null)

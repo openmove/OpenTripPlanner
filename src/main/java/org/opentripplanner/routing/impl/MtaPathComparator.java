@@ -36,9 +36,9 @@ public class MtaPathComparator extends PathComparator {
         if (!o1NoTransit && o2NoTransit)
             return -1;
         if (specialOrder) {
-            if (o2.getDuration() < o1.getDuration() && o2.getEndTime() < o1.getEndTime())
+            if (o2.getDuration() < o1.getDuration() && o2.getEndTime() < o1.getEndTime() && o2.getTrips().size() <= o1.getTrips().size())
                 return 1;
-            if (o1.getDuration() < o2.getDuration() && o1.getEndTime() < o2.getEndTime())
+            if (o1.getDuration() < o2.getDuration() && o1.getEndTime() < o2.getEndTime() && o1.getTrips().size() <= o2.getTrips().size())
                 return -1;
         }
         return weight(o1) - weight(o2) > 0 ? 1 : -1;

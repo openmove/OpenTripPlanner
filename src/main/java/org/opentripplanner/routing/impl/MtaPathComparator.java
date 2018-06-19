@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.impl;
 
+import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.spt.GraphPath;
 
@@ -31,6 +32,12 @@ public class MtaPathComparator extends PathComparator {
             return 1;
         if (!o1NoTransit && o2NoTransit)
             return -1;
+        if (OptimizeType.QUICK.equals(o1.getOptions().optimize)) {
+            if (o2.getDuration() < o1.getDuration() && o2.getEndTime() < o1.getEndTime())
+                return 1;
+            if (o1.getDuration() < o2.getDuration() && o1.getEndTime() < o2.getEndTime())
+                return -1;
+        }
         return weight(o1) - weight(o2) > 0 ? 1 : -1;
     }
 

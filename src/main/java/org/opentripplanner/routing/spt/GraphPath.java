@@ -25,6 +25,7 @@ import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.RoutingContext;
+import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Edge;
@@ -273,5 +274,9 @@ public class GraphPath {
             }
         }
         return false;
+    }
+
+    public RoutingRequest getOptions() {
+        return states.getFirst().getOptions();
     }
 }

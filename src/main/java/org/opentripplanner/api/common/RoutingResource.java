@@ -725,6 +725,8 @@ public abstract class RoutingResource {
         } else if (optimize == OptimizeType.WALKING) {
             optimize = OptimizeType.QUICK;
             request.walkReluctance *= request.optimizeWalkMultiplier;
+        } else if (optimize == OptimizeType.QUICK && "mta".equals(request.pathComparator)) {
+            request.pathComparator = "mta_quick";
         }
 
         if (batch != null)

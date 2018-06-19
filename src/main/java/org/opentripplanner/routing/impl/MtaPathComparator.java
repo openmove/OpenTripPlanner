@@ -19,8 +19,11 @@ import org.opentripplanner.routing.spt.GraphPath;
 
 public class MtaPathComparator extends PathComparator {
 
-    public MtaPathComparator(boolean compareStartTimes) {
+    private boolean specialOrder;
+
+    public MtaPathComparator(boolean compareStartTimes, boolean specialOrder) {
         super(compareStartTimes);
+        this.specialOrder = specialOrder;
     }
 
     // Walking trips should appear last in results
@@ -32,7 +35,7 @@ public class MtaPathComparator extends PathComparator {
             return 1;
         if (!o1NoTransit && o2NoTransit)
             return -1;
-        if (OptimizeType.QUICK.equals(o1.getOptions().optimize)) {
+        if (specialOrder) {
             if (o2.getDuration() < o1.getDuration() && o2.getEndTime() < o1.getEndTime())
                 return 1;
             if (o1.getDuration() < o2.getDuration() && o1.getEndTime() < o2.getEndTime())

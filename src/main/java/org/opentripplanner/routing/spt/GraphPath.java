@@ -275,8 +275,4 @@ public class GraphPath {
         }
         return false;
     }
-
-    public RoutingRequest getOptions() {
-        return states.getFirst().getOptions();
-    }
 }

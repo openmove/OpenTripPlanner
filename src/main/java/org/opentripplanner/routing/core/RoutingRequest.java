@@ -1464,7 +1464,9 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     public Comparator<GraphPath> getPathComparator(boolean compareStartTimes) {
         if ("mta".equals(pathComparator)) {
-            return new MtaPathComparator(compareStartTimes);
+            return new MtaPathComparator(compareStartTimes, false);
+        } else if ("mta_quick".equals(pathComparator)) {
+            return new MtaPathComparator(compareStartTimes, true);
         }
         return new PathComparator(compareStartTimes);
     }

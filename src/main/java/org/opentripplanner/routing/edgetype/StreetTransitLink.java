@@ -144,6 +144,8 @@ public class StreetTransitLink extends Edge {
                 s1.setCarParked(true);
             } else if (!req.preTransitKissAndRide && !req.postTransitKissAndRide) {
                 return null;
+            } else if (req.postTransitKissAndRide && s0.isEverBoarded()) {
+                return null;
             }
         }
         if (req.preTransitKissAndRide && !leavingTransit && !s0.isCarUnused()) {

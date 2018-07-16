@@ -196,7 +196,14 @@ public class Leg {
     @XmlAttribute
     @JsonSerialize
     public String tripBlockId = null;
-    
+
+     /**
+      * For transit leg, the trip's direction ID (if one exists). For non-transit legs, null.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public String tripDirectionId = null;
+
     /**
      * For transit legs, the headsign of the bus or train being used. For non-transit legs, null.
      */

@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class StopTimesByStop {
 
-    private StopShort stop;
+    private StopDetail stop;
 
     /** Upcoming arrivals and departures, grouped by route and headsign */
     private Map<String, StopTimesByRouteAndHeadsign> groupsByKey;
@@ -39,7 +39,7 @@ public class StopTimesByStop {
     public List<LocalizedAlert> alerts;
 
     public StopTimesByStop(Stop stop, double distance, long walkTime, Iterable<Coordinate> coordinates, boolean groupByParent) {
-        this.stop = new StopShort(stop);
+        this.stop = new StopDetail(stop);
         if (distance >= 0) {
             this.stop.dist = (int) Math.round(distance);
         }

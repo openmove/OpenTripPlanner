@@ -282,8 +282,11 @@ public class RoutingRequest implements Cloneable, Serializable {
     public StopMatcher bannedStops = StopMatcher.emptyMatcher(); 
     
     /** Do not use certain stops. See for more information the bannedStopsHard property in the RoutingResource class. */
-    public StopMatcher bannedStopsHard = StopMatcher.emptyMatcher(); 
-    
+    public StopMatcher bannedStopsHard = StopMatcher.emptyMatcher();
+
+    /** Do not use certain stops for Nearby search */
+    public StopMatcher bannedStopsNearby = StopMatcher.emptyMatcher();
+
     /** Set of preferred routes by user. */
     public RouteMatcher preferredRoutes = RouteMatcher.emptyMatcher();
     
@@ -791,6 +794,15 @@ public class RoutingRequest implements Cloneable, Serializable {
         }
         else {
             bannedStopsHard = StopMatcher.emptyMatcher();
+        }
+    }
+
+    public void setBannedStopsNearby(String s) {
+        if (s != null && !s.equals("")) {
+            bannedStopsNearby = StopMatcher.parse(s);
+        }
+        else {
+            bannedStopsNearby = StopMatcher.emptyMatcher();
         }
     }
 

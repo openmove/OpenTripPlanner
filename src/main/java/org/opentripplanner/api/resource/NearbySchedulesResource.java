@@ -247,6 +247,10 @@ public class NearbySchedulesResource {
                 continue;
             }
 
+            if (router.defaultRoutingRequest.bannedStopsNearby.matches(stop)) {
+                continue;
+            }
+
             List<StopTimesInPattern> stopTimesPerPattern = index.stopTimesForStop(
                     stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null,
                     bannedAgencies, bannedRouteTypes);

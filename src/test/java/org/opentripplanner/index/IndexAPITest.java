@@ -19,12 +19,18 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.model.Agency;
+import org.onebusaway.gtfs.model.FeedInfo;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
+import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
 import org.opentripplanner.ConstantsForTests;
+import org.opentripplanner.graph_builder.model.GtfsBundle;
+import org.opentripplanner.graph_builder.module.GtfsFeedId;
+import org.opentripplanner.graph_builder.module.GtfsModule;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.PatternDetail;
@@ -53,6 +59,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -72,14 +79,16 @@ public class IndexAPITest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        GtfsContext context = GtfsLibrary.readGtfs(new File(ConstantsForTests.FAKE_GTFS));
         Graph graph = new Graph();
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
-        factory.run(graph);
-        factory.createTransfersTxtTransfers();
-        graph.putService(CalendarServiceData.class, GtfsLibrary.createCalendarServiceData(context.getDao()));
+        GtfsBundle gtfsBundle = new GtfsBundle(new File(ConstantsForTests.FAKE_GTFS));
+        GtfsFeedId gtfsFeedId = new GtfsFeedId.Builder().id("FEED").build();
+        gtfsBundle.setFeedId(gtfsFeedId);
+        gtfsBundle.setTransfersTxtDefinesStationPaths(true);
+        List<GtfsBundle> gtfsBundleList = Collections.singletonList(gtfsBundle);
+        GtfsModule module = new GtfsModule(gtfsBundleList);
+        module.buildGraph(graph, new HashMap<>());
         graph.index(new DefaultStreetVertexIndexFactory());
-        feedId = context.getFeedId().getId();
+        feedId = "FEED";
         api = new IndexAPI(graph);
 
         long time = TestUtils.dateInSeconds("America/New_York", 2018, 0, 1, 4, 0, 0);
@@ -104,7 +113,7 @@ public class IndexAPITest {
         List<TripUpdate> updates = Arrays.asList(update42);
         graph.timetableSnapshotSource = new TimetableSnapshotSource(graph);
         graph.timetableSnapshotSource.purgeExpiredData = false;
-        graph.timetableSnapshotSource.applyTripUpdates(graph, true, updates, "agency");
+        graph.timetableSnapshotSource.applyTripUpdates(graph, true, updates, feedId);
     }
 
     @Test
@@ -239,41 +248,41 @@ public class IndexAPITest {
 
     @Test
     public void testRoute() {
-        Route route = getResponse(api.getRoute("agency:4"), Route.class);
+        Route route = getResponse(api.getRoute(feedId + ":4"), Route.class);
         assertEquals("4", route.getId().getId());
     }
 
     // route 4 goes thru stop F, and has 3 trips which go F,G,H
     @Test
     public void testPatternsForRoute() {
-        List<PatternShort> patterns = getResponseList(api.getPatternsForRoute("agency:4"), PatternShort.class);
+        List<PatternShort> patterns = getResponseList(api.getPatternsForRoute(feedId + ":4"), PatternShort.class);
         assertEquals(1, patterns.size());
     }
 
     @Test
     public void testStopsForRoute() {
-        List<StopShort> stops = getResponseList(api.getStopsForRoute("agency:4"), StopShort.class);
+        List<StopShort> stops = getResponseList(api.getStopsForRoute(feedId + ":4"), StopShort.class);
         List<String> stopIds = stops.stream().map(s -> s.id.getId()).sorted().collect(Collectors.toList());
         assertEquals(Arrays.asList("F", "G", "H"), stopIds);
     }
 
     @Test
     public void testTripsForRoute() {
-        List<TripShort> trips = getResponseList(api.getTripsForRoute("agency:4"), TripShort.class);
+        List<TripShort> trips = getResponseList(api.getTripsForRoute(feedId + ":4"), TripShort.class);
         List<String> stopIds = trips.stream().map(t -> t.id.getId()).sorted().collect(Collectors.toList());
         assertEquals(Arrays.asList("4.1", "4.2", "4.3"), stopIds);
     }
 
     @Test
     public void testTrip() {
-        Trip trip = getResponse(api.getTrip("agency:4.1"), Trip.class);
+        Trip trip = getResponse(api.getTrip(feedId + ":4.1"), Trip.class);
         assertEquals("4.1", trip.getId().getId());
         assertEquals("4", trip.getRoute().getId().getId());
     }
 
     @Test
     public void testStopsForTrip() {
-        List<StopShort> stops = getResponseList(api.getStopsForTrip("agency:4.1"), StopShort.class);
+        List<StopShort> stops = getResponseList(api.getStopsForTrip(feedId + ":4.1"), StopShort.class);
         List<String> ids = stops.stream().map(s -> s.id.getId()).collect(Collectors.toList());
         assertEquals(Arrays.asList("F", "G", "H"), ids);
     }
@@ -281,12 +290,12 @@ public class IndexAPITest {
     @Test
     public void testSemanticHashForTrip() {
         // just confirm types
-        getResponse(api.getSemanticHashForTrip("agency:4.1"), String.class);
+        getResponse(api.getSemanticHashForTrip(feedId + ":4.1"), String.class);
     }
 
     @Test
     public void testStopTimesForTrip() {
-        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip("agency:4.1"), TripTimeShort.class);
+        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":4.1"), TripTimeShort.class);
         // 5:00 F, 5:30 G, 6:00 H
         assertEquals(3, times.size());
         TripTimeShort f = times.get(0);
@@ -305,7 +314,7 @@ public class IndexAPITest {
 
     @Test
     public void testGeometryForTrip() {
-        getResponse(api.getGeometryForTrip("agency:4.1"), EncodedPolylineBean.class);
+        getResponse(api.getGeometryForTrip(feedId + ":4.1"), EncodedPolylineBean.class);
     }
 
     @Test
@@ -364,7 +373,7 @@ public class IndexAPITest {
     // Realtime: SCHEDULED trip
     @Test
     public void testRealtimeStopTimesForTrip() {
-        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip("agency:4.2"), TripTimeShort.class);
+        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":4.2"), TripTimeShort.class);
         // 23:00 F, 23:30 G, 24:00 H, plus 5 min
         assertEquals(3, times.size());
         TripTimeShort f = times.get(0);

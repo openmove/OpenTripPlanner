@@ -1,6 +1,8 @@
 package org.opentripplanner.routing.graph;
 
 import com.google.common.collect.ArrayListMultimap;
+
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
@@ -120,6 +122,9 @@ public class GraphIndex {
 
     /** Store distances from each stop to all nearby street intersections. Useful in speeding up analyst requests. */
     private transient StopTreeCache stopTreeCache = null;
+
+    /** Keep a time value for testing */
+    private long time = -1;
 
     public GraphIndex (Graph graph) {
         LOG.info("Indexing graph...");
@@ -599,8 +604,7 @@ public class GraphIndex {
         // The timetableSnapshot will be null if there's no real-time data being applied.
         if (req.rctx.timetableSnapshot == null) return tripPattern.scheduledTimetable;
         // Get the updated times for right now, which is the only reasonable default since no date is supplied.
-        Calendar calendar = Calendar.getInstance();
-        ServiceDate serviceDate = new ServiceDate(calendar.getTime());
+        ServiceDate serviceDate = new ServiceDate(getTime());
         return req.rctx.timetableSnapshot.resolve(tripPattern, serviceDate);
     }
 
@@ -738,4 +742,11 @@ public class GraphIndex {
         return allAgencies;
     }
 
+    private Date getTime() {
+        return time != -1 ? new Date(time) : Calendar.getInstance().getTime();
+    }
+
+    public void setTime(long time) {
+        this.time = time;
+    }
 }

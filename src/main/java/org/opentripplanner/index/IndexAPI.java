@@ -45,6 +45,7 @@ import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TransferEdge;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Edge;
+import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
 import org.opentripplanner.routing.vertextype.TransitStationStop;
@@ -102,6 +103,11 @@ public class IndexAPI {
         Router router = otpServer.getRouter(routerId);
         index = router.graph.index;
         streetIndex = router.graph.streetIndex;
+    }
+
+    public IndexAPI(Graph graph) {
+        index = graph.index;
+        streetIndex = graph.streetIndex;
     }
 
    /* Needed to check whether query parameter map is empty, rather than chaining " && x == null"s */
@@ -228,7 +234,7 @@ public class IndexAPI {
     */
    @GET
    @Path("/stops")
-   @TypeHint(StopDetail.class)
+   @TypeHint(StopDetail[].class)
    public Response getStopsInRadius (
            @QueryParam("minLat") Double minLat,
            @QueryParam("minLon") Double minLon,
@@ -245,7 +251,8 @@ public class IndexAPI {
        boolean expectCircle = (lat != null || lon != null || radius != null);
 
        /* When no parameters are supplied, return all stops. */
-       if (uriInfo.getQueryParameters().isEmpty() || (uriInfo.getQueryParameters().size() == 1 && debug != null)) {
+       if (minLat == null && minLon == null && maxLat == null && maxLon == null && lat == null
+               && lon == null && radius == null) {
            Collection<Stop> in = index.stopForId.values();
            stops = in.stream().map(StopDetail::new).collect(Collectors.toList());
        }

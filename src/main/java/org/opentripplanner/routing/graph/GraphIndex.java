@@ -20,6 +20,7 @@ import com.vividsolutions.jts.geom.Envelope;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.execution.ExecutorServiceExecutionStrategy;
+import org.apache.commons.math3.util.Pair;
 import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
 import org.onebusaway.gtfs.model.Agency;
@@ -425,10 +426,7 @@ public class GraphIndex {
             startTime = System.currentTimeMillis() / 1000;
         }
         List<StopTimesInPattern> ret = new ArrayList<>();
-        TimetableSnapshot snapshot = null;
-        if (graph.timetableSnapshotSource != null) {
-            snapshot = graph.timetableSnapshotSource.getTimetableSnapshot();
-        }
+        TimetableSnapshot snapshot = getTimetableSnapshot();
         Date date = new Date(startTime * 1000);
         ServiceDate[] serviceDates = {new ServiceDate(date).previous(), new ServiceDate(date), new ServiceDate(date).next()};
 
@@ -740,6 +738,48 @@ public class GraphIndex {
             allAgencies.addAll(agencyForId.values());
         }
         return allAgencies;
+    }
+
+    private TimetableSnapshot getTimetableSnapshot() {
+        if (graph.timetableSnapshotSource != null) {
+            return graph.timetableSnapshotSource.getTimetableSnapshot();
+        }
+        return null;
+    }
+
+    public Trip getTripForId(AgencyAndId id) {
+        if (tripForId.containsKey(id)) {
+            return tripForId.get(id);
+        }
+        return findAddedTripInfo(id).getValue();
+    }
+
+    public TripPattern getTripPatternForTripId(AgencyAndId id) {
+        if (tripForId.containsKey(id)) {
+            Trip trip = tripForId.get(id);
+            return patternForTrip.get(trip);
+        }
+        return findAddedTripInfo(id).getKey();
+    }
+
+    private Pair<TripPattern, Trip> findAddedTripInfo(AgencyAndId id) {
+        TimetableSnapshot snapshot = getTimetableSnapshot();
+        if (snapshot != null) {
+            // check today, tomorrow, and yesterday
+            ServiceDate today = new ServiceDate(getTime());
+            for (ServiceDate sd : Arrays.asList(today, today.next(), today.previous())) {
+                TripPattern tripPattern = snapshot.getLastAddedTripPattern(id.getAgencyId(), id.getId(), sd);
+                if (tripPattern != null) {
+                    Timetable tt = snapshot.resolve(tripPattern, sd);
+                    for (TripTimes tripTimes : tt.tripTimes) {
+                        if (tripTimes.trip.getId().equals(id)) {
+                            return new Pair<>(tripPattern, tripTimes.trip);
+                        }
+                    }
+                }
+            }
+        }
+        return new Pair<>(null, null);
     }
 
     private Date getTime() {

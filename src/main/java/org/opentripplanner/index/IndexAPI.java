@@ -553,7 +553,7 @@ public class IndexAPI {
    @TypeHint(Trip.class)
    public Response getTrip (@PathParam("tripId") String tripIdString) {
        AgencyAndId tripId = GtfsLibrary.convertIdFromString(tripIdString);
-       Trip trip = index.tripForId.get(tripId);
+       Trip trip = index.getTripForId(tripId);
        if (trip != null) {
            return Response.status(Status.OK).entity(trip).build();
        } else { 
@@ -571,9 +571,8 @@ public class IndexAPI {
    @TypeHint(StopShort[].class)
    public Response getStopsForTrip (@PathParam("tripId") String tripIdString) {
        AgencyAndId tripId = GtfsLibrary.convertIdFromString(tripIdString);
-       Trip trip = index.tripForId.get(tripId);
-       if (trip != null) {
-           TripPattern pattern = index.patternForTrip.get(trip);
+       TripPattern pattern = index.getTripPatternForTripId(tripId);
+       if (pattern != null) {
            Collection<Stop> stops = pattern.getStops();
            return Response.status(Status.OK).entity(StopShort.list(stops)).build();
        } else { 
@@ -612,9 +611,9 @@ public class IndexAPI {
     @TypeHint(TripTimeShort[].class)
     public Response getStoptimesForTrip(@PathParam("tripId") String tripIdString) {
         AgencyAndId tripId = GtfsLibrary.convertIdFromString(tripIdString);
-        Trip trip = index.tripForId.get(tripId);
-        if (trip != null) {
-            TripPattern pattern = index.patternForTrip.get(trip);
+        TripPattern pattern = index.getTripPatternForTripId(tripId);
+        Trip trip = index.getTripForId(tripId);
+        if (pattern != null) {
             // Note, we need the updated timetable not the scheduled one (which contains no real-time updates).
             Timetable table = index.currentUpdatedTimetableForTripPattern(pattern);
             return Response.status(Status.OK).entity(TripTimeShort.fromTripTimes(table, trip)).build();

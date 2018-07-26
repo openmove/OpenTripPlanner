@@ -12,27 +12,21 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package org.opentripplanner.index;
 
-import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.FeedInfo;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
-import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
 import org.opentripplanner.graph_builder.module.GtfsFeedId;
 import org.opentripplanner.graph_builder.module.GtfsModule;
-import org.opentripplanner.gtfs.GtfsContext;
-import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.PatternDetail;
 import org.opentripplanner.index.model.PatternShort;
 import org.opentripplanner.index.model.RouteShort;
@@ -42,11 +36,9 @@ import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TransferShort;
 import org.opentripplanner.index.model.TripShort;
 import org.opentripplanner.index.model.TripTimeShort;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.trippattern.RealTimeState;
-import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.opentripplanner.util.TestUtils;
 import org.opentripplanner.util.model.EncodedPolylineBean;
@@ -61,7 +53,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -110,7 +101,21 @@ public class IndexAPITest {
                         .setArrival(StopTimeEvent.newBuilder().setDelay(100))
                         .setDeparture(StopTimeEvent.newBuilder().setDelay(100)))
                 .build();
-        List<TripUpdate> updates = Arrays.asList(update42);
+        TripUpdate update172 = TripUpdate.newBuilder()
+                .setTrip(TripDescriptor.newBuilder().setTripId("17.2")
+                        .setStartDate("20180101")
+                        .setRouteId("17")
+                        .setScheduleRelationship(TripDescriptor.ScheduleRelationship.ADDED))
+                .addStopTimeUpdate(StopTimeUpdate.newBuilder()
+                        .setStopId("C")
+                        .setArrival(StopTimeEvent.newBuilder().setTime(1514844000)) // 5pm
+                        .setDeparture(StopTimeEvent.newBuilder().setTime(1514844000)))
+                .addStopTimeUpdate(StopTimeUpdate.newBuilder()
+                        .setStopId("E")
+                        .setArrival(StopTimeEvent.newBuilder().setTime(1514844600)) // 5:10pm
+                        .setDeparture(StopTimeEvent.newBuilder().setTime(1514844600)))
+                .build();
+        List<TripUpdate> updates = Arrays.asList(update42, update172);
         graph.timetableSnapshotSource = new TimetableSnapshotSource(graph);
         graph.timetableSnapshotSource.purgeExpiredData = false;
         graph.timetableSnapshotSource.applyTripUpdates(graph, true, updates, feedId);
@@ -201,7 +206,10 @@ public class IndexAPITest {
         assertEquals(23 * 3600 + (30 * 60), tripTimes42.scheduledDeparture);
         assertTrue(tripTimes42.realtime);
 
-        // TODO - why isn't there a 3rd?
+        TripTimeShort tripTimes43 = tripTimes.get(2);
+        assertEquals(24 * 3600 + (10 * 60), tripTimes43.realtimeArrival);
+        assertEquals(24 * 3600 + (10 * 60), tripTimes43.realtimeDeparture);
+        assertFalse(tripTimes43.realtime);
     }
 
     @Test
@@ -371,6 +379,7 @@ public class IndexAPITest {
     }
 
     // Realtime: SCHEDULED trip
+
     @Test
     public void testRealtimeStopTimesForTrip() {
         List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":4.2"), TripTimeShort.class);
@@ -397,6 +406,75 @@ public class IndexAPITest {
         assertEquals(24 * 3600, h.scheduledArrival);
         assertEquals(24 * 3600 + 100, h.realtimeArrival);
         assertEquals(100, h.arrivalDelay);
+    }
+
+    // ADDED trips
+
+    @Test
+    public void testStopTimesForStopAddedTrip() {
+        long time = TestUtils.dateInSeconds("America/New_York", 2018, 0, 1, 16, 0, 0);
+        List<StopTimesInPattern> stopTimesInPatterns = getResponseList(api.getStoptimesForStop(feedId + ":C",
+                time, 86400, 3, false), StopTimesInPattern.class);
+
+        // filter to route 17 and order by arrival time
+        List<TripTimeShort> tripTimes = stopTimesInPatterns.stream()
+                .filter(st -> st.route.id.getId().equals("17"))
+                .flatMap(st -> st.times.stream())
+                .sorted(Comparator.comparingLong(tt -> tt.realtimeArrival + tt.serviceDay))
+                .collect(Collectors.toList());
+
+        long today = new ServiceDate(2018, 1, 1).getAsDate().getTime() / 1000;
+
+        TripTimeShort tripTimes171 = tripTimes.get(0);
+        assertEquals("17.1", tripTimes171.tripId.getId());
+        assertEquals(16 * 3600, tripTimes171.realtimeArrival);
+        assertEquals(16 * 3600, tripTimes171.realtimeDeparture);
+        assertEquals(today, tripTimes171.serviceDay);
+        assertFalse(tripTimes171.realtime);
+        assertEquals(RealTimeState.SCHEDULED, tripTimes171.realtimeState);
+
+        TripTimeShort tripTimes172 = tripTimes.get(1);
+        assertEquals("17.2", tripTimes172.tripId.getId());
+        assertEquals(17 * 3600, tripTimes172.realtimeArrival);
+        assertEquals(17 * 3600, tripTimes172.realtimeDeparture);
+        assertEquals(today, tripTimes172.serviceDay);
+        assertTrue(tripTimes172.realtime);
+        assertEquals(RealTimeState.ADDED, tripTimes172.realtimeState);
+
+    }
+
+    @Test
+    public void testStopsForAddedTrip() {
+        List<StopShort> stops = getResponseList(api.getStopsForTrip(feedId + ":17.2"), StopShort.class);
+        List<String> ids = stops.stream().map(s -> s.id.getId()).collect(Collectors.toList());
+        assertEquals(Arrays.asList("C", "E"), ids);
+    }
+
+    @Test
+    public void testSemanticHashForAddedTrip() {
+        // just confirm types
+        getResponse(api.getSemanticHashForTrip(feedId + ":17.2"), String.class);
+    }
+
+    @Test
+    public void testStopTimesForAddedTrip() {
+        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":17.2"), TripTimeShort.class);
+        // 5:00 F, 5:30 G, 6:00 H
+        assertEquals(2, times.size());
+        TripTimeShort c = times.get(0);
+        assertEquals("C", c.stopId.getId());
+        assertEquals(0, c.stopIndex);
+        assertEquals(17 * 3600, c.scheduledArrival);
+        TripTimeShort e = times.get(1);
+        assertEquals("E", e.stopId.getId());
+        assertEquals(1, e.stopIndex);
+        assertEquals((17 * 3600) + (10 * 60), e.scheduledArrival);
+    }
+
+    @Test
+    public void testTripAdded() {
+        Trip trip = getResponse(api.getTrip(feedId + ":17.2"), Trip.class);
+        assertEquals("17.2", trip.getId().getId());
     }
 
     private <T> T getResponse(Response response, Class<T> klass) {

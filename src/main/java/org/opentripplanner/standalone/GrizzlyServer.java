@@ -155,7 +155,7 @@ public class GrizzlyServer {
                 @Override
                 protected void onMissingResource(Request request, Response response) throws Exception {
                     if (params.clientFallback) {
-                        handle("/", request, response);
+                        handle(params.clientPath, request, response);
                     } else {
                         super.onMissingResource(request, response);
                     }

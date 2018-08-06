@@ -448,18 +448,16 @@ public abstract class GraphPathToTripPlanConverter {
                     if (relDir != null)
                         instr += ", " + relDir;
                     if (extraInstr != null) {
-                        instr += ". " + extraInstr;
+                        instr += " [" + extraInstr + "]";
                     }
                     return instr;
-                } else {
-                    return "Continue on to pathway.";
                 }
             }
-            if (e instanceof TransferEdge && nextState != null && nextState.getBackTrip() != null) {
+            if ((e instanceof TransferEdge || e instanceof PathwayEdge) && nextState != null && nextState.getBackTrip() != null) {
                 Route route = nextState.getBackTrip().getRoute();
                 String routeName = route.getShortName() != null ? route.getShortName() : route.getLongName();
                 String sign = getHeadsignInstruction(nextState);
-                return "Transfer to " + routeName + (sign != null ? ". " + sign : "");
+                return "Continue to " + routeName + (sign != null ? " [" + sign + "]" : "");
             }
         }
         if (step.relativeDirection.isCircle()) {
@@ -488,7 +486,7 @@ public abstract class GraphPathToTripPlanConverter {
         if (tt != null && state.backEdge instanceof OnboardEdge) {
             int stopIndex = ((OnboardEdge) state.backEdge).getStopIndex();
             if (tt.getHeadsign(stopIndex) != null) {
-                return "Follow signs for " + tt.getHeadsign(stopIndex);
+                return tt.getHeadsign(stopIndex);
             }
         }
         return null;

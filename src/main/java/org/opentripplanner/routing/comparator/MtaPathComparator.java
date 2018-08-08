@@ -11,9 +11,9 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-package org.opentripplanner.routing.impl;
+package org.opentripplanner.routing.comparator;
 
-import org.opentripplanner.routing.core.OptimizeType;
+import org.opentripplanner.routing.comparator.PathComparator;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.spt.GraphPath;
 

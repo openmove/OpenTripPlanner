@@ -10,18 +10,15 @@
 
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-
-package org.opentripplanner.routing.impl;
-
-import java.util.Comparator;
+package org.opentripplanner.routing.comparator;
 
 import org.opentripplanner.routing.spt.GraphPath;
 
-public class PathWeightComparator implements Comparator<GraphPath> {
+import java.util.Comparator;
 
+public class TransfersComparator implements Comparator<GraphPath> {
     @Override
     public int compare(GraphPath o1, GraphPath o2) {
-        return (int) (o1.getWeight() - o2.getWeight());
+        return o1.getTrips().size() - o2.getTrips().size();
     }
-
 }

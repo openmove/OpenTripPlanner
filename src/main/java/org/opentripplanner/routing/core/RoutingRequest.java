@@ -23,13 +23,16 @@ import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
 import org.opentripplanner.routing.alertpatch.Alert;
+import org.opentripplanner.routing.comparator.OptimizeTypeComparator;
+import org.opentripplanner.routing.comparator.TransfersComparator;
+import org.opentripplanner.routing.comparator.WalkingComparator;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
-import org.opentripplanner.routing.impl.MtaPathComparator;
-import org.opentripplanner.routing.impl.PathComparator;
+import org.opentripplanner.routing.comparator.MtaPathComparator;
+import org.opentripplanner.routing.comparator.PathComparator;
 import org.opentripplanner.routing.request.BannedStopSet;
 import org.opentripplanner.routing.spt.DominanceFunction;
 import org.opentripplanner.routing.spt.GraphPath;
@@ -133,6 +136,9 @@ public class RoutingRequest implements Cloneable, Serializable {
     // TODO this should be completely removed and done only with individual cost parameters
     // Also: apparently OptimizeType only affects BICYCLE mode traversal of street segments.
     // If this is the case it should be very well documented and carried over into the Enum name.
+
+    /** Keep track of original OptimizeType, since it is overwritten */
+    public OptimizeType requestedOptimize = OptimizeType.QUICK;
 
     /** The epoch date/time that the trip should depart (or arrive, for requests where arriveBy is true) */
     public long dateTime = new Date().getTime() / 1000;
@@ -1140,7 +1146,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && maxWalkDistanceHeuristic == other.maxWalkDistanceHeuristic
                 && hardPathBanningAgencies.equals(other.hardPathBanningAgencies)
                 && numberOfDepartures == other.numberOfDepartures
-                && stopLinking == other.stopLinking;
+                && stopLinking == other.stopLinking
+                && requestedOptimize == other.requestedOptimize;
     }
 
     /**
@@ -1180,7 +1187,8 @@ public class RoutingRequest implements Cloneable, Serializable {
                 + Double.hashCode(maxWalkDistanceHeuristic) * 731980
                 + hardPathBanningAgencies.hashCode() * 209477
                 + numberOfDepartures * 15485863
-                + Boolean.hashCode(stopLinking) * 18253;
+                + Boolean.hashCode(stopLinking) * 18253
+                + requestedOptimize.hashCode() * 296017;
         if (batch) {
             hashCode *= -1;
             // batch mode, only one of two endpoints matters
@@ -1479,6 +1487,12 @@ public class RoutingRequest implements Cloneable, Serializable {
             return new MtaPathComparator(compareStartTimes, false);
         } else if ("mta_quick".equals(pathComparator)) {
             return new MtaPathComparator(compareStartTimes, true);
+        } else if ("transfers".equals(pathComparator)) {
+            return new TransfersComparator();
+        } else if ("walking".equals(pathComparator)) {
+            return new WalkingComparator();
+        } else if ("optimizeType".equals(pathComparator)) {
+            return new OptimizeTypeComparator(compareStartTimes);
         }
         return new PathComparator(compareStartTimes);
     }

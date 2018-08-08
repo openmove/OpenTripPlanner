@@ -726,12 +726,15 @@ public abstract class RoutingResource {
             }
         }
 
-        if (optimize == OptimizeType.TRANSFERS) {
-            optimize = OptimizeType.QUICK;
-            request.transferPenalty += 1800;
-        } else if (optimize == OptimizeType.WALKING) {
-            optimize = OptimizeType.QUICK;
-            request.walkReluctance *= request.optimizeWalkMultiplier;
+        if (optimize != null) {
+            request.requestedOptimize = optimize;
+            if (optimize == OptimizeType.TRANSFERS) {
+                optimize = OptimizeType.QUICK;
+                request.transferPenalty += 1800;
+            } else if (optimize == OptimizeType.WALKING) {
+                optimize = OptimizeType.QUICK;
+                request.walkReluctance *= request.optimizeWalkMultiplier;
+            }
         }
 
         if (batch != null)

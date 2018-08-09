@@ -6,6 +6,7 @@ import java.util.TimeZone;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
+import org.opentripplanner.api.model.VehicleInfo;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -91,6 +92,9 @@ public class TripTimeShort {
 
     /** direction ID for the trip */
     public String directionId;
+
+    /** VehicleInfo for trip (if in realtime) */
+    public VehicleInfo vehicleInfo;
 
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.

@@ -15,8 +15,10 @@ package org.opentripplanner.index.model;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import org.onebusaway.gtfs.model.Stop;
+import org.opentripplanner.api.model.VehicleInfo;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.routing.alertpatch.Alert;
+import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.util.PolylineEncoder;
 
 import java.util.ArrayList;
@@ -96,16 +98,29 @@ public class StopTimesByStop {
         }
     }
 
-    public void addAlert(Alert alert, Locale locale) {
-        if (alerts == null) {
-            alerts = new ArrayList<>();
+    public void addAlert(AlertPatch alertPatch, Locale locale) {
+        if (alertPatch.getAlert() != null) {
+            Alert alert = alertPatch.getAlert();
+            if (alerts == null) {
+                alerts = new ArrayList<>();
+            }
+            for (LocalizedAlert a : alerts) {
+                if (a.alert.equals(alert)) {
+                    return;
+                }
+            }
+            alerts.add(new LocalizedAlert(alert, locale));
         }
-        for (LocalizedAlert a : alerts) {
-            if (a.alert.equals(alert)) {
-                return;
+        if (alertPatch.getVehicleInfo() != null) {
+            VehicleInfo vehicleInfo = alertPatch.getVehicleInfo();
+            for (StopTimesByRouteAndHeadsign group : groupsByKey.values()) {
+                for (TripTimeShort tt : group.getTimes()) {
+                    if (tt.tripId.equals(alertPatch.getTrip())) {
+                        tt.vehicleInfo = vehicleInfo;
+                    }
+                }
             }
         }
-        alerts.add(new LocalizedAlert(alert, locale));
     }
 
     public void limitTimes(long startTime, int timeRange, int numberOfDepartures) {

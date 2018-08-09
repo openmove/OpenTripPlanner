@@ -298,10 +298,10 @@ public class NearbySchedulesResource {
                         AlertPatch[] alertPatchesAlightEdges = index.graph.getAlertPatches(tripPattern.alightEdges[i]);
 
                         for(AlertPatch alertPatch : alertPatchesBoardEdges){
-                            stopTimes.addAlert(alertPatch.getAlert(), new Locale("en"));
+                            stopTimes.addAlert(alertPatch, new Locale("en"));
                         }
                         for(AlertPatch alertPatch : alertPatchesAlightEdges){
-                            stopTimes.addAlert(alertPatch.getAlert(), new Locale("en"));
+                            stopTimes.addAlert(alertPatch, new Locale("en"));
                         }
                     }
                 }

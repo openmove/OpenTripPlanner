@@ -37,6 +37,7 @@ import org.opentripplanner.index.model.StopDetail;
 import org.opentripplanner.index.model.StopShort;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TransferShort;
+import org.opentripplanner.index.model.TripDetail;
 import org.opentripplanner.index.model.TripShort;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.model.Landmark;
@@ -636,6 +637,32 @@ public class IndexAPI {
         if (trip != null) {
             TripPattern tripPattern = index.patternForTrip.get(trip);
             return getGeometryForPattern(tripPattern.code);
+        } else {
+            return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
+        }
+    }
+
+    /**
+     * Return detailed trip information, including stoptimes and geometry.
+     *
+     * @param tripIdString trip in Agency:Trip ID format
+     */
+    @GET
+    @Path("/trips/{tripId}/detail")
+    @TypeHint(TripDetail.class)
+    public Response getTripDetails (@PathParam("tripId") String tripIdString) {
+        AgencyAndId tripId = GtfsLibrary.convertIdFromString(tripIdString);
+        Trip trip = index.tripForId.get(tripId);
+        if (trip != null) {
+            TripPattern pattern = index.patternForTrip.get(trip);
+            EncodedPolylineBean geometry = PolylineEncoder.createEncodings(pattern.geometry);
+            Timetable table = index.currentUpdatedTimetableForTripPattern(pattern);
+            List<TripTimeShort> stopTimes = TripTimeShort.fromTripTimes(table, trip);
+            TripDetail detail = new TripDetail();
+            detail.setTrip(trip);
+            detail.setGeometry(geometry);
+            detail.setStopTimes(stopTimes);
+            return Response.status(Status.OK).entity(detail).build();
         } else {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
         }

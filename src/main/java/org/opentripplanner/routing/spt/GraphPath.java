@@ -48,6 +48,8 @@ public class GraphPath {
 
     private double walkDistance = 0;
 
+    private double walkTime = 0;
+
     // don't really need to save this (available through State) but why not
     private RoutingContext rctx;
 
@@ -109,6 +111,10 @@ public class GraphPath {
             // Record the edge if it exists and this is not the first state in the path.
             if (cur.getBackEdge() != null && cur.getBackState() != null) {
                 edges.addFirst(cur.getBackEdge());
+            }
+
+            if (TraverseMode.WALK.equals(cur.getBackMode())) {
+                walkTime += cur.getTimeDeltaSeconds();
             }
         }
         // dump();
@@ -247,8 +253,9 @@ public class GraphPath {
     public double getWalkDistance() {
         return walkDistance;
     }
+
     public double getWalkTime() {
-        return walkDistance/rctx.opt.walkSpeed;
+        return walkTime;
     }
 
     public RoutingContext getRoutingContext() {

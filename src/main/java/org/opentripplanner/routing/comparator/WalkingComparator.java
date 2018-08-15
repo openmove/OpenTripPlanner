@@ -19,6 +19,6 @@ import java.util.Comparator;
 public class WalkingComparator implements Comparator<GraphPath> {
     @Override
     public int compare(GraphPath o1, GraphPath o2) {
-        return (int) Math.round(o1.getWalkDistance() - o2.getWalkDistance());
+        return (int) Math.round(o1.getWalkTime() - o2.getWalkTime());
     }
 }

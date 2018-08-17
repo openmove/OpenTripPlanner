@@ -99,6 +99,9 @@ public class TripTimeShort {
     /** VehicleInfo for trip (if in realtime) */
     public VehicleInfo vehicleInfo;
 
+    /** Optional: all stops for this trip, if indicated in API request */
+    public List<StopShort> stopsForTrip;
+
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.
      */
@@ -131,13 +134,24 @@ public class TripTimeShort {
     }
 
     public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz) {
+        this(tripPattern, tt, i, stop, sd, tz, false);
+    }
+
+    public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz, boolean includeStopsForTrip) {
         this(tripPattern, tt, i, stop);
         tripId = tt.trip.getId();
         serviceDay = sd.time(0);
-        if (realtimeArrival != TripTimes.UNAVAILABLE)
-            arrivalFmt = formatDateIso(serviceDay + realtimeArrival, tz);
-        if (realtimeDeparture != TripTimes.UNAVAILABLE)
-            departureFmt = formatDateIso(serviceDay + realtimeDeparture, tz);
+        if (realtimeArrival != TripTimes.UNAVAILABLE || realtimeState.equals(RealTimeState.CANCELED)) {
+            long arrival = realtimeArrival != TripTimes.UNAVAILABLE ? realtimeArrival : scheduledArrival;
+            arrivalFmt = formatDateIso(serviceDay + arrival, tz);
+        }
+        if (realtimeDeparture != TripTimes.UNAVAILABLE || realtimeState.equals(RealTimeState.CANCELED)) {
+            long departure = realtimeDeparture != TripTimes.UNAVAILABLE ? realtimeDeparture : scheduledDeparture;
+            departureFmt = formatDateIso(serviceDay + departure, tz);
+        }
+        if (includeStopsForTrip) {
+            stopsForTrip = StopShort.list(tripPattern.getStops());
+        }
     }
 
     /**

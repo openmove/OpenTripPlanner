@@ -189,6 +189,20 @@ public class NearbySchedulesResource {
     @QueryParam("mode")
     private String mode;
 
+    /**
+     * Include cancelled trips in the output
+     */
+    @QueryParam("showCancelledTrips")
+    @DefaultValue("false")
+    private boolean showCancelledTrips;
+
+    /**
+     * Add all stops for a given trip to the output
+     */
+    @QueryParam("includeStopsForTrip")
+    @DefaultValue("false")
+    private boolean includeStopsForTrip;
+
     private GraphIndex index;
 
     private Router router;
@@ -253,7 +267,7 @@ public class NearbySchedulesResource {
 
             List<StopTimesInPattern> stopTimesPerPattern = index.stopTimesForStop(
                     stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null,
-                    bannedAgencies, bannedRouteTypes);
+                    bannedAgencies, bannedRouteTypes, showCancelledTrips, includeStopsForTrip);
 
             StopTimesByStop stopTimes = stopIdAndStopTimesMap.get(key);
 

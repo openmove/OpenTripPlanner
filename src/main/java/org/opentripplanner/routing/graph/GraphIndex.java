@@ -405,6 +405,13 @@ public class GraphIndex {
         return stopTimesForStop(stop, System.currentTimeMillis()/1000, 24 * 60 * 60, 2, omitNonPickups);
     }
 
+
+    public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups,
+                                                     RouteMatcher routeMatcher, Integer direction, String headsign, Set<String> bannedAgencies, Set<Integer> bannedRouteTypes) {
+        return stopTimesForStop(stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction,
+                headsign, bannedAgencies, bannedRouteTypes, false, false);
+    }
+
     /**
      * Fetch upcoming vehicle departures from a stop.
      * It goes though all patterns passing the stop for the previous, current and next service date.
@@ -421,7 +428,8 @@ public class GraphIndex {
      * @return
      */
     public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups,
-                                                     RouteMatcher routeMatcher, Integer direction, String headsign, Set<String> bannedAgencies, Set<Integer> bannedRouteTypes) {
+                                                     RouteMatcher routeMatcher, Integer direction, String headsign, Set<String> bannedAgencies, Set<Integer> bannedRouteTypes,
+                                                     boolean showCancelledTrips, boolean includeStopsForTrip) {
         if (startTime == 0) {
             startTime = System.currentTimeMillis() / 1000;
         }
@@ -483,9 +491,9 @@ public class GraphIndex {
                         for (TripTimes t : tt.tripTimes) {
                             if (!sd.serviceRunning(t.serviceCode)) continue;
                             if (headsign != null && !headsign.equals(t.getHeadsign(sidx))) continue;
-                            if (t.getDepartureTime(sidx) != -1 &&
-                                    t.getDepartureTime(sidx) >= secondsSinceMidnight) {
-                                pq.insertWithOverflow(new TripTimeShort(pattern, t, sidx, stop, sd, graph.getTimeZone()));
+                            if (shouldShowDeparture(t.getDepartureTime(sidx), secondsSinceMidnight)
+                                    || (showCancelledTrips && shouldShowDeparture(t.getScheduledDepartureTime(sidx), secondsSinceMidnight))) {
+                                pq.insertWithOverflow(new TripTimeShort(pattern, t, sidx, stop, sd, graph.getTimeZone(), includeStopsForTrip));
                             }
                         }
 
@@ -517,6 +525,10 @@ public class GraphIndex {
             }
         }
         return ret;
+    }
+
+    private boolean shouldShowDeparture(int departureTime, int time) {
+        return departureTime != -1 && departureTime >= time;
     }
 
     public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups, RouteMatcher routeMatcher, String headsign) {

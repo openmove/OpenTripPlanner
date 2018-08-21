@@ -13,6 +13,7 @@
 package org.opentripplanner.index.model;
 
 import org.onebusaway.gtfs.model.Trip;
+import org.opentripplanner.api.model.VehicleInfo;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import java.util.List;
@@ -24,6 +25,8 @@ public class TripDetail {
     private EncodedPolylineBean geometry;
 
     private List<TripTimeShort> stopTimes;
+
+    private VehicleInfo vehicleInfo;
 
     public Trip getTrip() {
         return trip;
@@ -47,5 +50,13 @@ public class TripDetail {
 
     public void setStopTimes(List<TripTimeShort> stopTimes) {
         this.stopTimes = stopTimes;
+    }
+
+    public VehicleInfo getVehicleInfo() {
+        return vehicleInfo;
+    }
+
+    public void setVehicleInfo(VehicleInfo vehicleInfo) {
+        this.vehicleInfo = vehicleInfo;
     }
 }

@@ -94,6 +94,9 @@ public class VehiclePositionsUpdateHandler extends AbstractUpdateHandler {
                         break;
                 }
             }
+            if (vehiclePosition.getPosition().hasBearing()) {
+                vehicleInfo.setBearing(vehiclePosition.getPosition().getBearing());
+            }
             patch.setVehicleInfo(vehicleInfo);
             String patchId = tripId + " " + vehiclePosition.getVehicle().getId();
             patch.setId(patchId);

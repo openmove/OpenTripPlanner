@@ -27,6 +27,7 @@ import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.opentripplanner.api.model.VehicleInfo;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.PatternDetail;
@@ -42,6 +43,7 @@ import org.opentripplanner.index.model.TripShort;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.model.Landmark;
 import org.opentripplanner.profile.StopCluster;
+import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TransferEdge;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -658,10 +660,12 @@ public class IndexAPI {
             EncodedPolylineBean geometry = PolylineEncoder.createEncodings(pattern.geometry);
             Timetable table = index.currentUpdatedTimetableForTripPattern(pattern);
             List<TripTimeShort> stopTimes = TripTimeShort.fromTripTimes(table, trip);
+            VehicleInfo vehicleInfo = getVehicleInfoForTrip(tripId, pattern);
             TripDetail detail = new TripDetail();
             detail.setTrip(trip);
             detail.setGeometry(geometry);
             detail.setStopTimes(stopTimes);
+            detail.setVehicleInfo(vehicleInfo);
             return Response.status(Status.OK).entity(detail).build();
         } else {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
@@ -882,4 +886,14 @@ public class IndexAPI {
 //                                @QueryParam("variables") HashMap<String, Object> variables) {
 //        return index.getGraphQLResponse(query, variables == null ? new HashMap<>() : variables);
 //    }
+
+    private VehicleInfo getVehicleInfoForTrip(AgencyAndId tripId, TripPattern pattern) {
+        AlertPatch[] alertPatches = index.graph.getAlertPatches(pattern.boardEdges[0]);
+        for (AlertPatch patch : alertPatches) {
+            if (patch.hasVehicleInfo() && patch.getTrip().equals(tripId)) {
+                return patch.getVehicleInfo();
+            }
+        }
+        return null;
+    }
 }

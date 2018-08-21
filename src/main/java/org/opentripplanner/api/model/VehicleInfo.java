@@ -30,6 +30,8 @@ public class VehicleInfo {
 
     private StopStatus currentStopStatus;
 
+    private double bearing;
+
     public String getVehicleId() {
         return vehicleId;
     }
@@ -86,6 +88,14 @@ public class VehicleInfo {
         this.currentStopStatus = currentStopStatus;
     }
 
+    public double getBearing() {
+        return bearing;
+    }
+
+    public void setBearing(double bearing) {
+        this.bearing = bearing;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -96,6 +106,7 @@ public class VehicleInfo {
         if (Double.compare(that.lat, lat) != 0) return false;
         if (Double.compare(that.lon, lon) != 0) return false;
         if (currentStopSequence != that.currentStopSequence) return false;
+        if (Double.compare(that.bearing, bearing) != 0) return false;
         if (vehicleId != null ? !vehicleId.equals(that.vehicleId) : that.vehicleId != null) return false;
         if (vehicleLabel != null ? !vehicleLabel.equals(that.vehicleLabel) : that.vehicleLabel != null) return false;
         if (stop != null ? !stop.equals(that.stop) : that.stop != null) return false;
@@ -115,6 +126,8 @@ public class VehicleInfo {
         result = 31 * result + (stop != null ? stop.hashCode() : 0);
         result = 31 * result + currentStopSequence;
         result = 31 * result + (currentStopStatus != null ? currentStopStatus.hashCode() : 0);
+        temp = Double.doubleToLongBits(bearing);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
 }

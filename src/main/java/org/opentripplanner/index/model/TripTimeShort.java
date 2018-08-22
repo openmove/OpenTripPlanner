@@ -27,6 +27,12 @@ public class TripTimeShort {
     /** Name of stop */
     public String stopName;
 
+    /** stop latitude */
+    public double stopLat;
+
+    /** stop longitude */
+    public double stopLon;
+
     /** Index of this stop in the trip */
     public int stopIndex;
 
@@ -108,6 +114,8 @@ public class TripTimeShort {
     public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop) {
         stopId = stop.getId();
         stopName           = stop.getName();
+        stopLat            = stop.getLat();
+        stopLon            = stop.getLon();
         stopIndex          = i;
         stopCount          = tt.getNumStops();
         scheduledArrival   = tt.getScheduledArrivalTime(i);

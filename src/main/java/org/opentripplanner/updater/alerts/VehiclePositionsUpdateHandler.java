@@ -72,8 +72,12 @@ public class VehiclePositionsUpdateHandler extends AbstractUpdateHandler {
                 vehicleInfo.setVehicleLabel(vehiclePosition.getVehicle().getLabel());
             }
             if (vehiclePosition.hasPosition()) {
-                vehicleInfo.setLat(vehiclePosition.getPosition().getLatitude());
-                vehicleInfo.setLon(vehiclePosition.getPosition().getLongitude());
+                if (vehiclePosition.getPosition().hasLatitude()) {
+                    vehicleInfo.setLat((double) vehiclePosition.getPosition().getLatitude());
+                }
+                if (vehiclePosition.getPosition().hasLongitude()) {
+                    vehicleInfo.setLon((double) vehiclePosition.getPosition().getLongitude());
+                }
             }
             if (vehiclePosition.hasStopId()) {
                 vehicleInfo.setStop(vehiclePosition.getStopId());
@@ -95,7 +99,7 @@ public class VehiclePositionsUpdateHandler extends AbstractUpdateHandler {
                 }
             }
             if (vehiclePosition.getPosition().hasBearing()) {
-                vehicleInfo.setBearing(vehiclePosition.getPosition().getBearing());
+                vehicleInfo.setBearing((double) vehiclePosition.getPosition().getBearing());
             }
             patch.setVehicleInfo(vehicleInfo);
             String patchId = tripId + " " + vehiclePosition.getVehicle().getId();

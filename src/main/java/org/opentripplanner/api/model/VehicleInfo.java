@@ -20,17 +20,17 @@ public class VehicleInfo {
 
     private String vehicleLabel;
 
-    private double lat;
+    private Double lat;
 
-    private double lon;
+    private Double lon;
 
     private String stop;
 
-    private int currentStopSequence;
+    private Integer currentStopSequence;
 
     private StopStatus currentStopStatus;
 
-    private double bearing;
+    private Double bearing;
 
     public String getVehicleId() {
         return vehicleId;
@@ -48,19 +48,19 @@ public class VehicleInfo {
         this.vehicleLabel = vehicleLabel;
     }
 
-    public double getLat() {
+    public Double getLat() {
         return lat;
     }
 
-    public void setLat(double lat) {
+    public void setLat(Double lat) {
         this.lat = lat;
     }
 
-    public double getLon() {
+    public Double getLon() {
         return lon;
     }
 
-    public void setLon(double lon) {
+    public void setLon(Double lon) {
         this.lon = lon;
     }
 
@@ -72,11 +72,11 @@ public class VehicleInfo {
         this.stop = stop;
     }
 
-    public int getCurrentStopSequence() {
+    public Integer getCurrentStopSequence() {
         return currentStopSequence;
     }
 
-    public void setCurrentStopSequence(int currentStopSequence) {
+    public void setCurrentStopSequence(Integer currentStopSequence) {
         this.currentStopSequence = currentStopSequence;
     }
 
@@ -88,11 +88,11 @@ public class VehicleInfo {
         this.currentStopStatus = currentStopStatus;
     }
 
-    public double getBearing() {
+    public Double getBearing() {
         return bearing;
     }
 
-    public void setBearing(double bearing) {
+    public void setBearing(Double bearing) {
         this.bearing = bearing;
     }
 
@@ -103,31 +103,27 @@ public class VehicleInfo {
 
         VehicleInfo that = (VehicleInfo) o;
 
-        if (Double.compare(that.lat, lat) != 0) return false;
-        if (Double.compare(that.lon, lon) != 0) return false;
-        if (currentStopSequence != that.currentStopSequence) return false;
-        if (Double.compare(that.bearing, bearing) != 0) return false;
         if (vehicleId != null ? !vehicleId.equals(that.vehicleId) : that.vehicleId != null) return false;
         if (vehicleLabel != null ? !vehicleLabel.equals(that.vehicleLabel) : that.vehicleLabel != null) return false;
+        if (lat != null ? !lat.equals(that.lat) : that.lat != null) return false;
+        if (lon != null ? !lon.equals(that.lon) : that.lon != null) return false;
         if (stop != null ? !stop.equals(that.stop) : that.stop != null) return false;
-        return currentStopStatus == that.currentStopStatus;
+        if (currentStopSequence != null ? !currentStopSequence.equals(that.currentStopSequence) : that.currentStopSequence != null)
+            return false;
+        if (currentStopStatus != that.currentStopStatus) return false;
+        return bearing != null ? bearing.equals(that.bearing) : that.bearing == null;
     }
 
     @Override
     public int hashCode() {
-        int result;
-        long temp;
-        result = vehicleId != null ? vehicleId.hashCode() : 0;
+        int result = vehicleId != null ? vehicleId.hashCode() : 0;
         result = 31 * result + (vehicleLabel != null ? vehicleLabel.hashCode() : 0);
-        temp = Double.doubleToLongBits(lat);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(lon);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (lat != null ? lat.hashCode() : 0);
+        result = 31 * result + (lon != null ? lon.hashCode() : 0);
         result = 31 * result + (stop != null ? stop.hashCode() : 0);
-        result = 31 * result + currentStopSequence;
+        result = 31 * result + (currentStopSequence != null ? currentStopSequence.hashCode() : 0);
         result = 31 * result + (currentStopStatus != null ? currentStopStatus.hashCode() : 0);
-        temp = Double.doubleToLongBits(bearing);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (bearing != null ? bearing.hashCode() : 0);
         return result;
     }
 }

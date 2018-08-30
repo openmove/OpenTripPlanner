@@ -619,9 +619,13 @@ public class IndexAPI {
         TripPattern pattern = index.getTripPatternForTripId(tripId);
         Trip trip = index.getTripForId(tripId);
         if (pattern != null) {
-            ServiceDate serviceDate = serviceDay != null ? new ServiceDate(new Date(serviceDay * 1000)) : new ServiceDate(new Date());
             // Note, we need the updated timetable not the scheduled one (which contains no real-time updates).
-            Timetable table = index.currentUpdatedTimetableForTripPattern(pattern, serviceDate);
+            Timetable table;
+            if (serviceDay != null) {
+                table = index.currentUpdatedTimetableForTripPattern(pattern, new ServiceDate(new Date(serviceDay * 1000)));
+            } else {
+                table = index.currentUpdatedTimetableForTripPattern(pattern);
+            }
             return Response.status(Status.OK).entity(TripTimeShort.fromTripTimes(table, trip)).build();
         } else {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
@@ -662,8 +666,12 @@ public class IndexAPI {
         if (trip != null) {
             TripPattern pattern = index.patternForTrip.get(trip);
             EncodedPolylineBean geometry = PolylineEncoder.createEncodings(pattern.geometry);
-            ServiceDate serviceDate = serviceDay != null ? new ServiceDate(new Date(serviceDay * 1000)) : new ServiceDate(new Date());
-            Timetable table = index.currentUpdatedTimetableForTripPattern(pattern, serviceDate);
+            Timetable table;
+            if (serviceDay != null) {
+                table = index.currentUpdatedTimetableForTripPattern(pattern, new ServiceDate(new Date(serviceDay * 1000)));
+            } else {
+                table = index.currentUpdatedTimetableForTripPattern(pattern);
+            }
             List<TripTimeShort> stopTimes = TripTimeShort.fromTripTimes(table, trip);
             VehicleInfo vehicleInfo = getVehicleInfoForTrip(tripId, pattern);
             TripDetail detail = new TripDetail();

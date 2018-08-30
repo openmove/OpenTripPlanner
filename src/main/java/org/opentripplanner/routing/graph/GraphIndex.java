@@ -608,14 +608,18 @@ public class GraphIndex {
      * There should probably be a less awkward way to do this that just gets the latest entry from the resolver without
      * making a fake routing request.
      */
-    public Timetable currentUpdatedTimetableForTripPattern (TripPattern tripPattern) {
+    public Timetable currentUpdatedTimetableForTripPattern (TripPattern tripPattern, ServiceDate serviceDate) {
         RoutingRequest req = new RoutingRequest();
         req.setRoutingContext(graph, (Vertex)null, (Vertex)null);
         // The timetableSnapshot will be null if there's no real-time data being applied.
         if (req.rctx.timetableSnapshot == null) return tripPattern.scheduledTimetable;
+        return req.rctx.timetableSnapshot.resolve(tripPattern, serviceDate);
+    }
+
+    public Timetable currentUpdatedTimetableForTripPattern (TripPattern tripPattern) {
         // Get the updated times for right now, which is the only reasonable default since no date is supplied.
         ServiceDate serviceDate = new ServiceDate(getTime());
-        return req.rctx.timetableSnapshot.resolve(tripPattern, serviceDate);
+        return currentUpdatedTimetableForTripPattern(tripPattern, serviceDate);
     }
 
     /**

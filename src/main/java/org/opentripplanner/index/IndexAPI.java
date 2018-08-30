@@ -78,6 +78,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -607,18 +608,20 @@ public class IndexAPI {
     /**
      * Return arrival/departures for a trip.
      *
+     * @param serviceDay service day to look up scheduled for, in UNIX epoch time
      * @param tripIdString trip in Agency:Trip ID format.
      */
     @GET
     @Path("/trips/{tripId}/stoptimes")
     @TypeHint(TripTimeShort[].class)
-    public Response getStoptimesForTrip(@PathParam("tripId") String tripIdString) {
+    public Response getStoptimesForTrip(@PathParam("tripId") String tripIdString, @QueryParam("serviceDay") Long serviceDay) {
         AgencyAndId tripId = GtfsLibrary.convertIdFromString(tripIdString);
         TripPattern pattern = index.getTripPatternForTripId(tripId);
         Trip trip = index.getTripForId(tripId);
         if (pattern != null) {
+            ServiceDate serviceDate = serviceDay != null ? new ServiceDate(new Date(serviceDay * 1000)) : new ServiceDate(new Date());
             // Note, we need the updated timetable not the scheduled one (which contains no real-time updates).
-            Timetable table = index.currentUpdatedTimetableForTripPattern(pattern);
+            Timetable table = index.currentUpdatedTimetableForTripPattern(pattern, serviceDate);
             return Response.status(Status.OK).entity(TripTimeShort.fromTripTimes(table, trip)).build();
         } else {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
@@ -647,18 +650,20 @@ public class IndexAPI {
     /**
      * Return detailed trip information, including stoptimes and geometry.
      *
+     * @param serviceDay service day to look up scheduled for, in UNIX epoch time
      * @param tripIdString trip in Agency:Trip ID format
      */
     @GET
     @Path("/trips/{tripId}/detail")
     @TypeHint(TripDetail.class)
-    public Response getTripDetails (@PathParam("tripId") String tripIdString) {
+    public Response getTripDetails (@PathParam("tripId") String tripIdString, @QueryParam("serviceDay") Long serviceDay) {
         AgencyAndId tripId = GtfsLibrary.convertIdFromString(tripIdString);
         Trip trip = index.tripForId.get(tripId);
         if (trip != null) {
             TripPattern pattern = index.patternForTrip.get(trip);
             EncodedPolylineBean geometry = PolylineEncoder.createEncodings(pattern.geometry);
-            Timetable table = index.currentUpdatedTimetableForTripPattern(pattern);
+            ServiceDate serviceDate = serviceDay != null ? new ServiceDate(new Date(serviceDay * 1000)) : new ServiceDate(new Date());
+            Timetable table = index.currentUpdatedTimetableForTripPattern(pattern, serviceDate);
             List<TripTimeShort> stopTimes = TripTimeShort.fromTripTimes(table, trip);
             VehicleInfo vehicleInfo = getVehicleInfoForTrip(tripId, pattern);
             TripDetail detail = new TripDetail();

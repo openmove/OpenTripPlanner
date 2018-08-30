@@ -303,7 +303,7 @@ public class IndexAPITest {
 
     @Test
     public void testStopTimesForTrip() {
-        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":4.1"), TripTimeShort.class);
+        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":4.1", null), TripTimeShort.class);
         // 5:00 F, 5:30 G, 6:00 H
         assertEquals(3, times.size());
         TripTimeShort f = times.get(0);
@@ -382,7 +382,7 @@ public class IndexAPITest {
 
     @Test
     public void testRealtimeStopTimesForTrip() {
-        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":4.2"), TripTimeShort.class);
+        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":4.2", null), TripTimeShort.class);
         // 23:00 F, 23:30 G, 24:00 H, plus 5 min
         assertEquals(3, times.size());
         TripTimeShort f = times.get(0);
@@ -458,7 +458,7 @@ public class IndexAPITest {
 
     @Test
     public void testStopTimesForAddedTrip() {
-        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":17.2"), TripTimeShort.class);
+        List<TripTimeShort> times = getResponseList(api.getStoptimesForTrip(feedId + ":17.2", null), TripTimeShort.class);
         // 5:00 F, 5:30 G, 6:00 H
         assertEquals(2, times.size());
         TripTimeShort c = times.get(0);

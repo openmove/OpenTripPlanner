@@ -146,9 +146,16 @@ public class TripTimeShort {
     }
 
     public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop, ServiceDay sd, TimeZone tz, boolean includeStopsForTrip) {
+        this(tripPattern, tt, i, stop, sd == null ? -1 : sd.time(0), tz, includeStopsForTrip);
+    }
+
+    public TripTimeShort(TripPattern tripPattern, TripTimes tt, int i, Stop stop, long serviceDay, TimeZone tz, boolean includeStopsForTrip) {
         this(tripPattern, tt, i, stop);
+        if (serviceDay < 0) {
+            return;
+        }
         tripId = tt.trip.getId();
-        serviceDay = sd.time(0);
+        this.serviceDay = serviceDay;
         if (realtimeArrival != TripTimes.UNAVAILABLE || realtimeState.equals(RealTimeState.CANCELED)) {
             long arrival = realtimeArrival != TripTimes.UNAVAILABLE ? realtimeArrival : scheduledArrival;
             arrivalFmt = formatDateIso(serviceDay + arrival, tz);
@@ -166,11 +173,15 @@ public class TripTimeShort {
      * must pass in both table and trip, because tripTimes do not have stops.
      */
     public static List<TripTimeShort> fromTripTimes (Timetable table, Trip trip) {
-        TripTimes times = table.getTripTimes(table.getTripIndex(trip.getId()));        
+        return fromTripTimes(table, trip, -1, null);
+    }
+
+    public static List<TripTimeShort> fromTripTimes(Timetable table, Trip trip, long serviceDay, TimeZone tz) {
+        TripTimes times = table.getTripTimes(table.getTripIndex(trip.getId()));
         List<TripTimeShort> out = Lists.newArrayList();
         // one per stop, not one per hop, thus the <= operator
         for (int i = 0; i < times.getNumStops(); ++i) {
-            out.add(new TripTimeShort(table.pattern, times, i, table.pattern.getStop(i)));
+            out.add(new TripTimeShort(table.pattern, times, i, table.pattern.getStop(i), serviceDay, tz, false));
         }
         return out;
     }

@@ -671,8 +671,9 @@ public class IndexAPI {
                 table = index.currentUpdatedTimetableForTripPattern(pattern, new ServiceDate(new Date(serviceDay * 1000)));
             } else {
                 table = index.currentUpdatedTimetableForTripPattern(pattern);
+                serviceDay = (new Date().getTime() / 1000);
             }
-            List<TripTimeShort> stopTimes = TripTimeShort.fromTripTimes(table, trip);
+            List<TripTimeShort> stopTimes = TripTimeShort.fromTripTimes(table, trip, serviceDay, index.graph.getTimeZone());
             VehicleInfo vehicleInfo = getVehicleInfoForTrip(tripId, pattern);
             TripDetail detail = new TripDetail();
             detail.setTrip(trip);

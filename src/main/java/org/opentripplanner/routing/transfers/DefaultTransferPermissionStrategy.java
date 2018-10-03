@@ -17,7 +17,7 @@ import org.opentripplanner.routing.core.State;
 
 public class DefaultTransferPermissionStrategy implements TransferPermissionStrategy {
     @Override
-    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop,  boolean boarding, int transferTime) {
+    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop,  boolean boarding) {
         return true;
     }
 }

@@ -16,5 +16,5 @@ import org.onebusaway.gtfs.model.Stop;
 import org.opentripplanner.routing.core.State;
 
 public interface TransferPermissionStrategy {
-    boolean isTransferAllowed(State state, Stop fromStop, Stop toStop, boolean boarding, int transferTime);
+    boolean isTransferAllowed(State state, Stop fromStop, Stop toStop, boolean boarding);
 }

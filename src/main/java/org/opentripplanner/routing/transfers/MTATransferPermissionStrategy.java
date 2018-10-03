@@ -37,11 +37,12 @@ public class MTATransferPermissionStrategy implements TransferPermissionStrategy
     }
 
     @Override
-    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop, boolean boarding, int transferTime) {
+    public boolean isTransferAllowed(State state, Stop fromStop, Stop toStop, boolean boarding) {
         RoutingRequest options = state.getOptions();
         String fromFeed = fromStop.getId().getAgencyId();
         String toFeed = toStop.getId().getAgencyId();
-        if (transferTime == StopTransfer.UNKNOWN_TRANSFER && !options.allowUnknownTransfers && transferTable.hasFeedTransfers(fromFeed, toFeed, boarding)) {
+        if (!options.allowUnknownTransfers && transferTable.hasFeedTransfers(fromFeed, toFeed, boarding)
+                && !transferTable.hasStopTransfer(fromStop, toStop)) {
             return false;
         }
 

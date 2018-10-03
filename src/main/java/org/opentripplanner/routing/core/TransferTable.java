@@ -129,6 +129,13 @@ public class TransferTable implements Serializable {
     }
 
     /**
+     * Determine whether a transfer from given stops is represented in the table.
+     */
+    public boolean hasStopTransfer(Stop fromStop, Stop toStop) {
+        return table.get(new P2<AgencyAndId>(fromStop.getId(), toStop.getId())) != null;
+    }
+
+    /**
      * Determine whether a transfer from given stops depends on trips.
      */
     public boolean hasTripSpecificity(Stop fromStop, Stop toStop, boolean forwardInTime) {

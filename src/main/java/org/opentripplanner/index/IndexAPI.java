@@ -662,10 +662,9 @@ public class IndexAPI {
     @TypeHint(TripDetail.class)
     public Response getTripDetails (@PathParam("tripId") String tripIdString, @QueryParam("serviceDay") Long serviceDay) {
         AgencyAndId tripId = GtfsLibrary.convertIdFromString(tripIdString);
-        Trip trip = index.tripForId.get(tripId);
+        TripPattern pattern = index.getTripPatternForTripId(tripId);
+        Trip trip = index.getTripForId(tripId);
         if (trip != null) {
-            TripPattern pattern = index.patternForTrip.get(trip);
-            EncodedPolylineBean geometry = PolylineEncoder.createEncodings(pattern.geometry);
             Timetable table;
             if (serviceDay != null) {
                 table = index.currentUpdatedTimetableForTripPattern(pattern, new ServiceDate(new Date(serviceDay * 1000)));
@@ -677,7 +676,10 @@ public class IndexAPI {
             VehicleInfo vehicleInfo = getVehicleInfoForTrip(tripId, pattern);
             TripDetail detail = new TripDetail();
             detail.setTrip(trip);
-            detail.setGeometry(geometry);
+            if (pattern.geometry != null) {
+                EncodedPolylineBean geometry = PolylineEncoder.createEncodings(pattern.geometry);
+                detail.setGeometry(geometry);
+            }
             detail.setStopTimes(stopTimes);
             detail.setVehicleInfo(vehicleInfo);
             return Response.status(Status.OK).entity(detail).build();

@@ -228,7 +228,7 @@ public class TestStreetMatcher {
         }
 
         @Override
-        public boolean isNoThruTraffic() {
+        public boolean isNoThruTraffic(TraverseMode mode) {
             return false;
         }
 

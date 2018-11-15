@@ -33,7 +33,7 @@ public class StreetUtils {
        4. Analyze small expanded islands (from step 2). Convert edges which are reachable only via noThruTraffic edges
           to noThruTraffic state. Depedestrianize unreachable edges. Removed unconnected edges.
      */
-    public static void pruneFloatingIslands(Graph graph, int maxIslandSize,
+    public static Map<Vertex, Subgraph> pruneFloatingIslands(Graph graph, int maxIslandSize,
             int islandWithStopMaxSize, String islandLogName) {
         LOG.debug("pruning");
         PrintWriter islandLog = null;
@@ -94,6 +94,8 @@ public class StreetUtils {
         if (graph.removeEdgelessVertices() > 0) {
             LOG.warn("Removed edgeless vertices after pruning islands");
         }
+
+        return subgraphs;
     }
 
     private static int processIslands(

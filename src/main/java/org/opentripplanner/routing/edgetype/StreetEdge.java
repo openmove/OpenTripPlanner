@@ -775,6 +775,10 @@ public class StreetEdge extends Edge implements Cloneable {
 	    return !thruTrafficPermission.allows(mode);
 	}
 
+    public boolean isNoThruTraffic() {
+        return thruTrafficPermission.allowsNothing();
+    }
+
 	public void setThruTrafficPermission(StreetTraversalPermission permission) {
 	    thruTrafficPermission = permission;
 	}

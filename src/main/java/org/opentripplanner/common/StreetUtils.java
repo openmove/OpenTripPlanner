@@ -1,16 +1,3 @@
-/* This program is free software: you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public License
- as published by the Free Software Foundation, either version 3 of
- the License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-
 package org.opentripplanner.common;
 
 import com.vividsolutions.jts.geom.Geometry;
@@ -46,7 +33,6 @@ public class StreetUtils {
        4. Analyze small expanded islands (from step 2). Convert edges which are reachable only via noThruTraffic edges
           to noThruTraffic state. Depedestrianize unreachable edges. Removed unconnected edges.
      */
-
     public static void pruneFloatingIslands(Graph graph, int maxIslandSize,
             int islandWithStopMaxSize, String islandLogName) {
         LOG.debug("pruning");
@@ -171,7 +157,7 @@ public class StreetUtils {
                       e instanceof ElevatorEdge || e instanceof FreeEdge)) {
                     continue;
                 }
-                if ((e instanceof StreetEdge && ((StreetEdge)e).isNoThruTraffic(mode)) != noThruTraffic) {
+                if ((e instanceof StreetEdge && ((StreetEdge)e).isNoThruTraffic()) != noThruTraffic) {
                     continue;
                 }
                 State s1 = e.traverse(s0);
@@ -253,7 +239,7 @@ public class StreetUtils {
                         if (!isolated.containsKey(e)) {
                             // not a true island edge but has limited access
                             // so convert to noThruTraffic
-                            pse.setNoThruTraffic(true);
+                            pse.setThruTrafficPermission(StreetTraversalPermission.NONE);
                             stats.put("noThru", stats.get("noThru") + 1);
                         } else {
                             StreetTraversalPermission permission = pse.getPermission();

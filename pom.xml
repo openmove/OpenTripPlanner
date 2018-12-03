@@ -690,7 +690,7 @@
         <dependency>
           <groupId>org.onebusaway</groupId>
           <artifactId>onebusaway-gtfs-realtime-api</artifactId>
-          <version>1.2.6</version>
+          <version>1.2.10-SNAPSHOT</version>
         </dependency>
         <!-- Processing is used for the debug GUI (though we could probably use just Java2D) -->
         <dependency>

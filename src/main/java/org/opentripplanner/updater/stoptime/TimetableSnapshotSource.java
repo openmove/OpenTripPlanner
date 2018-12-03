@@ -670,6 +670,12 @@ public class TimetableSnapshotSource {
             trip.setTripHeadsign(tripHeadsign);
         }
 
+        // Add trip direciton
+        String tripDirection = tripUpdate.getExtension(GtfsRealtimeOneBusAway.obaTripUpdate).getTripDirection();
+        if (StringUtil.isNotBlank(tripDirection)) {
+            trip.setDirectionId(tripDirection);
+        }
+
         final boolean success = addTripToGraphAndBuffer(feedId, graph, trip, tripUpdate, stops, serviceDate, RealTimeState.ADDED, timestamp);
         return success;
     }

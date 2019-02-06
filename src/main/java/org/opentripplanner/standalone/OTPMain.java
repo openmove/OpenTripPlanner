@@ -172,6 +172,7 @@ public class OTPMain {
                     registerPlugin(className, config);
                 }
             }
+        }
 
         /* Start web server if requested */
         if (params.server) {
@@ -186,7 +187,6 @@ public class OTPMain {
                 }
             }
         }
-
     }
 
     /**

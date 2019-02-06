@@ -85,7 +85,6 @@ public class PlannerResource extends RoutingResource {
             /* Convert the internal GraphPaths to a TripPlan object that is included in an OTP web service Response. */
             TripPlan plan = GraphPathToTripPlanConverter.generatePlan(paths, request);
             response.setPlan(plan);
-
         } catch (Exception e) {
             PlannerError error = new PlannerError(e);
             if(!PlannerError.isPlanningError(e.getClass()))
@@ -130,6 +129,8 @@ public class PlannerResource extends RoutingResource {
             }
             router.requestLogger.info(sb.toString());
         }
+
+        otpServer.publish(response);
         return response;
     }
 

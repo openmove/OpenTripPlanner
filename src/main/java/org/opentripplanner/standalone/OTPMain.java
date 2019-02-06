@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.graph_builder.GraphBuilder;
+import org.opentripplanner.plugin.Pluggable;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.impl.GraphScanner;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.Iterator;
 
 /**
  * This is the main entry point to OpenTripPlanner. It allows both building graphs and starting up an OTP server
@@ -158,6 +160,18 @@ public class OTPMain {
             }
         }
 
+        /* Load plugins from configuration file */
+        if(params.pluginConfig != null) {
+            JsonNode pluginConfig = loadJson(new File(params.pluginConfig));
+            if (pluginConfig != null && pluginConfig.has("plugins")) {
+                Iterator<JsonNode> plugins = pluginConfig.get("plugins").elements();
+                while (plugins.hasNext()) {
+                    JsonNode plugin = plugins.next();
+                    String className = plugin.get("class").asText();
+                    JsonNode config = plugin.get("config");
+                    registerPlugin(className, config);
+                }
+            }
 
         /* Start web server if requested */
         if (params.server) {
@@ -217,4 +231,16 @@ public class OTPMain {
         }
     }
 
+    private void registerPlugin(String className, JsonNode config) {
+        try {
+            Class<?> klass = Class.forName(className);
+            Pluggable component = (Pluggable) klass.newInstance();
+            component.init(config);
+            for (Class<?> messageType : component.getSubscriptions()) {
+                otpServer.subscribe(messageType, component);
+            }
+        } catch(Exception ex) {
+            LOG.error("Error loading plugin: {}", className);
+        }
+    }
 }

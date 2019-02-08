@@ -245,6 +245,7 @@ public class OTPMain {
             }
         } catch(Exception ex) {
             LOG.error("Error loading plugin: {}", className);
+            LOG.error("Exception: {}", ex);
         }
     }
 }

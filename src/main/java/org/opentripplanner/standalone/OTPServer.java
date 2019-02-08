@@ -3,13 +3,11 @@ package org.opentripplanner.standalone;
 import java.io.File;
 import java.util.Collection;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.opentripplanner.analyst.DiskBackedPointSetCache;
 import org.opentripplanner.analyst.PointSetCache;
 import org.opentripplanner.analyst.SurfaceCache;
-import org.opentripplanner.plugin.Pluggable;
+import org.opentripplanner.plugin.PluginManager;
 import org.opentripplanner.routing.error.GraphNotFoundException;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.scripting.impl.ScriptingService;
@@ -37,7 +35,7 @@ public class OTPServer {
 
     public CommandLineParameters params;
 
-    private static OTPServer singleton;
+    private PluginManager pluginManager;
 
     public OTPServer (CommandLineParameters params, GraphService gs) {
         LOG.info("Wiring up and configuring server.");
@@ -58,8 +56,6 @@ public class OTPServer {
         if (params.enableScriptingWebService) {
             LOG.warn("WARNING: scripting web-service is activated. For public-facing server this is a SERIOUS SECURITY RISK!");
         }
-
-        singleton = this;
     }
 
     /**
@@ -100,22 +96,11 @@ public class OTPServer {
         };
      }
 
-    // Plugin infrastructure: subscribe and publish
-
-    private Multimap<Class<?>, Pluggable> subscribers = ArrayListMultimap.create();
-
-    public void subscribe(Class<?> messageType, Pluggable service) {
-        subscribers.put(messageType, service);
+    public PluginManager getPluginManager() {
+        return pluginManager;
     }
 
-    public void publish(Object message) {
-        for (Pluggable plugin : subscribers.get(message.getClass())) {
-            plugin.receive(message);
-        }
+    public void setPluginManager(PluginManager pluginManager) {
+        this.pluginManager = pluginManager;
     }
-
-    public static OTPServer getInstance() {
-        return singleton;
-    }
-
 }

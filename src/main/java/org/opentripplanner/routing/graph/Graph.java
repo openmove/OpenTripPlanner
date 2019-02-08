@@ -40,6 +40,7 @@ import org.opentripplanner.graph_builder.annotation.NoFutureDates;
 import org.opentripplanner.graph_builder.model.GraphVersion;
 import org.opentripplanner.model.GraphBundle;
 import org.opentripplanner.model.Landmark;
+import org.opentripplanner.plugin.PluginManager;
 import org.opentripplanner.routing.accessibility.DefaultStopAccessibilityStrategy;
 import org.opentripplanner.routing.accessibility.StopAccessibilityStrategy;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -229,6 +230,8 @@ public class Graph implements Serializable {
 
     /** Optionally apply more complex transfer rules */
     public transient TransferPermissionStrategy transferPermissionStrategy = new DefaultTransferPermissionStrategy();
+
+    public transient PluginManager pluginManager;
 
     public GraphVersion graphVersion = null;
 

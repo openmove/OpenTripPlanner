@@ -35,7 +35,6 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
-import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,11 +111,12 @@ public class TimetableSnapshotSource {
 
     public GtfsRealtimeFuzzyTripMatcher fuzzyTripMatcher;
 
-    private OTPServer otpServer = OTPServer.getInstance();
+    private Graph graph;
 
     public TimetableSnapshotSource(final Graph graph) {
         timeZone = graph.getTimeZone();
         graphIndex = graph.index;
+        this.graph = graph;
 
         // Create dummy agency for added trips
         dummyAgency = new Agency();
@@ -303,7 +303,7 @@ public class TimetableSnapshotSource {
             long delta = stop - start;
             LOG.info("Feed {}: applied {} of {} updates in {} ms", feedId, appliedUpdates, totalUpdates, delta);
 
-            if (otpServer != null) {
+            if (graph.pluginManager != null) {
                 TripUpdateStats stats = new TripUpdateStats();
                 stats.setAppliedUpdates(appliedUpdates);
                 stats.setTotalUpdates(totalUpdates);
@@ -314,7 +314,7 @@ public class TimetableSnapshotSource {
                 stats.setCancelledSuccess(cancelledSuccess);
                 stats.setCancelledUpdates(cancelledUpdates);
                 stats.setFeedId(feedId);
-                otpServer.publish(stats);
+                graph.pluginManager.publish(stats);
             }
         }
     }

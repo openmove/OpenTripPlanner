@@ -7,7 +7,7 @@ import java.util.List;
 public interface Pluggable {
     void init(JsonNode config);
 
-    void receive(Object message);
+    Object receive(Object message);
 
     List<Class<?>> getSubscriptions();
 }

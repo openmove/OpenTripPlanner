@@ -19,6 +19,8 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import javax.ws.rs.core.Application;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -102,7 +104,13 @@ public class OTPApplication extends Application {
             NearbySchedulesResource.class,
             RoutePatternsResource.class
         ));
-        
+
+        // Optionally: add classes defined by an ApiPlugin
+        ApiPlugin plugin = server.getPluginManager().getPluginByType(ApiPlugin.class);
+        if (plugin != null) {
+            classes.addAll(plugin.getClasses());
+        }
+
         if (this.secure) {
             // A filter that converts HTTP Basic authentication headers into a Jersey SecurityContext
             classes.add(AuthFilter.class);
@@ -148,4 +156,7 @@ public class OTPApplication extends Application {
         return props;
     }
 
+    public interface ApiPlugin {
+        List<Class<?>> getClasses();
+    }
 }

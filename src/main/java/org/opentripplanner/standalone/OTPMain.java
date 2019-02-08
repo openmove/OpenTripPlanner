@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.MissingNode;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.graph_builder.GraphBuilder;
 import org.opentripplanner.plugin.Pluggable;
+import org.opentripplanner.plugin.PluginManager;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.impl.GraphScanner;
@@ -105,6 +106,9 @@ public class OTPMain {
         /* Create the top-level objects that represent the OTP server. */
         makeGraphService();
         otpServer = new OTPServer(params, graphService);
+        PluginManager pluginManager = new PluginManager();
+        otpServer.setPluginManager(pluginManager);
+        graphService.setPluginManager(pluginManager);
 
         /* Start graph builder if requested */
         if (params.build != null) {
@@ -234,10 +238,10 @@ public class OTPMain {
     private void registerPlugin(String className, JsonNode config) {
         try {
             Class<?> klass = Class.forName(className);
-            Pluggable component = (Pluggable) klass.newInstance();
-            component.init(config);
-            for (Class<?> messageType : component.getSubscriptions()) {
-                otpServer.subscribe(messageType, component);
+            Pluggable plugin = (Pluggable) klass.newInstance();
+            plugin.init(config);
+            for (Class<?> messageType : plugin.getSubscriptions()) {
+                otpServer.getPluginManager().subscribe(messageType, plugin);
             }
         } catch(Exception ex) {
             LOG.error("Error loading plugin: {}", className);

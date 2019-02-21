@@ -409,7 +409,7 @@ public class GraphIndex {
     public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups,
                                                      RouteMatcher routeMatcher, Integer direction, String headsign, Set<String> bannedAgencies, Set<Integer> bannedRouteTypes) {
         return stopTimesForStop(stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction,
-                headsign, bannedAgencies, bannedRouteTypes, false, false);
+                headsign, bannedAgencies, bannedRouteTypes, null, false, false);
     }
 
     /**
@@ -429,7 +429,7 @@ public class GraphIndex {
      */
     public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups,
                                                      RouteMatcher routeMatcher, Integer direction, String headsign, Set<String> bannedAgencies, Set<Integer> bannedRouteTypes,
-                                                     boolean showCancelledTrips, boolean includeStopsForTrip) {
+                                                     Collection<String> trackIds, boolean showCancelledTrips, boolean includeStopsForTrip) {
         if (startTime == 0) {
             startTime = System.currentTimeMillis() / 1000;
         }
@@ -491,6 +491,8 @@ public class GraphIndex {
                         for (TripTimes t : tt.tripTimes) {
                             if (!sd.serviceRunning(t.serviceCode)) continue;
                             if (headsign != null && !headsign.equals(t.getHeadsign(sidx))) continue;
+                            if (trackIds != null && t.getTrack(sidx) != null && !trackIds.contains(t.getTrack(sidx)))
+                                continue;
                             if (shouldShowDeparture(t.getDepartureTime(sidx), secondsSinceMidnight)
                                     || (showCancelledTrips && shouldShowDeparture(t.getScheduledDepartureTime(sidx), secondsSinceMidnight))) {
                                 pq.insertWithOverflow(new TripTimeShort(pattern, t, sidx, stop, sd, graph.getTimeZone(), includeStopsForTrip));

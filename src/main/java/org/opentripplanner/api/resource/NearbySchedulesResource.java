@@ -203,6 +203,12 @@ public class NearbySchedulesResource {
     @DefaultValue("false")
     private boolean includeStopsForTrip;
 
+    /**
+     * A list of tracks for which to display arrivals, e.g. "1" or "1,2". Default to all tracks.
+     */
+    @QueryParam("tracks")
+    private String trackIds = null;
+
     private GraphIndex index;
 
     private Router router;
@@ -267,7 +273,7 @@ public class NearbySchedulesResource {
 
             List<StopTimesInPattern> stopTimesPerPattern = index.stopTimesForStop(
                     stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null,
-                    bannedAgencies, bannedRouteTypes, showCancelledTrips, includeStopsForTrip);
+                    bannedAgencies, bannedRouteTypes, getTrackIds(), showCancelledTrips, includeStopsForTrip);
 
             StopTimesByStop stopTimes = stopIdAndStopTimesMap.get(key);
 
@@ -418,5 +424,9 @@ public class NearbySchedulesResource {
             }
         }
         return null;
+    }
+
+    private Collection<String> getTrackIds() {
+        return trackIds == null ? null : Arrays.asList(trackIds.split(","));
     }
 }

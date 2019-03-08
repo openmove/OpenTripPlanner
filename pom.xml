@@ -8,7 +8,7 @@
 
     <groupId>org.opentripplanner</groupId>
     <artifactId>otp</artifactId>
-    <version>1.3.0.33-SNAPSHOT</version>
+    <version>1.3.0.34-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <licenses>
@@ -80,7 +80,8 @@
 
     <properties>
         <geotools.version>10.5</geotools.version>
-        <jackson.version>2.5.3</jackson.version>
+        <jackson.version>2.9.7</jackson.version>
+        <jersey.version>2.18</jersey.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <site_id>developer.onebusaway.org</site_id>
         <site_deployment_base>scp://developer.onebusaway.org/var/www/sites/developer/modules</site_deployment_base>
@@ -124,7 +125,20 @@
                 <filtering>false</filtering>
             </resource>
         </resources>
-
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <!-- Shell scripts to start up OTP, need to be filtered to insert the JAR file name. -->
+                <!-- These are treated as testResources rather than resources to keep them out of the JAR. -->
+                <!-- The staging repo will reject a JAR containing them as they use traversal paths (../..). -->
+                <directory>src/scripts</directory>
+                <filtering>true</filtering>
+                <!-- Copy the scripts up into the root of the repo, not /target/classes -->
+                <targetPath>../..</targetPath>
+            </testResource>
+        </testResources>
         <pluginManagement>
             <plugins>
                 <!-- m2eclipse lifecycle mapping configuration. This controls which Maven build goals should
@@ -344,7 +358,8 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <Main-Class>org.opentripplanner.standalone.OTPMain</Main-Class>
-                                        <!-- The ImageIO lines allow some image reader plugins to work (TODO elaborate) -->
+                                        <!-- The ImageIO lines allow some image reader plugins to work
+                                             https://stackoverflow.com/questions/7051603/jai-vendorname-null#18495658 -->
                                         <Specification-Title>Java Advanced Imaging Image I/O
                                             Tools
                                         </Specification-Title>
@@ -576,7 +591,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.8.1</version>
+            <version>4.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -590,18 +605,18 @@
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>2.18</version>
+            <version>${jersey.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-multipart</artifactId>
-            <version>2.18</version>
+            <version>${jersey.version}</version>
         </dependency>
         <!-- Deploy Jersey apps in stand-alone Grizzly server instead of a servlet container. -->
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-grizzly2-http</artifactId>
-            <version>2.18</version>
+            <version>${jersey.version}</version>
         </dependency>
 
         <!-- Jackson modules. -->
@@ -713,7 +728,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.0</version>
+            <version>1.18</version>
         </dependency>
         <dependency>
             <groupId>commons-discovery</groupId>
@@ -747,12 +762,17 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5</version>
+            <version>4.5.5</version>
+        </dependency>
+        <dependency>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+          <version>1.11</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
-            <version>3.0</version>
+            <version>3.6.1</version>
         </dependency>
 
         <!-- Lucene for sophisticated text search -->

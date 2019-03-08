@@ -24,7 +24,10 @@ public class StopTimesByRouteAndHeadsign {
 
     private RouteShort route;
 
-    private SortedSet<TripTimeShort> times = new TreeSet<>(Comparator.<TripTimeShort>comparingLong(tt -> (tt.serviceDay+tt.realtimeArrival) ));
+    // Order times by actual arrival time, then by hashCode (just to prevent collisions if two
+    // arrival/departures have the same time)
+    private SortedSet<TripTimeShort> times = new TreeSet<>(Comparator.<TripTimeShort>comparingLong(
+            tt -> (tt.serviceDay+tt.realtimeArrival)).thenComparing(TripTimeShort::hashCode));
 
     private String headsign;
 

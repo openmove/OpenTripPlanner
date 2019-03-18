@@ -14,7 +14,7 @@
 package org.opentripplanner.updater.stoptime;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -47,7 +47,9 @@ public class AddedTripPatternIndex {
      */
     private HashMap<TripIdAndServiceDate, TripPattern> lastAddedTripPattern = new HashMap<>();
 
-    private Multimap<Stop, TripPattern> patternByStop = HashMultimap.create();
+    // Keep a mapping between a stop and all the ADDED TripPatterns which pass through that stop.
+    // If a pattern is added which already exists in the mapping, there should be no effect.
+    private SetMultimap<Stop, TripPattern> patternByStop = HashMultimap.create();
 
     /**
      * Get the last <b>added</b> trip pattern given a trip id (without agency) and a service date as

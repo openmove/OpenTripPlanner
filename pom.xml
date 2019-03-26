@@ -83,7 +83,6 @@
         <jackson.version>2.9.7</jackson.version>
         <jersey.version>2.18</jersey.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <aws.version>1.11.104</aws.version>
         <site_id>developer.onebusaway.org</site_id>
         <site_deployment_base>scp://developer.onebusaway.org/var/www/sites/developer/modules</site_deployment_base>
         <site_url>${site_deployment_base}/${project.name}/${project.version}</site_url>
@@ -475,32 +474,6 @@
     </repositories>
 
     <dependencies>
-        <!-- Amazon AWS client libraries -->
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-            <version>${aws.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-ec2</artifactId>
-            <version>${aws.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-sqs</artifactId>
-            <version>${aws.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-cloudwatch</artifactId>
-            <version>${aws.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-autoscaling</artifactId>
-            <version>${aws.version}</version>
-        </dependency>
         <!-- Fast drop-in serialization including compound value types (structs) for Java -->
         <dependency>
             <groupId>de.ruedigermoeller</groupId>

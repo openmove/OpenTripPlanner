@@ -20,15 +20,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.index.model.FrequencyDetail;
 import org.opentripplanner.index.model.StopTimesByRouteAndHeadsign;
-import org.opentripplanner.index.model.StopTimesByStop;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.util.model.EncodedPolylineBean;
@@ -105,7 +100,6 @@ public class Leg {
     /**
      * The mode (e.g., <code>Walk</code>) used when traversing this leg.
      */
-    @XmlAttribute
     @JsonSerialize
     public String mode = TraverseMode.WALK.toString();
 
@@ -113,42 +107,36 @@ public class Leg {
      * For transit legs, the route of the bus or train being used. For non-transit legs, the name of
      * the street being traversed.
      */
-    @XmlAttribute
     @JsonSerialize
     public String route = "";
 
     /**
      * For transit legs, the name of the agency being used.
      */
-    @XmlAttribute
     @JsonSerialize
     public String agencyName;
 
     /**
      * For transit legs, the URL of the agency being used.
      */
-    @XmlAttribute
     @JsonSerialize
     public String agencyUrl;
 
     /**
      * For transit legs, the branding URL of the agency being used.
      */
-    @XmlAttribute
     @JsonSerialize
     public String agencyBrandingUrl;
 
     /**
      * For transit legs, offset from GMT of the timezone of the agency being used, in milliseconds.
      */
-    @XmlAttribute
     @JsonSerialize
     public int agencyTimeZoneOffset;
 
     /**
      * For transit leg, the route's (background) color (if one exists). For non-transit legs, null.
      */
-    @XmlAttribute
     @JsonSerialize
     public String routeColor = null;
 
@@ -158,7 +146,6 @@ public class Leg {
      * When equal or highter than 100, it is coded using the Hierarchical Vehicle Type (HVT) codes from the European TPEG standard
      * Also see http://groups.google.com/group/gtfs-changes/msg/ed917a69cf8c5bef
      */
-    @XmlAttribute
     @JsonSerialize
     public Integer routeType = null;
     
@@ -171,14 +158,12 @@ public class Leg {
     /**
      * For transit leg, the route's text color (if one exists). For non-transit legs, null.
      */
-    @XmlAttribute
     @JsonSerialize
     public String routeTextColor = null;
 
     /**
      * For transit legs, if the rider should stay on the vehicle as it changes route names.
      */
-    @XmlAttribute
     @JsonSerialize
     public Boolean interlineWithPreviousLeg;
 
@@ -186,42 +171,36 @@ public class Leg {
     /**
      * For transit leg, the trip's short name (if one exists). For non-transit legs, null.
      */
-    @XmlAttribute
     @JsonSerialize
     public String tripShortName = null;
 
     /**
      * For transit leg, the trip's block ID (if one exists). For non-transit legs, null.
      */
-    @XmlAttribute
     @JsonSerialize
     public String tripBlockId = null;
 
      /**
       * For transit leg, the trip's direction ID (if one exists). For non-transit legs, null.
       */
-     @XmlAttribute
      @JsonSerialize
      public String tripDirectionId = null;
 
     /**
      * For transit legs, the headsign of the bus or train being used. For non-transit legs, null.
      */
-    @XmlAttribute
     @JsonSerialize
     public String headsign = null;
 
      /**
       * For transit legs, the stopHeadsign
       */
-     @XmlAttribute
      @JsonSerialize
      public String stopHeadsign = null;
 
      /**
       * For transit legs, the tripHeadsign of the bus or train being used.
       */
-     @XmlAttribute
      @JsonSerialize
      public String tripHeadsign = null;
 
@@ -229,7 +208,6 @@ public class Leg {
      * For transit legs, the ID of the transit agency that operates the service used for this leg.
      * For non-transit legs, null.
      */
-    @XmlAttribute
     @JsonSerialize
     public String agencyId = null;
     
@@ -243,14 +221,12 @@ public class Leg {
      * For transit legs, the service date of the trip.
      * For non-transit legs, null.
      */
-    @XmlAttribute
     @JsonSerialize
     public String serviceDate = null;
 
      /**
       * For transit leg, the route's branding URL (if one exists). For non-transit legs, null.
       */
-     @XmlAttribute
      @JsonSerialize
      public String routeBrandingUrl = null;
 
@@ -269,7 +245,6 @@ public class Leg {
      * For non-transit legs, null.
      * This field is optional i.e. it is always null unless "showIntermediateStops" parameter is set to "true" in the planner request.
      */
-    @XmlElementWrapper(name = "intermediateStops")
     @JsonProperty(value="intermediateStops")
     public List<Place> stop;
 
@@ -281,49 +256,42 @@ public class Leg {
     /**
      * A series of turn by turn instructions used for walking, biking and driving. 
      */
-    @XmlElementWrapper(name = "steps")
     @JsonProperty(value="steps")
     public List<WalkStep> walkSteps;
 
     /**
      * A list of alerts relevant to this leg.
      */
-    @XmlElement
     @JsonSerialize
     public List<LocalizedAlert> alerts;
 
      /**
       * For transit legs, the short name of the route being used.
       */
-    @XmlAttribute
     @JsonSerialize
     public String routeShortName;
 
      /**
       * For transit legs, the long name of the route being used.
       */
-    @XmlAttribute
     @JsonSerialize
     public String routeLongName;
 
      /**
       * For transit legs, the boarding restriction given in GTFS, if applicable. Allowable values: mustPhone, coordinateWithDriver
       */
-    @XmlAttribute
     @JsonSerialize
     public String boardRule;
 
      /**
       * For transit legs, the alight restriction given in GTFS, if applicable. Allowable values: mustPhone, coordinateWithDriver
       */
-    @XmlAttribute
     @JsonSerialize
     public String alightRule;
 
      /**
       * True if this leg is a bicycle leg in which the bicycle has been rented.
       */
-    @XmlAttribute
     @JsonSerialize
     public Boolean rentedBike;
 
@@ -333,14 +301,12 @@ public class Leg {
      /**
       * Information about whether a trip is peak or off-peak
       */
-     @XmlAttribute
      @JsonSerialize
      public Integer peakOffpeak;
 
      /**
        * For transit legs which reflect frequency-based trips, the frequency service parameters for this trip.
       */
-     @XmlAttribute
      @JsonSerialize
      public FrequencyDetail frequencyDetail;
 
@@ -362,7 +328,6 @@ public class Leg {
     /**
      * The leg's duration in seconds
      */
-    @XmlElement
     @JsonSerialize
     public double getDuration() {
         return endTime.getTimeInMillis()/1000.0 - startTime.getTimeInMillis()/1000.0;

@@ -14,7 +14,10 @@ package org.opentripplanner.api.model;
 
 public class VehicleInfo {
 
-    public enum StopStatus { INCOMING_AT, STOPPED_AT, IN_TRANSIT_TO };
+    public enum StopStatus {
+        INCOMING_AT, STOPPED_AT, IN_TRANSIT_TO, // GTFS-RT statuses
+        DELAYED                                 // extended statuses
+    };
 
     private String vehicleId;
 

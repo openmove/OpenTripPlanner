@@ -16,6 +16,8 @@ package org.opentripplanner.updater.alerts;
 import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
 import com.google.transit.realtime.GtfsRealtime.VehiclePosition;
+import com.google.transit.realtime.GtfsRealtimeMNR;
+import com.google.transit.realtime.GtfsRealtimeMNR.MnrVehiclePosition;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.api.model.VehicleInfo;
@@ -85,18 +87,14 @@ public class VehiclePositionsUpdateHandler extends AbstractUpdateHandler {
             if (vehiclePosition.hasCurrentStopSequence()) {
                 vehicleInfo.setCurrentStopSequence(vehiclePosition.getCurrentStopSequence());
             }
-            if (vehiclePosition.hasCurrentStatus()) {
-                switch (vehiclePosition.getCurrentStatus()) {
-                    case INCOMING_AT:
-                        vehicleInfo.setCurrentStopStatus(VehicleInfo.StopStatus.INCOMING_AT);
-                        break;
-                    case STOPPED_AT:
-                        vehicleInfo.setCurrentStopStatus(VehicleInfo.StopStatus.STOPPED_AT);
-                        break;
-                    case IN_TRANSIT_TO:
-                        vehicleInfo.setCurrentStopStatus(VehicleInfo.StopStatus.IN_TRANSIT_TO);
-                        break;
+            if (vehiclePosition.hasExtension(GtfsRealtimeMNR.mnrVehiclePosition)) {
+                MnrVehiclePosition ext = vehiclePosition.getExtension(GtfsRealtimeMNR.mnrVehiclePosition);
+                if (ext.hasCurrentStatus()) {
+                    vehicleInfo.setCurrentStopStatus(convertVehicleStatus(ext.getCurrentStatus()));
                 }
+            }
+            if (vehiclePosition.hasCurrentStatus() && vehicleInfo.getCurrentStopStatus() == null) {
+                vehicleInfo.setCurrentStopStatus(convertVehicleStatus(vehiclePosition.getCurrentStatus()));
             }
             if (vehiclePosition.getPosition().hasBearing()) {
                 vehicleInfo.setBearing((double) vehiclePosition.getPosition().getBearing());
@@ -108,4 +106,24 @@ public class VehiclePositionsUpdateHandler extends AbstractUpdateHandler {
             alertPatchService.apply(patch);
         }
     }
+
+    private static VehicleInfo.StopStatus convertVehicleStatus(VehiclePosition.VehicleStopStatus status) {
+        switch(status) {
+            case INCOMING_AT:
+                return VehicleInfo.StopStatus.INCOMING_AT;
+            case STOPPED_AT:
+                return VehicleInfo.StopStatus.STOPPED_AT;
+            case IN_TRANSIT_TO:
+                return VehicleInfo.StopStatus.IN_TRANSIT_TO;
+        }
+        return null;
+    }
+
+    private static VehicleInfo.StopStatus convertVehicleStatus(MnrVehiclePosition.MnrVehicleStopStatus status) {
+        if (MnrVehiclePosition.MnrVehicleStopStatus.DELAYED.equals(status)) {
+            return VehicleInfo.StopStatus.DELAYED;
+        }
+        return null;
+    }
+
 }

@@ -70,7 +70,7 @@ public class NearbySchedulesResource {
     private Double lon;
 
     /**
-     * Maximum walking distance that the search will use to find stops.
+     * Maximum walking distance, in meters, that the search will use to find stops.
      */
     @QueryParam("radius")
     private Double radius;

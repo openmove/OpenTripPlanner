@@ -203,7 +203,7 @@ public class StreetEdge extends Edge implements Cloneable {
      * @return
      */
     private boolean canTraverse(RoutingRequest options, TraverseMode mode) {
-        if (options.wheelchairAccessible && !options.getRoutingContext().streetWheelchairRestrictionRemoved) {
+        if (options.wheelchairAccessible && !options.isStreetWheelchairRestrictionRemoved()) {
             if (!isWheelchairAccessible()) {
                 return false;
             }
@@ -362,7 +362,7 @@ public class StreetEdge extends Edge implements Cloneable {
         double time = getDistance() / speed;
         double weight;
         // TODO(flamholz): factor out this bike, wheelchair and walking specific logic to somewhere central.
-        if (options.wheelchairAccessible  && !options.getRoutingContext().streetWheelchairRestrictionRemoved) {
+        if (options.wheelchairAccessible  && !options.isStreetWheelchairRestrictionRemoved()) {
             weight = getSlopeSpeedEffectiveLength() / speed;
         } else if (traverseMode.equals(TraverseMode.BICYCLE)) {
             time = getSlopeSpeedEffectiveLength() / speed;

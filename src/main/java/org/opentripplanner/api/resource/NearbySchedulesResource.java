@@ -149,6 +149,12 @@ public class NearbySchedulesResource {
     private boolean omitNonPickups;
 
     /**
+     * if given, tripHeadSign to return arrival/departure time for.
+     */
+    @QueryParam("tripHeadSign")
+    private String tripHeadSign;
+
+    /**
      * If true, group arrivals/departures by parent stop (station), instead of by stop.
      */
     @QueryParam("groupByParent")
@@ -272,7 +278,7 @@ public class NearbySchedulesResource {
             }
 
             List<StopTimesInPattern> stopTimesPerPattern = index.stopTimesForStop(
-                    stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null,
+                    stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null, tripHeadSign,
                     bannedAgencies, bannedRouteTypes, getTrackIds(), showCancelledTrips, includeStopsForTrip);
 
             StopTimesByStop stopTimes = stopIdAndStopTimesMap.get(key);

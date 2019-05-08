@@ -428,7 +428,7 @@ public class GraphIndex {
      * @return
      */
     public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups,
-                                                     RouteMatcher routeMatcher, Integer direction, String headsign, String tripHeadSign, Set<String> bannedAgencies, Set<Integer> bannedRouteTypes,
+                                                     RouteMatcher routeMatcher, Integer direction, String headsign, String tripHeadsign, Set<String> bannedAgencies, Set<Integer> bannedRouteTypes,
                                                      Collection<String> trackIds, boolean showCancelledTrips, boolean includeStopsForTrip) {
         if (startTime == 0) {
             startTime = System.currentTimeMillis() / 1000;
@@ -489,7 +489,7 @@ public class GraphIndex {
                     if (currStop == stop) {
                         if(omitNonPickups && pattern.stopPattern.pickups[sidx] == pattern.stopPattern.PICKDROP_NONE) continue;
                         for (TripTimes t : tt.tripTimes) {
-                            if (tripHeadSign != null && !tripHeadSign.equals(t.trip.getTripHeadsign())) continue;
+                            if (tripHeadsign != null && !tripHeadsign.equals(t.trip.getTripHeadsign())) continue;
                             if (!sd.serviceRunning(t.serviceCode)) continue;
                             if (headsign != null && !headsign.equals(t.getHeadsign(sidx))) continue;
                             if (trackIds != null && t.getTrack(sidx) != null && !trackIds.contains(t.getTrack(sidx)))

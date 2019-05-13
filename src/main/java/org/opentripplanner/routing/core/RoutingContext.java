@@ -128,9 +128,6 @@ public class RoutingContext implements Cloneable {
     /** Indicates that a maximum slope constraint was specified but was removed during routing to produce a result. */
     public boolean slopeRestrictionRemoved = false;
 
-    /** Indicates that wheelchair accessible constraint was specified but was removed from street segments during routing to produce a result. */
-    public boolean streetWheelchairRestrictionRemoved = false;
-
     /* CONSTRUCTORS */
 
     /**

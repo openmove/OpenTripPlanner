@@ -1537,11 +1537,4 @@ public class RoutingRequest implements Cloneable, Serializable {
         if (!planAlerts.contains(alert))
             planAlerts.add(alert);
     }
-
-    public boolean isStreetWheelchairRestrictionRemoved() {
-        if (rctx == null) {
-            return false;
-        }
-        return rctx.streetWheelchairRestrictionRemoved;
-    }
 }

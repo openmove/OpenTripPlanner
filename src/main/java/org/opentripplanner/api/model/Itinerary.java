@@ -122,11 +122,6 @@ public class Itinerary {
      */
     public boolean tooSloped = false;
 
-    /**
-     * This itinerary has ignored wheelchair accessible constraint from street segments during routing.
-     */
-    public boolean streetWheelchairRestrictionIgnored = false;
-
     /** 
      * adds leg to array list
      * @param leg

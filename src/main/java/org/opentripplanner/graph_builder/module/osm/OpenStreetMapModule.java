@@ -1079,6 +1079,17 @@ public class OpenStreetMapModule implements GraphBuilderModule {
             return new P2<StreetEdge>(street, backStreet);
         }
 
+        // used to set roadWayClass
+        // TODO: during code review, name this something better or refactor to distinguish it from streetClass
+        private final String[] roadWayClassRankings = new String[]{
+            "motorway",
+            "trunk",
+            "primary",
+            "secondary",
+            "tertiary",
+            "residential"
+        };
+
         private StreetEdge getEdgeForStreet(OsmVertex startEndpoint, OsmVertex endEndpoint,
                                                  OSMWay way, int index, long startNode, long endNode, double length,
                                                  StreetTraversalPermission permissions, LineString geometry, boolean back) {
@@ -1100,6 +1111,28 @@ public class OpenStreetMapModule implements GraphBuilderModule {
             street.setCarSpeed(carSpeed);
             street.setTNCStopSuitability(wayPropertySet.isSuitableForTNCStop(way));
             street.setFloatingCarDropoffSuitability(wayPropertySet.isSuitableForStreetParking(way));
+            // A road is one-way if:
+            // - car is allowed forward &&
+            //     way is marked as one-way &&
+            //     no contra-flow bicycling allowed &&
+            //     no cycleways exist as they can often have contra-flow travel
+            // - or car is not allowed &&
+            //     bicycling is allowed &&
+            //     one way forward specifically for bicycling is allowed &&
+            //     one way backward specifically for bicycling is not allowed
+            street.setOneWay(
+                (permissions.allows(TraverseMode.CAR) &&
+                    way.isOneWayForwardDriving() &&
+                    !way.isOneWayReverseBicycle() &&
+                    !way.isOpposableCycleway() &&
+                    !way.hasAnyCycleTrack()
+                ) || (
+                    !permissions.allows(TraverseMode.CAR) &&
+                        permissions.allows(TraverseMode.BICYCLE) &&
+                        way.isOneWayForwardBicycle() &&
+                        !way.isOneWayReverseBicycle()
+                )
+            );
 
             String highway = way.getTag("highway");
             int cls;
@@ -1119,6 +1152,16 @@ public class OpenStreetMapModule implements GraphBuilderModule {
 
             cls |= OSMFilter.getStreetClasses(way);
             street.setStreetClass(cls);
+
+            // TODO: during code review, name this something better or refactor to distinguish it from streetClass
+            if (highway != null) {
+                for (int i = 0; i < roadWayClassRankings.length; i++) {
+                    if (highway.startsWith(roadWayClassRankings[i])) {
+                        street.setRoadWayClass((byte) (i + 1));
+                        break;
+                    }
+                }
+            }
 
             if (!way.hasTag("name") && !way.hasTag("ref")) {
                 street.setHasBogusName(true);

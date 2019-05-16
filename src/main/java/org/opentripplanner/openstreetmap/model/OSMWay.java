@@ -125,4 +125,48 @@ public class OSMWay extends OSMWithTags {
                 || (cyclewayLeft != null && cyclewayLeft.startsWith("opposite"))
                 || (cyclewayRight != null && cyclewayRight.startsWith("opposite"));
     }
+
+    /**
+     * Returns true if any cycleway: track tag exists on the way.
+     */
+    public boolean hasAnyCycleTrack() {
+        String cycleway = getTag("cycleway");
+        String cyclewayLeft = getTag("cycleway:left");
+        String cyclewayRight = getTag("cycleway:right");
+
+        return (cycleway != null && cycleway.contains("track"))
+            || (cyclewayLeft != null && cyclewayLeft.contains("track"))
+            || (cyclewayRight != null && cyclewayRight.contains("track"));
+    }
+
+    // an array of highway tags considered tertiary.
+    // See descriptions of each tag type here: https://wiki.openstreetmap.org/wiki/Key:highway
+    private static final String[] tertiaryHighwayTagTypes = new String[]{
+        "service",
+        "pedestrian",
+        "escape",
+        "footway",
+        "bridleway",
+        "steps",
+        "path",
+        "cycleway",
+        "elevator",
+        "rest_area",
+        "services",
+        "emergency_bay",
+        "trail"
+    };
+
+    /**
+     * Returns true if this way is NOT some kind of primary or secondary road (ie is a service way, footpath, steps or
+     * other kind of way that does not warrant adding extra delay to the CAR or MICROMOBILITY modes on straight turns)
+     */
+    public boolean isTertiaryWay() {
+        String highwayType = getTag("highway");
+        if (highwayType == null) return true; // is it possible to have a streetedge without a highway tag?
+        for (String tertiaryHighwayTagType : tertiaryHighwayTagTypes) {
+            if (highwayType.equalsIgnoreCase(tertiaryHighwayTagType)) return true;
+        }
+        return false;
+    }
 }

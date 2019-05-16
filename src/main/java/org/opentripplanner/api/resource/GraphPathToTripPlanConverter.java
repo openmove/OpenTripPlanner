@@ -1118,7 +1118,7 @@ public abstract class GraphPathToTripPlanConverter {
                         State twoStatesBack = backState.getBackState();
                         Vertex backVertex = twoStatesBack.getVertex();
                         for (Edge alternative : backVertex.getOutgoingStreetEdges()) {
-                            List<Edge> alternatives = alternative.getToVertex()
+                            List<StreetEdge> alternatives = alternative.getToVertex()
                                     .getOutgoingStreetEdges();
                             if (alternatives.size() == 0) {
                                 continue; // this is not an alternative

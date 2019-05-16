@@ -1,6 +1,7 @@
 package org.opentripplanner.graph_builder.module.stopsAlerts;
 
 import org.opentripplanner.routing.edgetype.PathwayEdge;
+import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.StreetTransitLink;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -16,7 +17,7 @@ public class UnconnectedStop extends AbstractStopTester {
      */
     @Override
     public boolean fulfillDemands(TransitStop ts, Graph graph) {
-        List<Edge> outgoingStreets = ts.getOutgoingStreetEdges();
+        List<StreetEdge> outgoingStreets = ts.getOutgoingStreetEdges();
         boolean hasStreetLink = false;
         for(Edge e:ts.getIncoming()){
             if(e instanceof StreetTransitLink || e instanceof PathwayEdge){

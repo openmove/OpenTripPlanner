@@ -140,6 +140,21 @@ public class StreetEdge extends Edge implements Cloneable {
     // whether or not this street is a good place to dropoff a floating car rental
     private boolean suitableForFloatingCarRentalDropoff = true;
 
+    // whether or not this street is a one-way street
+    private boolean isOneWay = false;
+
+    // the roadway classification for this StreetEdge. This is used for caluclating left turn penalties for
+    // CAR and MICROMOBILITY modes
+    // TODO: during code review, name this something better or refactor to distinguish it from streetClass
+    //
+    // 1 = motorway, motorway_link
+    // 2 = trunk, trunk_link
+    // 3 = primary, primary_link
+    // 4 = secondary, secondary_link
+    // 5 = tertiary, tertiary_link
+    // 6 = residential, unclassified
+    // 7 = everything else
+    private byte roadWayClass = 7;
 
     public StreetEdge(StreetVertex v1, StreetVertex v2, LineString geometry,
                       I18NString name, double length,
@@ -1288,5 +1303,21 @@ public class StreetEdge extends Edge implements Cloneable {
             return false;
         }
         return carNetworks.contains(carNetwork);
+    }
+
+    public boolean isOneWay() {
+        return isOneWay;
+    }
+
+    public void setOneWay(boolean isOneWay) {
+        this.isOneWay = isOneWay;
+    }
+
+    public byte getRoadWayClass() {
+        return roadWayClass;
+    }
+
+    public void setRoadWayClass(byte roadWayClass) {
+        this.roadWayClass = roadWayClass;
     }
 }

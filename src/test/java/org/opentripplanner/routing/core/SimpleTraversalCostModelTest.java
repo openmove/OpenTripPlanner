@@ -172,8 +172,8 @@ public class SimpleTraversalCostModelTest {
         
         double traversalCost = costModel.computeTraversalCost(v, fromEdge, toEdge, mode, options, fromSpeed, toSpeed);
         
-        // Cost with default values = 5.0
-        assertEquals(5, traversalCost, 0.0);
+        // Cost with default values = 4.0
+        assertEquals(4, traversalCost, 0.0);
     }
     
     @Test

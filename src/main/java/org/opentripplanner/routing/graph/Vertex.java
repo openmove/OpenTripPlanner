@@ -1,24 +1,24 @@
 package org.opentripplanner.routing.graph;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import org.opentripplanner.common.MavenVersion;
+import org.opentripplanner.common.geometry.DirectionUtils;
+import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.util.I18NString;
+import org.opentripplanner.util.NonLocalizedString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
-
-import javax.xml.bind.annotation.XmlTransient;
-
-import org.opentripplanner.common.MavenVersion;
-import org.opentripplanner.common.geometry.DirectionUtils;
-import org.opentripplanner.routing.edgetype.StreetEdge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.vividsolutions.jts.geom.Coordinate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
-import org.opentripplanner.util.I18NString;
-import org.opentripplanner.util.NonLocalizedString;
 
 /**
  * A vertex in the graph. Each vertex has a longitude/latitude location, as well as a set of
@@ -273,8 +273,8 @@ public abstract class Vertex implements Serializable, Cloneable {
     /* UTILITY METHODS FOR SEARCHING, GRAPH BUILDING, AND GENERATING WALKSTEPS */
 
     @XmlTransient
-    public List<Edge> getOutgoingStreetEdges() {
-        List<Edge> result = new ArrayList<Edge>();
+    public List<StreetEdge> getOutgoingStreetEdges() {
+        List<StreetEdge> result = new ArrayList<>();
         for (Edge out : this.getOutgoing()) {
             if (!(out instanceof StreetEdge)) {
                 continue;

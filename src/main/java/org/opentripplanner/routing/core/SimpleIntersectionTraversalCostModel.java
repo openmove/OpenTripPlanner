@@ -1,9 +1,9 @@
 package org.opentripplanner.routing.core;
 
-import java.io.Serializable;
-
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
+
+import java.io.Serializable;
 
 public class SimpleIntersectionTraversalCostModel extends AbstractIntersectionTraversalCostModel implements Serializable {
 
@@ -40,7 +40,8 @@ public class SimpleIntersectionTraversalCostModel extends AbstractIntersectionTr
         }
 
         // Non-driving cases are much simpler. Handled generically in the base class.
-        if (!mode.isDriving()) {
+        // The turn times are much lower with non-driving, so if using Micromobility, use driving turn times
+        if (!mode.isDriving() && mode != TraverseMode.MICROMOBILITY) {
             return computeNonDrivingTraversalCost(v, from, to, fromSpeed, toSpeed);
         }
 
@@ -52,9 +53,9 @@ public class SimpleIntersectionTraversalCostModel extends AbstractIntersectionTr
             if (isRightTurn(turnAngle)) {
                 turnCost = expectedRightAtLightTimeSec;
             } else if (isLeftTurn(turnAngle)) {
-                turnCost = expectedLeftAtLightTimeSec;
+                turnCost = getLeftTurnCost(expectedLeftAtLightTimeSec, from, to);
             } else {
-                turnCost = expectedStraightAtLightTimeSec;
+                turnCost = getStraightTurnCost(v, from, to, expectedStraightAtLightTimeSec);
             }
         } else {
 
@@ -67,13 +68,75 @@ public class SimpleIntersectionTraversalCostModel extends AbstractIntersectionTr
             if (isRightTurn(turnAngle)) {
                 turnCost = expectedRightNoLightTimeSec;
             } else if (isLeftTurn(turnAngle)) {
-                turnCost = expectedLeftNoLightTimeSec;
+                turnCost = getLeftTurnCost(expectedLeftNoLightTimeSec, from, to);;
             } else {
-                turnCost = expectedStraightNoLightTimeSec;
+                turnCost = getStraightTurnCost(v, from, to, expectedStraightNoLightTimeSec);
             }
         }
 
         return turnCost;
     }
 
+    /**
+     * Add a big penalty for left turns from tertiary roads to non-tertiary roads.
+     */
+    private double getLeftTurnCost(Double baseTurnCost, StreetEdge from, StreetEdge to) {
+        int roadWayClassDiff = from.getRoadWayClass() - to.getRoadWayClass();
+        return roadWayClassDiff < 0
+            // going from a higher class to a lower class
+            // reduce the penalty from base case by 1 second
+            ? baseTurnCost - 1
+            // turning from an equal or lower class onto an equal or higher class
+            // multiply the penalty by the log of the difference in classes + 1
+            : baseTurnCost * (1 + Math.log(roadWayClassDiff + 1));
+    }
+
+    /**
+     * Straight turns should often have lower delay, but certain characteristics should make the delay even lower.
+     * For example, one-way streets are generally faster than two-way streets. Also, straight turns at intersections
+     * where all other roadway types are an equal or lower classification of roadway should be considered free-flowing.
+     *
+     * @param v
+     * @param from
+     * @param to
+     * @param baseTurnCost
+     * @return
+     */
+    private double getStraightTurnCost(
+        IntersectionVertex v,
+        StreetEdge from,
+        StreetEdge to,
+        double baseTurnCost
+    ) {
+        // iterate through all other outgoing edges to check if they have a greater or equal classification
+        boolean otherOutgoingEdgesHaveLowerClassification = true;
+        int maxOtherClassification = 0;
+        for (StreetEdge outgoingStreetEdge : v.getOutgoingStreetEdges()) {
+            if (outgoingStreetEdge != from && outgoingStreetEdge.wayId != from.wayId &&
+                outgoingStreetEdge != to && outgoingStreetEdge.wayId != to.wayId &&
+                outgoingStreetEdge.getRoadWayClass() >= from.getRoadWayClass() &&
+                outgoingStreetEdge.getRoadWayClass() >= to.getRoadWayClass()
+            ) {
+                otherOutgoingEdgesHaveLowerClassification = false;
+                maxOtherClassification = Math.max(maxOtherClassification, outgoingStreetEdge.getRoadWayClass());
+            }
+        }
+        boolean oneWayTurn = from.isOneWay() && to.isOneWay();
+        return otherOutgoingEdgesHaveLowerClassification
+            // lower delay due to other StreetEdges being of lower classification
+            ? (oneWayTurn
+                ? ((maxOtherClassification == 7 && from.getRoadWayClass() > 7 && to.getRoadWayClass() > 7)
+                    // 0 turn penalty if
+                    // - on a one-way
+                    // - both from and to edgesAV having class > 7
+                    // - all other edges being lowest class ways (service, footway, etc)
+                    ? 0
+                    // give all other one ways half the base cost for all other types
+                    : baseTurnCost * 0.5)
+                // not one-way, but other roadways are equal or lower class, so give a slight advantage over the base cost
+                : baseTurnCost * 0.8
+            )
+            // outgoing edges have greater or equal classification, bump up cost a little
+            : baseTurnCost * (oneWayTurn ? 1.1 : 1.2);
+    }
 }

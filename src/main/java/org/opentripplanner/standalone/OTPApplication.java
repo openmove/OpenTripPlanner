@@ -10,6 +10,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ServerProperties;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.opentripplanner.api.common.OTPExceptionMapper;
+import org.opentripplanner.api.connectivity.StationConnectivityResource;
 import org.opentripplanner.api.model.JSONObjectMapperProvider;
 import org.opentripplanner.api.resource.*;
 import org.opentripplanner.index.GeocoderResource;
@@ -19,7 +20,6 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import javax.ws.rs.core.Application;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,7 +100,8 @@ public class OTPApplication extends Application {
             /* Features and Filters: extend Jersey, manipulate requests and responses. */
             CorsFilter.class,
             MultiPartFeature.class,
-            NearbySchedulesResource.class
+            NearbySchedulesResource.class,
+            StationConnectivityResource.class
         ));
 
         // Optionally: add classes defined by an ApiPlugin

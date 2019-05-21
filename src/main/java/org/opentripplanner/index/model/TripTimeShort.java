@@ -108,6 +108,9 @@ public class TripTimeShort {
     /** Optional: all stops for this trip, if indicated in API request */
     public List<StopShort> stopsForTrip;
 
+    /** realtime sign text, if given in data */
+    public String realtimeSignText;
+
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.
      */
@@ -135,6 +138,7 @@ public class TripTimeShort {
         pattern            = new PatternShort(tripPattern);
         timestamp          = tt.getRealTimeState().equals(RealTimeState.SCHEDULED) ? null : tt.getTimestamp();
         directionId        = tt.trip.getDirectionId();
+        realtimeSignText   = tt.getRealtimeSignText(i);
         // use final stop if no trip_headsign
         if (tripHeadsign == null) {
             tripHeadsign = tripPattern.getStop(tripPattern.getStops().size() - 1).getName();

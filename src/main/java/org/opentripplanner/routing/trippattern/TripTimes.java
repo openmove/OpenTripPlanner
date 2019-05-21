@@ -132,6 +132,9 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     /** Realtime track information */
     private String[] realtimeTracks;
 
+    /** Train status */
+    private String[] realtimeSignText;
+
     /** For materialized TripTimes, save the FrequencyEntry which the TripTimes was materialized from. */
     private transient FrequencyEntry frequencyEntry;
 
@@ -195,6 +198,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             this.tracks = null;
         }
         this.realtimeTracks = null;
+        this.realtimeSignText = null;
         LOG.trace("trip {} has timepoint at indexes {}", trip, timepoints);
     }
 
@@ -541,6 +545,17 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             return realtimeTracks[stop];
         }
         return tracks == null ? null : tracks[stop];
+    }
+
+    public void setRealtimeSignText(int stop, String signText) {
+        if (realtimeSignText == null) {
+            realtimeSignText = new String[getNumStops()];
+        }
+        realtimeSignText[stop] = signText;
+    }
+
+    public String getRealtimeSignText(int stop) {
+        return realtimeSignText == null ? null : realtimeSignText[stop];
     }
 
     public boolean hasStopHeadsigns() {

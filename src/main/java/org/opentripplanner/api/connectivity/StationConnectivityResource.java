@@ -78,13 +78,6 @@ public class StationConnectivityResource {
         StationConnectivityResult result = strategy.computeConnectivityResult(state, tstop);
         // Would we ever want to ignore elevator alerts?
 
-//        Stop stop = tstop.getStop();
-//        Set<Vertex> nodes = new HashSet<>();
-//        nodes.add(tstop);
-//        List<Alert> alerts = new ArrayList<>();
-//
-//        StationConnectivityResult result = new StationConnectivityResult(stop.getParentStation(), nodes, alerts);
-
         return result;
     }
 }

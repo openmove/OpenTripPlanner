@@ -39,8 +39,10 @@ public class StationConnectivityStrategy extends ConnectivityTemplate<StationCon
     protected StationConnectivityResult buildResult(TransitStop tstop,
                                                     Set<Vertex> vertices,
                                                     Set<Vertex> accessibles,
-                                                    List<Alert> alerts) {
-        return new StationConnectivityResult(tstop, vertices, accessibles, alerts);
+                                                    List<Alert> alerts,
+                                                    State state,
+                                                    Set<PathwayEdge> links) {
+        return new StationConnectivityResult(tstop, vertices, accessibles, alerts, graph, state, links);
     }
 
     @Override

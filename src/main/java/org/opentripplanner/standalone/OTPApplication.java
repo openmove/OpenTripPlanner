@@ -97,11 +97,11 @@ public class OTPApplication extends Application {
             ScriptResource.class,
             UpdaterStatusResource.class,
             ScenarioResource.class,
+            StationConnectivityResource.class,
             /* Features and Filters: extend Jersey, manipulate requests and responses. */
             CorsFilter.class,
             MultiPartFeature.class,
-            NearbySchedulesResource.class,
-            StationConnectivityResource.class
+            NearbySchedulesResource.class
         ));
 
         // Optionally: add classes defined by an ApiPlugin

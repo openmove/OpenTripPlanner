@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public class PathwayEdge extends Edge {
 
-    private enum Mode { NONE, WALKWAY, STAIRS, ELEVATOR }
+    public enum Mode { NONE, WALKWAY, STAIRS, ELEVATOR }
 
     private int traversalTime;
 
@@ -90,6 +90,8 @@ public class PathwayEdge extends Edge {
     public TraverseMode getMode() {
        return TraverseMode.WALK;
     }
+
+    public Mode getPathwayMode() { return this.pathwayMode; }
 
     @Override
     public LineString getGeometry() {

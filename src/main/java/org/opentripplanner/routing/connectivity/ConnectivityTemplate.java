@@ -36,6 +36,7 @@ public abstract class ConnectivityTemplate <T>{
     public T computeConnectivityResult(State state, TransitStop tstop) {
         Set<Vertex> seen = new HashSet<>();
         LinkedList<Vertex> queue = new LinkedList<>();
+        Set<PathwayEdge> links = new HashSet<>();
         Set<Vertex> vAccessibles = new HashSet<>();
         Set<Edge> eAccessibles = new HashSet<>();
 
@@ -51,7 +52,7 @@ public abstract class ConnectivityTemplate <T>{
 //                    && ((TransitStop) v).isEntrance() && ((TransitStop) v).hasWheelchairEntrance()) {
                 // success
                 // return AccessibilityResult.ALWAYS_ACCESSIBLE;
-                return buildResult(tstop, seen, vAccessibles, alerts);
+                return buildResult(tstop, seen, vAccessibles, alerts, state, links);
             }
             if (v instanceof TransitStop &&
                     ((TransitStop) v).isEntrance() &&
@@ -59,12 +60,15 @@ public abstract class ConnectivityTemplate <T>{
                 vAccessibles.add(v);
             }
             for (Edge e : v.getOutgoing()) {
-                if (e instanceof PathwayEdge && canUsePathway(state, (PathwayEdge) e, alerts)) {
-                    if (e.isWheelchairAccessible()) eAccessibles.add(e);
-                    Vertex w = e.getToVertex();
-                    if (!seen.contains(w)) {
-                        seen.add(w);
-                        queue.add(w);
+                if (e instanceof PathwayEdge) {
+                    links.add((PathwayEdge) e);
+                    if (canUsePathway(state, (PathwayEdge) e, alerts)) {
+                        if (e.isWheelchairAccessible()) eAccessibles.add(e);
+                        Vertex w = e.getToVertex();
+                        if (!seen.contains(w)) {
+                            seen.add(w);
+                            queue.add(w);
+                        }
                     }
                 }
             }
@@ -83,10 +87,11 @@ public abstract class ConnectivityTemplate <T>{
             }
         }
         // return AccessibilityResult.notAccessibleForReason(alerts);
-        return buildResult(tstop, seen, vAccessibles, alerts);
+        return buildResult(tstop, seen, vAccessibles, alerts, state, links);
     }
 
-    abstract protected T buildResult(TransitStop tstop, Set<Vertex> vertices, Set<Vertex> accessibles, List<Alert> alerts);
+    abstract protected T buildResult(TransitStop tstop, Set<Vertex> vertices, Set<Vertex> accessibles,
+                                     List<Alert> alerts, State state, Set<PathwayEdge> links);
     abstract protected boolean testForEarlyReturn(Vertex v);
     abstract protected boolean canUsePathway(State state, PathwayEdge pathway, List<Alert> alerts);
 

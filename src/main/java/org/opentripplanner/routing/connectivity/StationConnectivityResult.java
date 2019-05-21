@@ -16,20 +16,22 @@
 package org.opentripplanner.routing.connectivity;
 
 import org.onebusaway.gtfs.model.Stop;
+import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.routing.alertpatch.Alert;
+import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.edgetype.PathwayEdge;
+import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class StationConnectivityResult {
     private String stationName;
     private String stationId;
-    private String initialStopId;
     private Set<StationNode> nodes;
-    private List<Alert> alerts;
+    private List<LocalizedAlert> alerts;
+    private Set<StationLink> links;
 
     public String getStationId() {
         return stationId;
@@ -39,7 +41,7 @@ public class StationConnectivityResult {
         return nodes;
     }
 
-    public List<Alert> getAlerts() {
+    public List<LocalizedAlert> getAlerts() {
         return alerts;
     }
 
@@ -47,17 +49,27 @@ public class StationConnectivityResult {
         return stationName;
     }
 
+    public Set<StationLink> getLinks() { return this.links; }
+
     public StationConnectivityResult(TransitStop initialStop, Set<Vertex> vertices, Set<Vertex> accessibles,
-                                     List<Alert> alerts) {
+                                     List<Alert> alerts, Graph graph, State state, Set<PathwayEdge> pathways) {
         this.stationName = initialStop.getName();
         this.stationId = initialStop.getStop().getParentStation();
-        this.initialStopId = initialStop.getLabel();
 
         this.nodes = new HashSet<>();
         for (Vertex v: vertices) {
             nodes.add(new StationNode(v, accessibles.contains(v)));
         }
-        this.alerts = alerts;
+        this.alerts = new ArrayList<>();
+        alerts.forEach( (alert) -> this.alerts.add(new LocalizedAlert(alert, Locale.US)) );
+
+        this.links = new HashSet<>();
+        for (PathwayEdge e: pathways) {
+            boolean isActive = e.getElevatorIsOutOfServiceAlerts(graph, state).isEmpty();
+
+            links.add(new StationLink(e.getId(), e.getFromVertex().getIndex(), e.getToVertex().getIndex(),
+                    e.getPathwayMode(), e.getPathwayCode(), isActive));
+        }
     }
 
 }

@@ -18,20 +18,19 @@ package org.opentripplanner.routing.connectivity;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
-import java.util.Set;
-
 public class StationNode {
     public enum Type { STOP, STATION, ENTRANCE, OTHER, MEZZANINE }
 
-    private int index;
+    private int id;
     private String label;
     private double lat;
     private double lon;
     private Type type;
     private long osmWayId;
+    private boolean isAccessible;
 
-    public int getIndex() {
-        return index;
+    public int getId() {
+        return id;
     }
 
     public String getLabel() {
@@ -58,16 +57,13 @@ public class StationNode {
         return isAccessible;
     }
 
-    private boolean isAccessible;
-
-
-    public StationNode(int index, boolean isAccessible) {
-        this.index = index;
+    public StationNode(int id, boolean isAccessible) {
+        this.id = id;
         this.isAccessible = isAccessible;
     }
 
-    public StationNode(int index, String label, double lat, double lon) {
-        this.index = index;
+    public StationNode(int id, String label, double lat, double lon) {
+        this.id = id;
         this.label = label;
         this.lat = lat;
         this.lon = lon;

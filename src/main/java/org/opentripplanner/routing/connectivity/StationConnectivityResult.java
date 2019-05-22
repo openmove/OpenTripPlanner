@@ -52,7 +52,8 @@ public class StationConnectivityResult {
     public Set<StationLink> getLinks() { return this.links; }
 
     public StationConnectivityResult(TransitStop initialStop, Set<Vertex> vertices, Set<Vertex> accessibles,
-                                     List<Alert> alerts, Graph graph, State state, Set<PathwayEdge> pathways) {
+                                     List<Alert> alerts, Graph graph, State state, Set<PathwayEdge> pathways,
+                                     boolean earlyReturn) {
         this.stationName = initialStop.getName();
         this.stationId = initialStop.getStop().getParentStation();
 

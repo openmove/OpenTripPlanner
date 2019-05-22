@@ -36,21 +36,28 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.*;
 
 /**
- * Return the station connectivity, i.e. internal nodes and links, for the station associatied with the given stop.
+ * Return the station connectivity, i.e. internal nodes and links, for the station associated with the given stop,
+ * at the given date and time (for elevator alerts).
  */
 @Path("/routers/{routerId}/stationConnectivity")
 @XmlRootElement
 public class StationConnectivityResource {
 
     /**
-     *
+     * Stop of interest in the form MTA:101001,MNR:1, etc.
      */
     @QueryParam("stopId")
     private String stopIdString;
 
+    /**
+     * date for checking elevator alerts. Will default to the current date.
+     */
     @QueryParam("date")
     private String date;
 
+   /**
+     * time for checking elevator alerts. Will default to the current time.
+     */
     @QueryParam("time")
     private String time;
 
@@ -65,7 +72,8 @@ public class StationConnectivityResource {
     }
 
     /**
-     *
+     * Starting with the provided stop, walk the graph of connected pathway edges. Return list of nodes and links
+     * encountered and any alerts associated with elevator links.
      */
     @GET
     @Produces({ MediaType.APPLICATION_JSON })
@@ -76,7 +84,6 @@ public class StationConnectivityResource {
 
         StationConnectivityStrategy strategy = new StationConnectivityStrategy(router.graph);
         StationConnectivityResult result = strategy.computeConnectivityResult(state, tstop);
-        // Would we ever want to ignore elevator alerts?
 
         return result;
     }

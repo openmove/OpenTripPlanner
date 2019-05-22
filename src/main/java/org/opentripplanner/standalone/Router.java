@@ -198,7 +198,7 @@ public class Router {
 
         graph.consequencesStrategy = getConsequencesStrategyConfig(config.get("consequences"));
 
-        graph.stopAccessibilityStrategy = new DefaultStopAccessibilityStrategy();
+        graph.stopAccessibilityStrategy = new DefaultStopAccessibilityStrategy(graph);
         JsonNode stopAccessibilityStrategy = config.get("stopAccessibilityStrategy");
         if (stopAccessibilityStrategy != null) {
             if (stopAccessibilityStrategy.asText().equals("mta")) {

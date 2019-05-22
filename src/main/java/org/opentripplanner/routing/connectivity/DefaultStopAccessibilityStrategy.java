@@ -12,12 +12,39 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package org.opentripplanner.routing.connectivity;
 
+import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.edgetype.PathwayEdge;
+import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
-public class DefaultStopAccessibilityStrategy implements StopAccessibilityStrategy {
+import java.util.List;
+import java.util.Set;
+
+public class DefaultStopAccessibilityStrategy extends ConnectivityTemplate<AccessibilityResult> implements StopAccessibilityStrategy {
     @Override
     public AccessibilityResult stopIsAccessible(State state, TransitStop stop) {
         return stop.hasWheelchairEntrance() ? AccessibilityResult.ALWAYS_ACCESSIBLE : AccessibilityResult.NEVER_ACCESSIBLE;
+    }
+
+    public DefaultStopAccessibilityStrategy(Graph graph) {
+        super(graph);
+    }
+
+    @Override
+    protected boolean testForEarlyReturn(Vertex v) {
+        return false;
+    }
+
+    @Override
+    protected boolean canUsePathway(State state, PathwayEdge pathway, List<Alert> alerts) {
+        return false;
+    }
+
+    @Override
+    protected AccessibilityResult buildResult(TransitStop tstop, Set<Vertex> vertices, Set<Vertex> accessibles,
+                                              List<Alert> alerts, State state, Set<PathwayEdge> links, boolean earlyReturn) {
+        return null;
     }
 }

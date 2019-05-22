@@ -237,7 +237,7 @@ public class Graph implements Serializable {
     public ConsequencesStrategyFactory consequencesStrategy;
 
     /** Apply more complex stop accessibility rules */
-    public transient StopAccessibilityStrategy stopAccessibilityStrategy = new DefaultStopAccessibilityStrategy();
+    public transient StopAccessibilityStrategy stopAccessibilityStrategy = new DefaultStopAccessibilityStrategy(this);
 
     /** Optionally apply more complex transfer rules */
     public transient TransferPermissionStrategy transferPermissionStrategy = new DefaultTransferPermissionStrategy();

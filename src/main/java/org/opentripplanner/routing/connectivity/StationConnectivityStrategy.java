@@ -41,8 +41,9 @@ public class StationConnectivityStrategy extends ConnectivityTemplate<StationCon
                                                     Set<Vertex> accessibles,
                                                     List<Alert> alerts,
                                                     State state,
-                                                    Set<PathwayEdge> links) {
-        return new StationConnectivityResult(tstop, vertices, accessibles, alerts, graph, state, links);
+                                                    Set<PathwayEdge> links,
+                                                    boolean earlyReturn) {
+        return new StationConnectivityResult(tstop, vertices, accessibles, alerts, graph, state, links, earlyReturn);
     }
 
     @Override

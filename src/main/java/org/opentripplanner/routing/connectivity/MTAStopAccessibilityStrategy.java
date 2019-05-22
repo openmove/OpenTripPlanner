@@ -28,10 +28,8 @@ import java.util.Set;
 
 public class MTAStopAccessibilityStrategy extends DefaultStopAccessibilityStrategy {
 
-    private Graph graph;
-
     public MTAStopAccessibilityStrategy(Graph graph) {
-        this.graph = graph;
+        super(graph);
     }
 
     @Override
@@ -43,32 +41,26 @@ public class MTAStopAccessibilityStrategy extends DefaultStopAccessibilityStrate
 
     private AccessibilityResult stopIsAccessibleFromStreet(State state, TransitStop tstop) {
         // only by traversing pathways, can we get to the street?
-        Set<Vertex> seen = new HashSet<>();
-        LinkedList<Vertex> queue = new LinkedList<>();
-        queue.push(tstop);
-        seen.add(tstop);
-        List<Alert> alerts = new ArrayList<>();
-        while (!queue.isEmpty()) {
-            Vertex v = queue.pop();
-            if (v instanceof TransitStop
-                    && ((TransitStop) v).isEntrance() && ((TransitStop) v).hasWheelchairEntrance()) {
-                // success
-                return AccessibilityResult.ALWAYS_ACCESSIBLE;
-            }
-            for (Edge e : v.getOutgoing()) {
-                if (e instanceof PathwayEdge && canUsePathway(state, (PathwayEdge) e, alerts)) {
-                    Vertex w = e.getToVertex();
-                    if (!seen.contains(w)) {
-                        seen.add(w);
-                        queue.add(w);
-                    }
-                }
-            }
-        }
-        return AccessibilityResult.notAccessibleForReason(alerts);
+        return computeConnectivityResult(state, tstop);
     }
 
-    private boolean canUsePathway(State state, PathwayEdge pathway, List<Alert> alerts) {
+    @Override
+    protected boolean testForEarlyReturn(Vertex v) {
+        return (v instanceof TransitStop && ((TransitStop) v).isEntrance() && ((TransitStop) v).hasWheelchairEntrance());
+    }
+
+    @Override
+    protected AccessibilityResult buildResult(TransitStop tstop, Set<Vertex> vertices, Set<Vertex> accessibles,
+                                              List<Alert> alerts, State state, Set<PathwayEdge> links, boolean earlyReturn) {
+        if (earlyReturn) {
+            return AccessibilityResult.ALWAYS_ACCESSIBLE;
+        } else {
+            return AccessibilityResult.notAccessibleForReason(alerts);
+        }
+    }
+
+    @Override
+    protected boolean canUsePathway(State state, PathwayEdge pathway, List<Alert> alerts) {
         if (!pathway.isWheelchairAccessible())
             return false;
         if (!pathway.isElevator())

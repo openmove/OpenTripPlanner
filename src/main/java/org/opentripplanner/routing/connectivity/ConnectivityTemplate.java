@@ -25,6 +25,10 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 
 import java.util.*;
 
+/**
+ * Implementation of the template method pattern for traversing graphs within a station.
+ * @param <T> Type of connectivity result to be returned by computeConnectivityResult.
+ */
 public abstract class ConnectivityTemplate <T>{
 
     protected Graph graph;
@@ -33,6 +37,12 @@ public abstract class ConnectivityTemplate <T>{
         this.graph = graph;
     }
 
+    /**
+     * For the given initial graph, starting from tstop, using the date/time in state
+     * @param state
+     * @param tstop
+     * @return
+     */
     public T computeConnectivityResult(State state, TransitStop tstop) {
         Set<Vertex> seen = new HashSet<>();
         LinkedList<Vertex> queue = new LinkedList<>();
@@ -48,11 +58,7 @@ public abstract class ConnectivityTemplate <T>{
         while (!queue.isEmpty()) {
             Vertex v = queue.pop();
             if (testForEarlyReturn(v)) {
-//            if (v instanceof TransitStop
-//                    && ((TransitStop) v).isEntrance() && ((TransitStop) v).hasWheelchairEntrance()) {
-                // success
-                // return AccessibilityResult.ALWAYS_ACCESSIBLE;
-                return buildResult(tstop, seen, vAccessibles, alerts, state, links);
+               return buildResult(tstop, seen, vAccessibles, alerts, state, links, true);
             }
             if (v instanceof TransitStop &&
                     ((TransitStop) v).isEntrance() &&
@@ -87,11 +93,11 @@ public abstract class ConnectivityTemplate <T>{
             }
         }
         // return AccessibilityResult.notAccessibleForReason(alerts);
-        return buildResult(tstop, seen, vAccessibles, alerts, state, links);
+        return buildResult(tstop, seen, vAccessibles, alerts, state, links, false);
     }
 
     abstract protected T buildResult(TransitStop tstop, Set<Vertex> vertices, Set<Vertex> accessibles,
-                                     List<Alert> alerts, State state, Set<PathwayEdge> links);
+                                     List<Alert> alerts, State state, Set<PathwayEdge> links, boolean earlyReturn);
     abstract protected boolean testForEarlyReturn(Vertex v);
     abstract protected boolean canUsePathway(State state, PathwayEdge pathway, List<Alert> alerts);
 

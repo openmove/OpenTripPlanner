@@ -25,6 +25,12 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Implements a complete traversal of the pathway edges connected to a given stop:
+ * * no early return
+ * * build StationConnectivityResult
+ * * can use any pathway except an elevator with an alert, include alerts in result
+ */
 public class StationConnectivityStrategy extends ConnectivityTemplate<StationConnectivityResult> {
     public StationConnectivityStrategy(Graph graph) {
         super(graph);

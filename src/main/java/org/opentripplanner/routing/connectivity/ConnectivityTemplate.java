@@ -29,7 +29,7 @@ import java.util.*;
  * Implementation of the template method pattern for traversing graphs within a station.
  * @param <T> Type of connectivity result to be returned by computeConnectivityResult.
  */
-public abstract class ConnectivityTemplate <T>{
+public abstract class ConnectivityTemplate <T> {
 
     protected Graph graph;
 
@@ -38,10 +38,12 @@ public abstract class ConnectivityTemplate <T>{
     }
 
     /**
-     * For the given initial graph, starting from tstop, using the date/time in state
+     * For the given initial graph, starting from tstop, using the date/time in state, traverse the graph
+     * following only pathway edges that satisfy canUsePathway. Return if testForEarlyReturn is true, otherwise
+     * return once all useable pathways have ben traversed.
      * @param state
      * @param tstop
-     * @return
+     * @return object of type <T>
      */
     public T computeConnectivityResult(State state, TransitStop tstop) {
         Set<Vertex> seen = new HashSet<>();
@@ -92,24 +94,37 @@ public abstract class ConnectivityTemplate <T>{
                 }
             }
         }
-        // return AccessibilityResult.notAccessibleForReason(alerts);
         return buildResult(tstop, seen, vAccessibles, alerts, state, links, false);
     }
 
+    /**
+     *
+     * @param tstop
+     * @param vertices
+     * @param accessibles
+     * @param alerts
+     * @param state
+     * @param links
+     * @param earlyReturn
+     * @return object of type <T>
+     */
     abstract protected T buildResult(TransitStop tstop, Set<Vertex> vertices, Set<Vertex> accessibles,
                                      List<Alert> alerts, State state, Set<PathwayEdge> links, boolean earlyReturn);
+
+    /**
+     *
+     * @param v
+     * @return true or false
+     */
     abstract protected boolean testForEarlyReturn(Vertex v);
+
+    /**
+     *
+     * @param state
+     * @param pathway
+     * @param alerts
+     * @return return true or false
+     */
     abstract protected boolean canUsePathway(State state, PathwayEdge pathway, List<Alert> alerts);
 
-//    private boolean canUsePathway(State state, PathwayEdge pathway, List<Alert> alerts) {
-//        if (!pathway.isWheelchairAccessible())
-//            return false;
-//        if (!pathway.isElevator())
-//            return true;
-//        if (state.getOptions().ignoreRealtimeUpdates)
-//            return true;
-//        List<Alert> newAlerts = pathway.getElevatorIsOutOfServiceAlerts(graph, state);
-//        alerts.addAll(newAlerts);
-//        return newAlerts.isEmpty();
-//    }
 }

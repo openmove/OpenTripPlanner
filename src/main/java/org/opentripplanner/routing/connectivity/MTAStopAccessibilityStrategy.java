@@ -26,6 +26,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Extends default strategy to handle MTASBWY stops by finding first path to accessible entrance:
+ * * early return as soon an a wheel chair entrance is found
+ * * build AccessibilityResult
+ * * only use pathways that are accessible, include alerts in result
+ */
 public class MTAStopAccessibilityStrategy extends DefaultStopAccessibilityStrategy {
 
     public MTAStopAccessibilityStrategy(Graph graph) {

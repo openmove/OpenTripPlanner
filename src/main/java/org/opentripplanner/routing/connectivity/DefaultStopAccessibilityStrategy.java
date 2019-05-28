@@ -22,6 +22,9 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Implement strategy that a stop is accessible only if it has a wheel chair entrance.
+ */
 public class DefaultStopAccessibilityStrategy extends ConnectivityTemplate<AccessibilityResult> implements StopAccessibilityStrategy {
     @Override
     public AccessibilityResult stopIsAccessible(State state, TransitStop stop) {

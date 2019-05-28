@@ -26,6 +26,9 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 
 import java.util.*;
 
+/**
+ * Bundles connectivity elements, nodes, links, and alerts, into one model.
+ */
 public class StationConnectivityResult {
     private String stationName;
     private String stationId;

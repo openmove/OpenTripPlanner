@@ -18,6 +18,9 @@ package org.opentripplanner.routing.connectivity;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
+/**
+ * Models a node internal to a station.
+ */
 public class StationNode {
     public enum Type { STOP, STATION, ENTRANCE, OTHER, MEZZANINE }
 

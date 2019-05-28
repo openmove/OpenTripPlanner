@@ -17,6 +17,9 @@ package org.opentripplanner.routing.connectivity;
 
 import org.opentripplanner.routing.edgetype.PathwayEdge;
 
+/**
+ * Models a link internal to a station.
+ */
 public class StationLink {
     public enum Type { OTHER, WALKWAY, STAIRS, MOVING_SIDEWALK, ESCALATOR, ELEVATOR}
 

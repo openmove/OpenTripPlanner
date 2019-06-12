@@ -52,6 +52,7 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
         this.clientId = config.path("clientId").asText();
         this.clientSecret = config.path("clientSecret").asText();
         this.wheelChairAccessibleRideType = config.path("wheelChairAccessibleRideType").asText();
+        tolerateApiFailures = config.path("tolerateApiFailures").asBoolean();
     }
 
     // intended for use during testing

@@ -46,6 +46,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         this.serverToken = config.path("serverToken").asText();
         this.baseUrl = UBER_API_URL;
         this.wheelChairAccessibleRideType = config.path("wheelChairAccessibleRideType").asText();
+        tolerateApiFailures = config.path("tolerateApiFailures").asBoolean();
     }
 
     public UberTransportationNetworkCompanyDataSource (String serverToken, String baseUrl) {

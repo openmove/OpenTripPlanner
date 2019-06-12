@@ -34,6 +34,7 @@ public abstract class TransportationNetworkCompanyDataSource {
         CacheBuilder.newBuilder().expireAfterWrite(cacheTimeSeconds, TimeUnit.SECONDS).build();
 
     protected String wheelChairAccessibleRideType;
+    protected boolean tolerateApiFailures;
 
     // Abstract method to return the TransportationNetworkCompany enum type
     public abstract TransportationNetworkCompany getTransportationNetworkCompanyType();
@@ -67,5 +68,9 @@ public abstract class TransportationNetworkCompanyDataSource {
 
     protected boolean productIsWheelChairAccessible(String productId) {
         return productId.equals(wheelChairAccessibleRideType);
+    }
+
+    public boolean toleratesApiFailures () {
+        return tolerateApiFailures;
     }
 }

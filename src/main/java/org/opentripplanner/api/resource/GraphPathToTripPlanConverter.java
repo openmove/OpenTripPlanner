@@ -534,9 +534,17 @@ public abstract class GraphPathToTripPlanConverter {
                 LOG.warn("Removing itinerary due to TNC unavailability");
                 encounteredError = true;
             } catch (Exception e) {
-                LOG.error("Error fetching TNC data");
-                e.printStackTrace();
-                encounteredError = true;
+                if (service.allSourcesTolerateFailures()) {
+                    LOG.warn("Error encountered while fetching TNC data: {}", e.getLocalizedMessage());
+                    LOG.warn("Setting all TNC legs with blank tncData.");
+                    for (Leg tncLeg : tncLegs) {
+                        tncLeg.tncData = new TransportationNetworkCompanySummary(null, null);
+                    }
+                } else {
+                    LOG.error("Error fetching TNC data");
+                    e.printStackTrace();
+                    encounteredError = true;
+                }
             }
             // Shutdown thread pool.
             pool.shutdown();

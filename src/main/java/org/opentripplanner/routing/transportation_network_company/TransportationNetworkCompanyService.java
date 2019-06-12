@@ -164,4 +164,17 @@ public class TransportationNetworkCompanyService implements Serializable {
 
         return sources.get(co);
     }
+
+    /**
+     * Whether or not all sources tolerate API failures. Used by some trip planning functions to continue with some
+     * default assumptions about TNCs.
+     */
+    public boolean allSourcesTolerateFailures () {
+        for (TransportationNetworkCompanyDataSource source : sources.values()) {
+            if (!source.toleratesApiFailures()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

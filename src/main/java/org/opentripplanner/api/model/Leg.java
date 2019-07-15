@@ -313,6 +313,13 @@ public class Leg {
     /** The location of the vehicle serving the transit leg, if available */
     public VehicleInfo vehicleInfo;
 
+     /**
+      * For transit legs, whether or not fare card is accepted.
+      * For non-transit legs, false.
+      */
+     @JsonSerialize
+    public boolean regionalFareCardAccepted = false;
+
     /**
      * Whether this leg is a transit leg or not.
      * @return Boolean true if the leg is a transit leg

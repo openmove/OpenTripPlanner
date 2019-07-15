@@ -23,6 +23,7 @@ import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.FrequencyDetail;
 import org.opentripplanner.index.model.StopTimesByStop;
 import org.opentripplanner.index.model.StopTimesInPattern;
@@ -772,6 +773,10 @@ public abstract class GraphPathToTripPlanConverter {
             if (tripTimes.isFrequencyBased()) {
                 leg.frequencyDetail = new FrequencyDetail(tripTimes.getFrequencyEntry());
             }
+
+            if (GtfsLibrary.getTraverseMode(route) == TraverseMode.BUS) {
+                leg.regionalFareCardAccepted = (route.getRegionalFareCardAccepted() != 0);
+            }
         }
     }
 
@@ -792,6 +797,10 @@ public abstract class GraphPathToTripPlanConverter {
 
         Stop firstStop = firstVertex instanceof TransitVertex ?
                 ((TransitVertex) firstVertex).getStop(): null;
+
+        /* addPlaces is called after addTripFields, so leave regionalFareCardAccepted true if already set */
+        leg.regionalFareCardAccepted |= firstStop.getRegionalFareCardAccepted() != 0;
+
         Stop lastStop = lastVertex instanceof TransitVertex ?
                 ((TransitVertex) lastVertex).getStop(): null;
         TripTimes tripTimes = states[states.length - 1].getTripTimes();

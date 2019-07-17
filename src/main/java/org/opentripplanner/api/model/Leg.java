@@ -27,6 +27,7 @@ import org.opentripplanner.index.model.StopTimesByRouteAndHeadsign;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.util.model.EncodedPolylineBean;
+import org.opentripplanner.routing.core.Fare;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -314,6 +315,12 @@ public class Leg {
     public VehicleInfo vehicleInfo;
 
      /**
+      * Leg fare
+      */
+     @JsonSerialize
+     public Fare fare = new Fare();
+  
+     /** 
       * For transit legs, whether or not fare card is accepted.
       * For non-transit legs, false.
       */
@@ -328,8 +335,7 @@ public class Leg {
         if (mode == null) return null;
         else if (mode.equals(TraverseMode.WALK.toString())) return false;
         else if (mode.equals(TraverseMode.CAR.toString())) return false;
-        else if (mode.equals(TraverseMode.BICYCLE.toString())) return false;
-        else return true;
+        else return !mode.equals(TraverseMode.BICYCLE.toString());
     }
 
     /**

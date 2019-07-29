@@ -151,6 +151,9 @@ public class PathwayEdge extends Edge {
             time = wheelchairTraversalTime;
         }
         StateEditor s1 = s0.edit(this);
+        if (s0.backEdge instanceof TransferEdge) {
+            s1.setTransferPermissible();
+        }
         s1.incrementTimeInSeconds(time);
         s1.incrementWeight(time);
         s1.setBackMode(getMode());

@@ -151,6 +151,7 @@ public class PathwayEdge extends Edge {
             time = wheelchairTraversalTime;
         }
         StateEditor s1 = s0.edit(this);
+        // Allow transfers to the street if the PathwayEdge is proceeded by a TransferEdge
         if (s0.backEdge instanceof TransferEdge) {
             s1.setTransferPermissible();
         }

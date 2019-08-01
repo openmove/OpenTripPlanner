@@ -81,7 +81,7 @@
     <properties>
         <aws.version>1.11.602</aws.version>
         <geotools.version>10.5</geotools.version>
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.9.9</jackson.version>
         <jersey.version>2.18</jersey.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <site_id>developer.onebusaway.org</site_id>
@@ -643,7 +643,40 @@
             <artifactId>jackson-jaxrs-json-provider</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-        <!-- Jackson modules to serialize Jersey response objects to XML. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>${jackson.version}</version>
+            <exclusions>
+                <!-- jackson 2.9.9 includes reference to woodstox-core 5.1.0
+                     which requires stax2-api:4.1 which is binary imcompatible
+                      stax2-api:3.1.4 -->
+                <exclusion>
+                    <artifactId>com.fasterxml.woodstox</artifactId>
+                    <groupId>woodstox-core</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+            <version>5.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+            <version>${jackson.version}</version>
+            <exclusions>
+                <!-- jackson 2.9.9 includes reference to woodstox-core 5.1.0
+                     which requires stax2-api:4.1 which is binary imcompatible
+                      stax2-api:3.1.4 -->
+                <exclusion>
+                    <artifactId>com.fasterxml.woodstox</artifactId>
+                    <groupId>woodstox-core</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-xml-provider</artifactId>

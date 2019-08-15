@@ -267,53 +267,59 @@ public class NearbySchedulesResource {
         Map<AgencyAndId, StopTimesByStop> stopIdAndStopTimesMap = new LinkedHashMap<>();
         RouteMatcher routeMatcher = RouteMatcher.parse(routesStr);
         for (TransitStop tstop : transitStops) {
-            Stop stop = tstop.getStop();
-            AgencyAndId key = key(stop);
+            if(tstop == null || tstop.equals(null))
+            {
+                //TODO add a warning here to indicate no stop found??
+            } else
+            {
+                Stop stop = tstop.getStop();
+                AgencyAndId key = key(stop);
 
-            Set<TraverseMode> modes = getModes();
-            Set<String> bannedAgencies = getBannedAgencies();
-            Set<Integer> bannedRouteTypes = getBannedRouteTypes();
+                Set<TraverseMode> modes = getModes();
+                Set<String> bannedAgencies = getBannedAgencies();
+                Set<Integer> bannedRouteTypes = getBannedRouteTypes();
 
-            /* filter by mode */
-            if(modes != null && !stopHasMode(tstop, modes)){
-                continue;
-            }
-
-            if (router.defaultRoutingRequest.bannedStopsNearby.matches(stop)) {
-                continue;
-            }
-
-            Stop requiredStop = null;
-            if (stoppingAt != null){
-                AgencyAndId id = AgencyAndId.convertFromString(stoppingAt, ':');
-                requiredStop = index.stopForId.get(id);
-            }
-
-            List<StopTimesInPattern> stopTimesPerPattern = index.stopTimesForStop(
-                    stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null, tripHeadsign, requiredStop,
-                    bannedAgencies, bannedRouteTypes, getTrackIds(), showCancelledTrips, includeStopsForTrip);
-
-            StopTimesByStop stopTimes = stopIdAndStopTimesMap.get(key);
-
-            if (stopTimes == null) {
-                if (stateMap != null) {
-                    State state = stateMap.get(tstop);
-                    double distance = state.getWalkDistance();
-                    LinkedList<Coordinate> coords = new LinkedList<>();
-                    for (State s = state; s != null; s = s.getBackState()) {
-                        coords.addFirst(s.getVertex().getCoordinate());
-                    }
-                    long time = state.getElapsedTimeSeconds();
-                    stopTimes = new StopTimesByStop(stop, distance, time, coords, groupByParent);
-                } else {
-                    stopTimes = new StopTimesByStop(stop, groupByParent);
+                /* filter by mode */
+                if(modes != null && !stopHasMode(tstop, modes)){
+                    continue;
                 }
-                stopIdAndStopTimesMap.put(key, stopTimes);
+
+                if (router.defaultRoutingRequest.bannedStopsNearby.matches(stop)) {
+                    continue;
+                }
+
+                Stop requiredStop = null;
+                if (stoppingAt != null){
+                    AgencyAndId id = AgencyAndId.convertFromString(stoppingAt, ':');
+                    requiredStop = index.stopForId.get(id);
+                }
+
+                List<StopTimesInPattern> stopTimesPerPattern = index.stopTimesForStop(
+                        stop, startTime, timeRange, numberOfDepartures, omitNonPickups, routeMatcher, direction, null, tripHeadsign, requiredStop,
+                        bannedAgencies, bannedRouteTypes, getTrackIds(), showCancelledTrips, includeStopsForTrip);
+
+                StopTimesByStop stopTimes = stopIdAndStopTimesMap.get(key);
+
+                if (stopTimes == null) {
+                    if (stateMap != null) {
+                        State state = stateMap.get(tstop);
+                        double distance = state.getWalkDistance();
+                        LinkedList<Coordinate> coords = new LinkedList<>();
+                        for (State s = state; s != null; s = s.getBackState()) {
+                            coords.addFirst(s.getVertex().getCoordinate());
+                        }
+                        long time = state.getElapsedTimeSeconds();
+                        stopTimes = new StopTimesByStop(stop, distance, time, coords, groupByParent);
+                    } else {
+                        stopTimes = new StopTimesByStop(stop, groupByParent);
+                    }
+                    stopIdAndStopTimesMap.put(key, stopTimes);
+                }
+                stopTimes.addPatterns(stopTimesPerPattern);
+
+
+                addAlertsToStopTimes(stop, stopTimes);
             }
-            stopTimes.addPatterns(stopTimesPerPattern);
-
-
-            addAlertsToStopTimes(stop, stopTimes);
         }
 
 
@@ -390,7 +396,7 @@ public class NearbySchedulesResource {
                 // first try interpreting stop as a parent
                 Collection<Stop> children = index.stopsForParentStation.get(id);
                 if (children.isEmpty()) {
-                    throw new IllegalArgumentException("Unknown stop: " + st);
+                    stops.add(null);
                 }
                 stops.addAll(children);
             } else {

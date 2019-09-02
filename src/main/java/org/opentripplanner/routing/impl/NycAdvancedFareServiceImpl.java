@@ -91,19 +91,22 @@ class NycAgencyFare implements Serializable {
     float price;
     String startZone;
     String endZone;
+    String midZone;
 
     NycAgencyFare(NycServiceId serviceId,
                   FareType fareType,
                   NycFareConditionType fareConditionType,
                   float price,
                   String startZone,
-                  String endZone) {
+                  String endZone,
+                  String midZone) {
         this.serviceId = serviceId;
         this.fareType = fareType;
         this.fareConditionType = fareConditionType;
         this.price = price;
         this.startZone = startZone;
         this.endZone = endZone;
+        this.midZone = midZone;
     }
 
     public String getKey() {
@@ -112,11 +115,17 @@ class NycAgencyFare implements Serializable {
             internalKey += '_' + this.fareConditionType.toString();
         }
         if(this.startZone != null && !this.startZone.isEmpty()) {
-            internalKey += '_' + this.startZone;
+            internalKey += "_" + this.startZone;
         }
+
+        if(this.midZone != null && !this.midZone.isEmpty()) {
+            internalKey += "_" + this.midZone;
+        }
+
         if(this.endZone != null && !this.endZone.isEmpty()) {
-            internalKey += '_' + this.endZone;
+            internalKey += "_" + this.endZone;
         }
+
 
         return internalKey;
     }
@@ -186,6 +195,7 @@ class NycTraveledService implements Serializable {
     long rideTime;
     float price;
     String startZone;
+    String midZone;
 
     NycTraveledService(NycServiceId serviceId, AgencyAndId agencyAndId, long rideTime, float price) {
         this.serviceId = serviceId;
@@ -224,16 +234,16 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         NycServiceId lirr = new NycServiceId("LI", 2);
 
         // agency fares
-        NycAgencyFare nyctSubwayRegularFare = new NycAgencyFare(nyctSubway, FareType.regular, null, 2.75f, null, null);
-        NycAgencyFare nyctSubwayReducedFare = new NycAgencyFare(nyctSubway, FareType.special, null, 1.35f, null, null);
-        NycAgencyFare nyctLocalBusRegularFare = new NycAgencyFare(nyctLocalBus, FareType.regular, null, 2.75f, null, null);
-        NycAgencyFare nyctLocalBusReducedFare = new NycAgencyFare(nyctLocalBus, FareType.special, null, 1.35f, null, null);
-        NycAgencyFare nyctExpressBusRegularFare = new NycAgencyFare(nyctExpressBus, FareType.regular, null, 6.75f, null, null);
-        NycAgencyFare nyctExpressBusReducedFare = new NycAgencyFare(nyctExpressBus, FareType.special, NycFareConditionType.peak_hour_only, 3.35f, null, null);
-        NycAgencyFare mtabcLocalBusRegularFare = new NycAgencyFare(mtabcLocalBus, FareType.regular, null, 2.75f, null, null);
-        NycAgencyFare mtabcLocalBusReducedFare = new NycAgencyFare(mtabcLocalBus, FareType.special, null, 1.35f, null, null);
-        NycAgencyFare mtabcExpressBusRegularFare = new NycAgencyFare(mtabcExpressBus, FareType.regular, null, 6.75f, null, null);
-        NycAgencyFare mtabcExpressBusReducedFare = new NycAgencyFare(mtabcExpressBus, FareType.special, NycFareConditionType.peak_hour_only, 3.35f, null, null);
+        NycAgencyFare nyctSubwayRegularFare = new NycAgencyFare(nyctSubway, FareType.regular, null, 2.75f, null, null, null);
+        NycAgencyFare nyctSubwayReducedFare = new NycAgencyFare(nyctSubway, FareType.special, null, 1.35f, null, null, null);
+        NycAgencyFare nyctLocalBusRegularFare = new NycAgencyFare(nyctLocalBus, FareType.regular, null, 2.75f, null, null, null);
+        NycAgencyFare nyctLocalBusReducedFare = new NycAgencyFare(nyctLocalBus, FareType.special, null, 1.35f, null, null, null);
+        NycAgencyFare nyctExpressBusRegularFare = new NycAgencyFare(nyctExpressBus, FareType.regular, null, 6.75f, null, null, null);
+        NycAgencyFare nyctExpressBusReducedFare = new NycAgencyFare(nyctExpressBus, FareType.special, NycFareConditionType.peak_hour_only, 3.35f, null, null, null);
+        NycAgencyFare mtabcLocalBusRegularFare = new NycAgencyFare(mtabcLocalBus, FareType.regular, null, 2.75f, null, null, null);
+        NycAgencyFare mtabcLocalBusReducedFare = new NycAgencyFare(mtabcLocalBus, FareType.special, null, 1.35f, null, null, null);
+        NycAgencyFare mtabcExpressBusRegularFare = new NycAgencyFare(mtabcExpressBus, FareType.regular, null, 6.75f, null, null, null);
+        NycAgencyFare mtabcExpressBusReducedFare = new NycAgencyFare(mtabcExpressBus, FareType.special, NycFareConditionType.peak_hour_only, 3.35f, null, null, null);
 
         agencyFares.put(nyctSubwayRegularFare.getKey(), nyctSubwayRegularFare);
         agencyFares.put(nyctSubwayReducedFare.getKey(), nyctSubwayReducedFare);
@@ -351,7 +361,7 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
             Float value = entry.getValue();
             String startZone = key.split("to")[0];
             String endZone = key.split("to")[1];
-            NycAgencyFare lirrFare= new NycAgencyFare(lirr, FareType.regular, null, value.floatValue(), startZone, endZone);
+            NycAgencyFare lirrFare= new NycAgencyFare(lirr, FareType.regular, null, value.floatValue(), startZone, endZone, null);
             agencyFares.put(lirrFare.getKey(), lirrFare);
         }
 
@@ -374,7 +384,7 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
             Float value = entry.getValue();
             String startZone = key.split("to")[0];
             String endZone = key.split("to")[1];
-            NycAgencyFare lirrFare= new NycAgencyFare(lirr, FareType.regular, NycFareConditionType.am_peak_only, value.floatValue(), startZone, endZone);
+            NycAgencyFare lirrFare= new NycAgencyFare(lirr, FareType.regular, NycFareConditionType.am_peak_only, value.floatValue(), startZone, endZone,null);
             agencyFares.put(lirrFare.getKey(), lirrFare);
         }
 
@@ -396,8 +406,153 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
             Float value = entry.getValue();
             String startZone = key.split("to")[0];
             String endZone = key.split("to")[1];
-            NycAgencyFare lirrFare= new NycAgencyFare(lirr, FareType.regular, NycFareConditionType.pm_peak_only, value.floatValue(), startZone, endZone);
+            NycAgencyFare lirrFare= new NycAgencyFare(lirr, FareType.regular, null, value.floatValue(), startZone, endZone, null);
             agencyFares.put(lirrFare.getKey(), lirrFare);
+        }
+
+        lirrFareMap.clear();
+
+        // INDIRECT ROUTES
+
+        // via Woodside Station (ZONE 1) (Page 12-5)
+        lirrFareMap.put("1to1to1", 10.25f);
+        lirrFareMap.put("3to1to1", 11.5f);
+        lirrFareMap.put("4to1to1", 13f);
+        lirrFareMap.put("7to1to1", 14.5f);
+        lirrFareMap.put("9to1to1", 17.25f);
+        lirrFareMap.put("10to1to1", 20.25f);
+        lirrFareMap.put("12to1to1", 24.75f);
+        lirrFareMap.put("14to1to1", 31f);
+        lirrFareMap.put("91to1to1", 9f);
+
+        lirrFareMap.put("3to1to3", 12f);
+        lirrFareMap.put("4to1to3", 13.5f);
+        lirrFareMap.put("7to1to3", 15.75f);
+        lirrFareMap.put("9to1to3", 18.25f);
+        lirrFareMap.put("10to1to3", 20.5f);
+        lirrFareMap.put("12to1to3", 25f);
+        lirrFareMap.put("14to1to3", 32f);
+        lirrFareMap.put("91to1to3", 10.75f);
+
+        lirrFareMap.put("4to1to4", 14.75f);
+        lirrFareMap.put("7to1to4", 17.25f);
+        lirrFareMap.put("9to1to4", 19.75f);
+        lirrFareMap.put("10to1to4", 22.25f);
+        lirrFareMap.put("12to1to4", 27f);
+        lirrFareMap.put("14to1to4", 33.75f);
+        lirrFareMap.put("91to1to4", 12.5f);
+
+        lirrFareMap.put("91to1to7", 14f);
+
+        lirrFareMap.put("91to1to9", 16.5f);
+
+        lirrFareMap.put("91to1to10", 19.75f);
+
+        lirrFareMap.put("91to1to12", 23.5f);
+
+        lirrFareMap.put("91to1to14", 30.5f);
+
+
+        // via Jamaica Station (ZONE 3) (Page 12-6)
+        lirrFareMap.put("1to3to1", 12f);
+
+        lirrFareMap.put("3to3to3", 5.5f);
+        lirrFareMap.put("4to3to3", 9f);
+        lirrFareMap.put("7to3to3", 10.5f);
+        lirrFareMap.put("9to3to3", 13f);
+        lirrFareMap.put("10to3to3", 15.75f);
+        lirrFareMap.put("12to3to3", 20.5f);
+        lirrFareMap.put("14to3to3", 27f);
+
+        lirrFareMap.put("4to3to4", 10f);
+        lirrFareMap.put("7to3to4", 11f);
+        lirrFareMap.put("9to3to4", 13.5f);
+        lirrFareMap.put("10to3to4", 16.5f);
+        lirrFareMap.put("12to3to4", 21.25f);
+        lirrFareMap.put("14to3to4", 27.75f);
+
+        lirrFareMap.put("7to3to7", 12.25f);
+        lirrFareMap.put("9to3to7", 15.75f);
+        lirrFareMap.put("10to3to7", 18.25f);
+        lirrFareMap.put("12to3to7", 22.75f);
+        lirrFareMap.put("14to3to7", 29.75f);
+
+        lirrFareMap.put("9to3to9", 18.5f);
+        lirrFareMap.put("10to3to9", 21.25f);
+        lirrFareMap.put("12to3to9", 26f);
+        lirrFareMap.put("14to3to9", 32.75f);
+
+        lirrFareMap.put("10to3to10", 22.75f);
+        lirrFareMap.put("12to3to10", 28f);
+        lirrFareMap.put("14to3to10", 34.75f);
+
+        lirrFareMap.put("12to3to12", 33f);
+        lirrFareMap.put("14to3to12", 40f);
+
+        lirrFareMap.put("14to3to14", 43.5f);
+
+        // via Lynbrook, Mineola, Valley Stream (ZONE 4) (Page 12-7)
+        lirrFareMap.put("4to4to4", 4.25f);
+        lirrFareMap.put("7to4to4", 4.25f);
+        lirrFareMap.put("9to4to4", 6f);
+        lirrFareMap.put("10to4to4", 8.25f);
+        lirrFareMap.put("12to4to4", 12f);
+        lirrFareMap.put("14to4to4", 18.5f);
+
+        lirrFareMap.put("7to4to7", 4.5f);
+        lirrFareMap.put("9to4to7", 6.5f);
+        lirrFareMap.put("10to4to7", 9f);
+        lirrFareMap.put("12to4to7", 12.25f);
+        lirrFareMap.put("14to4to7", 18.75f);
+
+        lirrFareMap.put("9to4to9", 9.25f);
+        lirrFareMap.put("10to4to9", 11f);
+        lirrFareMap.put("12to4to9", 14.75f);
+        lirrFareMap.put("14to4to9", 21.75f);
+
+        lirrFareMap.put("10to4to10", 13.5f);
+        lirrFareMap.put("12to4to10", 17.75f);
+        lirrFareMap.put("14to4to10", 24.5f);
+
+        lirrFareMap.put("12to4to12", 21.75f);
+        lirrFareMap.put("14to4to12", 28f);
+
+        lirrFareMap.put("14to4to14", 30.75f);
+
+        // via Hicksville (ZONE 7) (Page 12-8)
+        lirrFareMap.put("7to7to7", 4.25f);
+        lirrFareMap.put("9to7to7", 4.25f);
+        lirrFareMap.put("10to7to7", 6f);
+        lirrFareMap.put("12to7to7", 10.5f);
+        lirrFareMap.put("14to7to7", 17.25f);
+
+        lirrFareMap.put("9to7to9", 4.5f);
+        lirrFareMap.put("10to7to9", 6.5f);
+        lirrFareMap.put("12to7to9", 11f);
+        lirrFareMap.put("14to7to9", 17.75f);
+
+        lirrFareMap.put("10to7to10", 10f);
+        lirrFareMap.put("12to7to10", 13.5f);
+        lirrFareMap.put("14to7to10", 20.25f);
+
+        lirrFareMap.put("12to7to12", 17.75f);
+        lirrFareMap.put("14to7to12", 24.5f);
+
+        lirrFareMap.put("14to7to14", 28f);
+
+
+        for (HashMap.Entry<String, Float> entry : lirrFareMap.entrySet()) {
+            String key = entry.getKey();
+            Float value = entry.getValue();
+            String startZone = key.split("to")[0];
+            String midZone = key.split("to")[1];
+            String endZone = key.split("to")[2];
+            NycAgencyFare lirrFare= new NycAgencyFare(lirr, FareType.regular, null, value.floatValue(), startZone, endZone, midZone);
+            agencyFares.put(lirrFare.getKey(), lirrFare);
+            if(!endZone.equals(startZone)) {
+                NycAgencyFare reverseLirrFare = new NycAgencyFare(lirr, FareType.regular, null, value.floatValue(), endZone, startZone, midZone);
+                agencyFares.put(reverseLirrFare.getKey(), reverseLirrFare);
+            }
         }
 
 
@@ -614,13 +769,22 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
                                 }
                                 break;
                             case merge:
-                                // If we found a merge zone transfer, then set the traveledSevice origin for future reference.
+                                // If we found a merge zone transfer, then set the traveled Service origin for future reference.
+                                Ride lastRide = null;
                                 if(traveledService.startZone == null){
                                     int index = rides.indexOf(ride);
-                                    Ride lastRide = rides.get(index-1);
+                                    lastRide = rides.get(index-1);
                                     traveledService.startZone = lastRide.startZone;
+                                    traveledService.midZone = lastRide.endZone;
                                 }
                                 ride.mergeStartZone = traveledService.startZone;
+
+                                //Look for indirect route patterns
+                                if (isLessThan(lastRide.endZone, traveledService.midZone)){
+                                    traveledService.midZone = lastRide.endZone;
+                                }
+                                ride.mergeMidZone = traveledService.midZone;
+
                                 agencyFare = findAgencyFare(ride, fareType);
                                 transferFare = agencyFare.price - traveledService.price;
                                 traveledService.price = agencyFare.price;
@@ -706,10 +870,15 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         else if(ride.startZone != null && !ride.startZone.isEmpty()) {
             zoneKey += '_' + ride.startZone;
         }
+
+        if(ride.mergeMidZone != null && !ride.mergeMidZone.isEmpty()
+                && isLessThan(ride.mergeMidZone,ride.mergeStartZone) && isLessThan(ride.mergeMidZone, ride.endZone)){
+            zoneKey += '_' + ride.mergeMidZone;
+        }
+
         if(ride.endZone != null && !ride.endZone.isEmpty()) {
             zoneKey += '_' + ride.endZone;
         }
-
 
         // check if there's fare without conditions
         String nonConditionFareKey = serviceIdString + '_' + fareType.toString();
@@ -826,6 +995,14 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
     }
 
 
+    /** check to see if zone A is less than zone B */
+    private boolean isLessThan(String zoneA, String zoneB){
+        if(zoneA.compareTo(zoneB) < 0){
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     /** query transfer rules related to a specific service */
     private Set<NycTransferRule> getRelatedTransferRules(String serviceIdString) {

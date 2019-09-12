@@ -28,6 +28,7 @@ import java.util.Set;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.FareAttribute;
 import org.onebusaway.gtfs.model.Stop;
+import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.Fare.FareType;
 import org.opentripplanner.routing.core.FareComponent;
@@ -42,9 +43,16 @@ import org.opentripplanner.routing.spt.GraphPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** A group of chains **/
+class RideChain{
+    boolean isPeak;
+}
+
 /** A set of edges on a single route, with associated information for calculating fares */
 class Ride {
-    
+
+    RideChain chain;
+
     String agency; // route agency
 
     AgencyAndId route;
@@ -52,6 +60,8 @@ class Ride {
     int routeType;
 
     AgencyAndId trip;
+
+    Trip gtfsTrip;
     
     Set<String> zones;
 

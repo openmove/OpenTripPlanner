@@ -164,7 +164,7 @@ public class AStar {
         // check that this state has not been dominated
         // and mark vertex as visited
         if (!runState.spt.visit(runState.u)) {
-            // state has been dominated since it was added to the priority queue, so it is
+            // state has been doinated since it was added to the priority queue, so it is
             // not in any optimal path. drop it on the floor and try the next one.
             return false;
         }

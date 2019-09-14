@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.edgetype;
 
+import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
@@ -21,6 +22,8 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.vertextype.TransitStationStop;
 import com.vividsolutions.jts.geom.LineString;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A transfer directly between two stops without using the street network.
@@ -35,6 +38,8 @@ public class TransferEdge extends Edge {
     private LineString geometry = null;
 
     private boolean wheelchairAccessible = true;
+    private boolean verbose = false;
+    private static final Logger LOG = LoggerFactory.getLogger(TransferEdge.class);
 
     /**
      * Creates a new Transfer edge.
@@ -85,6 +90,11 @@ public class TransferEdge extends Edge {
 
         // Forbid taking shortcuts composed of two transfers in a row
         if (s0.backEdge instanceof TransferEdge) {
+            if (verbose) {
+                System.out.println("   backEdge isintanceof TransferEdge ");
+                LOG.info("   debug vertex, backEdge instance of TransferEdge is true");
+            }
+
             return null;
         }
         if (s0.backEdge instanceof StreetTransitLink) {
@@ -104,6 +114,7 @@ public class TransferEdge extends Edge {
                     options.softWalkOverageRate);
         }
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
+            System.out.println("   not wheelchairAccessible");
             return null;
         }
 

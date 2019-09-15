@@ -29,6 +29,8 @@ import com.vividsolutions.jts.geom.LineString;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** 
  * This represents the connection between a street vertex and a transit vertex
@@ -43,6 +45,9 @@ public class StreetTransitLink extends Edge {
     private boolean wheelchairAccessible;
 
     private TransitStop transitStop;
+
+    private boolean verbose = false;
+    private static final Logger LOG = LoggerFactory.getLogger(StreetTransitLink.class);
 
     // osm way ID this was linked from
     private long wayId = -1;
@@ -90,16 +95,28 @@ public class StreetTransitLink extends Edge {
 
         // Forbid taking shortcuts composed of two street-transit links in a row. Also avoids spurious leg transitions.
         if (s0.backEdge instanceof StreetTransitLink) {
+            if (verbose) {
+                System.out.println("   backEdge isintanceof StreetTransitLink ");
+                LOG.info("   debug vertex, backEdge instance of StreetTransitLink == true");
+            }
+
             return null;
         }
 
         // Do not re-enter the street network following a transfer.
         if (s0.backEdge instanceof TransferEdge) {
-            return null;
+            if (verbose) {
+                System.out.println("   backEdge isintanceof TransferEdge ");
+                LOG.info("   debug vertex, backEdge instance of TransferEdge is true");
+            }            return null;
         }
 
         RoutingRequest req = s0.getOptions();
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
+            if (verbose) {
+                System.out.println("   wheelchairAccessible == false ");
+                LOG.info("   debug vertex, wheelchairAccessible == false");
+            }
             return null;
         }
         if (s0.getOptions().bikeParkAndRide && !s0.isBikeParked()) {
@@ -126,6 +143,11 @@ public class StreetTransitLink extends Edge {
         boolean firstLink = s0.getPreTransitNumBoardings() == 0 && s0.getOptions().rctx.origin instanceof TransitVertex;
         if (s0.getPreTransitNumBoardings() >= 0 && leavingTransit && !firstLink) {
             if (s0.getNumBoardings() == s0.getPreTransitNumBoardings()) {
+                if (verbose) {
+                    System.out.println("   leavingTransit and firstLink == false");
+                    LOG.info("   debug vertex, leavingTransit and firstLink == false");
+                }
+
                 return null;
             }
         } else if (!leavingTransit) {
@@ -134,6 +156,10 @@ public class StreetTransitLink extends Edge {
 
         // Don't reenter street network following a transfer which has been followed by intervening pathways
         if (leavingTransit && !s0.isTransferPermissible()) {
+            if (verbose) {
+                System.out.println("   leavingTransit and isTransferPermissible == false");
+                LOG.info("   debug vertex, leavingTransit and isTransferPermissible == false");
+            }
             return null;
         }
 

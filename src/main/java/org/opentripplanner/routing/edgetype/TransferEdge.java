@@ -98,12 +98,24 @@ public class TransferEdge extends Edge {
             return null;
         }
         if (s0.backEdge instanceof StreetTransitLink) {
+            if (verbose) {
+                System.out.println("   backEdge isintanceof StreetTransitLink ");
+                LOG.info("   debug vertex, backEdge instance of StreetTransitLink is true");
+            }
             return null;
         }
         if (!s0.isTransferPermissible()) {
+            if (verbose) {
+                System.out.println("   isTransferPermissible == false ");
+                LOG.info("   debug vertex, isTransferPremissible == false");
+            }
             return null;
         }
         if (distance > s0.getOptions().maxTransferWalkDistance) {
+            if (verbose) {
+                System.out.println("   distance > maxTransferWalkDistance");
+                LOG.info("   debug vertex, distance > maxTransferWalkDistance");
+            }
             return null;
         }
         if (distance > s0.getOptions().maxWalkDistance && s0.getOptions().walkLimitingByLeg) {
@@ -115,6 +127,9 @@ public class TransferEdge extends Edge {
         }
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
             System.out.println("   not wheelchairAccessible");
+            if (verbose) {
+                LOG.info("   debug vertex, not wheelchairAccessible");
+            }
             return null;
         }
 
@@ -122,6 +137,10 @@ public class TransferEdge extends Edge {
             if (!s0.getOptions().getRoutingContext().graph.transferPermissionStrategy.isTransferAllowed(
                     s0, ((TransitStationStop) fromv).getStop(), ((TransitStationStop) tov).getStop(),
                     !s0.getOptions().arriveBy)) {
+                if (verbose) {
+                    System.out.println("   TransferAllowed == false");
+                    LOG.info("   debug vertex, TransferAllowed == false");
+                }
                 return null;
             }
         }

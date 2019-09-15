@@ -108,7 +108,8 @@ public class StreetTransitLink extends Edge {
             if (verbose) {
                 System.out.println("   backEdge isintanceof TransferEdge ");
                 LOG.info("   debug vertex, backEdge instance of TransferEdge is true");
-            }            return null;
+            }
+            return null;
         }
 
         RoutingRequest req = s0.getOptions();

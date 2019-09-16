@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * A walking pathway as described in GTFS
  */
@@ -50,6 +52,9 @@ public class PathwayEdge extends Edge {
     private String pathwayCode;
 
     private double distance;
+
+    private boolean verbose = false;
+    private static final Logger LOG = LoggerFactory.getLogger(PathwayEdge.class);
 
     public PathwayEdge(Vertex fromv, Vertex tov, int pathwayMode, String pathwayCode, int traversalTime, int wheelchairTraversalTime) {
         super(fromv, tov);
@@ -142,10 +147,16 @@ public class PathwayEdge extends Edge {
     }
 
     public State traverse(State s0) {
+        verbose = false;
         int time = traversalTime;
         if (s0.getOptions().wheelchairAccessible) {
             if (!isWheelchairAccessible() ||
                     (!s0.getOptions().ignoreRealtimeUpdates && pathwayMode.equals(Mode.ELEVATOR) && elevatorIsOutOfService(s0))) {
+                if (verbose) {
+                    System.out.println("   wheelchairAccessible == true AND elevatorIsOutOfService == true");
+                    LOG.info("   debug disallow, wheelchairAccessible == true AND elevatorIsOutOfService == true");
+                }
+
                 return null;
             }
             time = wheelchairTraversalTime;

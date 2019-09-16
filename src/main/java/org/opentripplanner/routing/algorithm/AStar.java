@@ -178,7 +178,7 @@ public class AStar {
         if (verbose) {
             System.out.println("   vertex " + runState.u_vertex);
             LOG.info("   debug vertex, " + runState.u_vertex.getLat() + ',' + runState.u_vertex.getLon() + "," + runState.u_vertex.getLabel()
-                    + "," + runState.u_vertex.getName());
+                    + "," + runState.u_vertex.getName()+ "," + runState.u_vertex);
         }
         runState.nVisited += 1;
         

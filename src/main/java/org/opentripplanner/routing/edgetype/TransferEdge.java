@@ -83,7 +83,7 @@ public class TransferEdge extends Edge {
         /* Disallow chaining of transfer edges. TODO: This should really be guaranteed by the PathParser
            but the default Pathparser is currently very hard to read because
            we need a complement operator. */
-
+        verbose = false;
         RoutingRequest options = s0.getOptions();
         int time = getTime(options);
         double weight = time * options.walkReluctance;
@@ -92,7 +92,7 @@ public class TransferEdge extends Edge {
         if (s0.backEdge instanceof TransferEdge) {
             if (verbose) {
                 System.out.println("   backEdge isintanceof TransferEdge ");
-                LOG.info("   debug vertex, backEdge instance of TransferEdge is true");
+                LOG.info("   debug disallow, backEdge instance of TransferEdge is true");
             }
 
             return null;
@@ -100,21 +100,21 @@ public class TransferEdge extends Edge {
         if (s0.backEdge instanceof StreetTransitLink) {
             if (verbose) {
                 System.out.println("   backEdge isintanceof StreetTransitLink ");
-                LOG.info("   debug vertex, backEdge instance of StreetTransitLink is true");
+                LOG.info("   debug disallow, backEdge instance of StreetTransitLink is true");
             }
             return null;
         }
         if (!s0.isTransferPermissible()) {
             if (verbose) {
                 System.out.println("   isTransferPermissible == false ");
-                LOG.info("   debug vertex, isTransferPremissible == false");
+                LOG.info("   debug disallow, isTransferPremissible == false");
             }
             return null;
         }
         if (distance > s0.getOptions().maxTransferWalkDistance) {
             if (verbose) {
                 System.out.println("   distance > maxTransferWalkDistance");
-                LOG.info("   debug vertex, distance > maxTransferWalkDistance");
+                LOG.info("   debug disallow, distance > maxTransferWalkDistance");
             }
             return null;
         }
@@ -128,7 +128,7 @@ public class TransferEdge extends Edge {
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
             System.out.println("   not wheelchairAccessible");
             if (verbose) {
-                LOG.info("   debug vertex, not wheelchairAccessible");
+                LOG.info("   debug disallow, not wheelchairAccessible");
             }
             return null;
         }
@@ -139,7 +139,7 @@ public class TransferEdge extends Edge {
                     !s0.getOptions().arriveBy)) {
                 if (verbose) {
                     System.out.println("   TransferAllowed == false");
-                    LOG.info("   debug vertex, TransferAllowed == false");
+                    LOG.info("   debug disallow, TransferAllowed == false");
                 }
                 return null;
             }

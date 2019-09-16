@@ -92,12 +92,12 @@ public class StreetTransitLink extends Edge {
     }
 
     public State traverse(State s0) {
-
+        verbose = false;
         // Forbid taking shortcuts composed of two street-transit links in a row. Also avoids spurious leg transitions.
         if (s0.backEdge instanceof StreetTransitLink) {
             if (verbose) {
                 System.out.println("   backEdge isintanceof StreetTransitLink ");
-                LOG.info("   debug vertex, backEdge instance of StreetTransitLink == true");
+                LOG.info("   debug disallow, backEdge instance of StreetTransitLink == true");
             }
 
             return null;
@@ -106,8 +106,8 @@ public class StreetTransitLink extends Edge {
         // Do not re-enter the street network following a transfer.
         if (s0.backEdge instanceof TransferEdge) {
             if (verbose) {
-                System.out.println("   backEdge isintanceof TransferEdge ");
-                LOG.info("   debug vertex, backEdge instance of TransferEdge is true");
+                System.out.println("   backEdge isinstanceof TransferEdge ");
+                LOG.info("   debug disallow, backEdge instance of TransferEdge is true");
             }
             return null;
         }
@@ -116,7 +116,7 @@ public class StreetTransitLink extends Edge {
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
             if (verbose) {
                 System.out.println("   wheelchairAccessible == false ");
-                LOG.info("   debug vertex, wheelchairAccessible == false");
+                LOG.info("   debug disallow, wheelchairAccessible == false");
             }
             return null;
         }
@@ -146,7 +146,7 @@ public class StreetTransitLink extends Edge {
             if (s0.getNumBoardings() == s0.getPreTransitNumBoardings()) {
                 if (verbose) {
                     System.out.println("   leavingTransit and firstLink == false");
-                    LOG.info("   debug vertex, leavingTransit and firstLink == false");
+                    LOG.info("   debug disallow, leavingTransit and firstLink == false");
                 }
 
                 return null;
@@ -159,7 +159,7 @@ public class StreetTransitLink extends Edge {
         if (leavingTransit && !s0.isTransferPermissible()) {
             if (verbose) {
                 System.out.println("   leavingTransit and isTransferPermissible == false");
-                LOG.info("   debug vertex, leavingTransit and isTransferPermissible == false");
+                LOG.info("   debug disallow, leavingTransit and isTransferPermissible == false");
             }
             return null;
         }

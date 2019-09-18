@@ -257,9 +257,13 @@ public class IndexAPI {
        /* When no parameters are supplied, return all stops. */
        if (minLat == null && minLon == null && maxLat == null && maxLon == null && lat == null
                && lon == null && radius == null) {
-           Collection<Stop> in = index.stopForId.values();
-           stops = in.stream().map(StopDetail::new).collect(Collectors.toList());
-       }
+           index.clusterStopsAsNeeded();
+           stops = Lists.newArrayList();
+           for (Stop stop : index.stopForId.values()) {
+               String cluster = index.stopClusterForStop.get(stop).id;
+               stops.add(new StopDetail(stop, cluster));
+           }
+        }
        else if (expectCircle) {
            if (lat == null || lon == null || radius == null || radius < 0) {
                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
@@ -267,13 +271,16 @@ public class IndexAPI {
            if (radius > MAX_STOP_SEARCH_RADIUS){
                radius = MAX_STOP_SEARCH_RADIUS;
            }
+           index.clusterStopsAsNeeded();
            stops = Lists.newArrayList();
            Coordinate coord = new Coordinate(lon, lat);
            for (TransitStop stopVertex : streetIndex.getNearbyTransitStops(
                     new Coordinate(lon, lat), radius)) {
                double distance = SphericalDistanceLibrary.fastDistance(stopVertex.getCoordinate(), coord);
                if (distance < radius) {
-                   stops.add(new StopDetail(stopVertex.getStop(), (int) distance));
+                   Stop stop = stopVertex.getStop();
+
+                   stops.add(new StopDetail(stop, (int) distance, index.stopClusterForStop.get(stop).id));
                }
            }
        } else {
@@ -284,10 +291,12 @@ public class IndexAPI {
            if (maxLat <= minLat || maxLon <= minLon) {
                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
            }
+           index.clusterStopsAsNeeded();
            stops = Lists.newArrayList();
            Envelope envelope = new Envelope(new Coordinate(minLon, minLat), new Coordinate(maxLon, maxLat));
            for (TransitStop stopVertex : streetIndex.getTransitStopForEnvelope(envelope)) {
-               stops.add(new StopDetail(stopVertex.getStop()));
+               Stop stop = stopVertex.getStop();
+               stops.add(new StopDetail(stop, index.stopClusterForStop.get(stop).id));
            }
        }
        if (debug != null && debug) {

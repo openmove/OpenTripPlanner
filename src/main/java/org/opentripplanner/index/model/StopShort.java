@@ -27,17 +27,21 @@ public class StopShort {
     /** URL of the stop, if given in the data */
     public String url;
 
-    /** Parent station of the stop, if given in the data */
+    /** Corresponding cluster id of the stop. Depending on stop cluster mode
+     *  this will be either Parent station of the stop, or the id of the cluster if proximity. */
     public String cluster;
 
     public StopShort (Stop stop) {
+        this(stop, stop.getParentStation());
+    }
+    public StopShort (Stop stop, String cluster) {
         id = new AgencyAndId(stop.getId().getAgencyId(), stop.getId().getId()); // copy
         code = stop.getCode();
         name = stop.getName();
         lat = stop.getLat();
         lon = stop.getLon();
         url = stop.getUrl();
-        cluster = stop.getParentStation(); // TODO harmonize these names, maybe use "station" everywhere
+        this.cluster = cluster;
     }
 
     public static List<StopShort> list (Collection<Stop> in) {

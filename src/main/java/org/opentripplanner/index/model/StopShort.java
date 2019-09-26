@@ -31,6 +31,9 @@ public class StopShort {
      *  this will be either Parent station of the stop, or the id of the cluster if proximity. */
     public String cluster;
 
+    /** Parent station of the stop. */
+    public String parentStation;
+
     public StopShort (Stop stop) {
         this(stop, stop.getParentStation());
     }
@@ -42,6 +45,7 @@ public class StopShort {
         lon = stop.getLon();
         url = stop.getUrl();
         this.cluster = cluster;
+        parentStation = stop.getParentStation();
     }
 
     public static List<StopShort> list (Collection<Stop> in) {

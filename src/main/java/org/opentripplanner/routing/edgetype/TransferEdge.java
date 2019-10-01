@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.edgetype;
 
+import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
@@ -21,6 +22,8 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.vertextype.TransitStationStop;
 import com.vividsolutions.jts.geom.LineString;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A transfer directly between two stops without using the street network.
@@ -35,6 +38,8 @@ public class TransferEdge extends Edge {
     private LineString geometry = null;
 
     private boolean wheelchairAccessible = true;
+    private boolean verbose = false;
+    private static final Logger LOG = LoggerFactory.getLogger(TransferEdge.class);
 
     /**
      * Creates a new Transfer edge.
@@ -78,22 +83,39 @@ public class TransferEdge extends Edge {
         /* Disallow chaining of transfer edges. TODO: This should really be guaranteed by the PathParser
            but the default Pathparser is currently very hard to read because
            we need a complement operator. */
-
+        verbose = false;
         RoutingRequest options = s0.getOptions();
         int time = getTime(options);
         double weight = time * options.walkReluctance;
 
         // Forbid taking shortcuts composed of two transfers in a row
         if (s0.backEdge instanceof TransferEdge) {
+            if (verbose) {
+                System.out.println("   backEdge isintanceof TransferEdge ");
+                LOG.info("   debug disallow, backEdge instance of TransferEdge is true");
+            }
+
             return null;
         }
         if (s0.backEdge instanceof StreetTransitLink) {
+            if (verbose) {
+                System.out.println("   backEdge isintanceof StreetTransitLink ");
+                LOG.info("   debug disallow, backEdge instance of StreetTransitLink is true");
+            }
             return null;
         }
         if (!s0.isTransferPermissible()) {
+            if (verbose) {
+                System.out.println("   isTransferPermissible == false ");
+                LOG.info("   debug disallow, isTransferPremissible == false");
+            }
             return null;
         }
         if (distance > s0.getOptions().maxTransferWalkDistance) {
+            if (verbose) {
+                System.out.println("   distance > maxTransferWalkDistance");
+                LOG.info("   debug disallow, distance > maxTransferWalkDistance");
+            }
             return null;
         }
         if (distance > s0.getOptions().maxWalkDistance && s0.getOptions().walkLimitingByLeg) {
@@ -104,6 +126,10 @@ public class TransferEdge extends Edge {
                     options.softWalkOverageRate);
         }
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
+            System.out.println("   not wheelchairAccessible");
+            if (verbose) {
+                LOG.info("   debug disallow, not wheelchairAccessible");
+            }
             return null;
         }
 
@@ -111,6 +137,10 @@ public class TransferEdge extends Edge {
             if (!s0.getOptions().getRoutingContext().graph.transferPermissionStrategy.isTransferAllowed(
                     s0, ((TransitStationStop) fromv).getStop(), ((TransitStationStop) tov).getStop(),
                     !s0.getOptions().arriveBy)) {
+                if (verbose) {
+                    System.out.println("   TransferAllowed == false");
+                    LOG.info("   debug disallow, TransferAllowed == false");
+                }
                 return null;
             }
         }

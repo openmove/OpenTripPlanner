@@ -44,6 +44,7 @@ import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.model.Landmark;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TransferEdge;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -235,6 +236,8 @@ public class IndexAPI {
     * @param lon coordinate of circle
     * @param radius radius of circle
     * @param debug include extra "debug" info on stop linking data
+    * @param mode mode only return clusters with this mode. Valid values are TRAM, SUBWAY, RAIL, BUS, FERRY, CABLE_CAR, GONDOLA, FUNICULAR. (optional)
+    * @param agencyId  only return clusters for this agency (optional)
     */
    @GET
    @Path("/stops")
@@ -247,9 +250,12 @@ public class IndexAPI {
            @QueryParam("lat")    Double lat,
            @QueryParam("lon")    Double lon,
            @QueryParam("radius") Double radius,
-           @QueryParam("debug") Boolean debug) {
+           @QueryParam("debug") Boolean debug,
+           @QueryParam("mode") String mode,
+           @QueryParam("agencyId") String agencyId) {
 
        List<StopDetail> stops;
+       TraverseMode traverseMode = (mode == null) ? null : TraverseMode.valueOf(mode);
 
        /* If any of the circle parameters are specified, expect a circle not a box. */
        boolean expectCircle = (lat != null || lon != null || radius != null);
@@ -257,9 +263,18 @@ public class IndexAPI {
        /* When no parameters are supplied, return all stops. */
        if (minLat == null && minLon == null && maxLat == null && maxLon == null && lat == null
                && lon == null && radius == null) {
-           Collection<Stop> in = index.stopForId.values();
-           stops = in.stream().map(StopDetail::new).collect(Collectors.toList());
-       }
+           index.clusterStopsAsNeeded();
+           stops = Lists.newArrayList();
+           for (Stop stop : index.stopForId.values()) {
+               if (agencyId != null && !(stop.getId().getAgencyId().equals(agencyId))) continue;
+               if (traverseMode != null &&
+                       !(index.routesForStop(stop).stream().anyMatch(route ->
+                               GtfsLibrary.getTraverseMode(route) == traverseMode))) continue;
+
+               String cluster = index.stopClusterForStop.get(stop).id;
+               stops.add(new StopDetail(stop, cluster));
+           }
+        }
        else if (expectCircle) {
            if (lat == null || lon == null || radius == null || radius < 0) {
                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
@@ -267,13 +282,19 @@ public class IndexAPI {
            if (radius > MAX_STOP_SEARCH_RADIUS){
                radius = MAX_STOP_SEARCH_RADIUS;
            }
+           index.clusterStopsAsNeeded();
            stops = Lists.newArrayList();
            Coordinate coord = new Coordinate(lon, lat);
            for (TransitStop stopVertex : streetIndex.getNearbyTransitStops(
                     new Coordinate(lon, lat), radius)) {
+               if (traverseMode != null && !stopVertex.getModes().contains(traverseMode)) continue;
+
                double distance = SphericalDistanceLibrary.fastDistance(stopVertex.getCoordinate(), coord);
                if (distance < radius) {
-                   stops.add(new StopDetail(stopVertex.getStop(), (int) distance));
+                   Stop stop = stopVertex.getStop();
+                   if (agencyId != null && !(stop.getId().getAgencyId().equals(agencyId))) continue;
+
+                   stops.add(new StopDetail(stop, (int) distance, index.stopClusterForStop.get(stop).id));
                }
            }
        } else {
@@ -284,10 +305,16 @@ public class IndexAPI {
            if (maxLat <= minLat || maxLon <= minLon) {
                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
            }
+           index.clusterStopsAsNeeded();
            stops = Lists.newArrayList();
            Envelope envelope = new Envelope(new Coordinate(minLon, minLat), new Coordinate(maxLon, maxLat));
            for (TransitStop stopVertex : streetIndex.getTransitStopForEnvelope(envelope)) {
-               stops.add(new StopDetail(stopVertex.getStop()));
+               if (traverseMode != null && !stopVertex.getModes().contains(traverseMode)) continue;
+
+               Stop stop = stopVertex.getStop();
+               if (agencyId != null && !(stop.getId().getAgencyId().equals(agencyId))) continue;
+
+               stops.add(new StopDetail(stop, index.stopClusterForStop.get(stop).id));
            }
        }
        if (debug != null && debug) {
@@ -808,14 +835,37 @@ public class IndexAPI {
         return Response.status(Status.OK).entity("NONE").build();
     }
 
-    /** Return all clusters of stops. */
+    /** Return all clusters of stops.
+    *
+    * @param mode only return clusters with this mode. Valid values are TRAM, SUBWAY, RAIL, BUS, FERRY, CABLE_CAR, GONDOLA, FUNICULAR. (optional)
+    * @param agencyId only return clusters for this agency (optional)
+    */
+
     @GET
     @Path("/clusters")
     @TypeHint(StopClusterDetail[].class)
-    public Response getAllStopClusters () {
+    public Response getAllStopClusters (@QueryParam("mode") String mode, @QueryParam("agencyId") String agencyId) {
         index.clusterStopsAsNeeded();
+        Collection<StopCluster> clusters = index.stopClusterForId.values();
+        if (agencyId != null) {
+            clusters = clusters.stream()
+                    .filter(cluster ->
+                            cluster.children.stream().anyMatch(stop -> stop.getId().getAgencyId().equals(agencyId)))
+                    .collect(Collectors.toList());
+        }
+        if (mode != null) {
+            TraverseMode traverseMode = TraverseMode.valueOf(mode);
+
+            clusters = clusters.stream()
+                    .filter(cluster ->
+                            cluster.children.stream().anyMatch(stop ->
+                                    index.routesForStop(stop).stream()
+                            .anyMatch(route ->
+                                    GtfsLibrary.getTraverseMode(route) == traverseMode)))
+                    .collect(Collectors.toList());
+        }
         // use 'detail' field common to all API methods in this class
-        List<StopClusterDetail> scl = StopClusterDetail.list(index.stopClusterForId.values(), detail);
+        List<StopClusterDetail> scl = StopClusterDetail.list(clusters, detail);
         return Response.status(Status.OK).entity(scl).build();
     }
 
@@ -855,6 +905,7 @@ public class IndexAPI {
     @Path("/landmarks/{landmark}")
     @TypeHint(StopShort[].class)
     public Response getLandmarkStops(@PathParam("landmark") String name) {
+
         Landmark landmark = index.graph.landmarksByName.get(name);
         if (landmark == null) {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();

@@ -138,9 +138,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     /** For materialized TripTimes, save the FrequencyEntry which the TripTimes was materialized from. */
     private transient FrequencyEntry frequencyEntry;
 
-    /** Notes, if available */
-    private final String[] notes;
-
     /**
      * The provided stopTimes are assumed to be pre-filtered, valid, and monotonically increasing.
      * The non-interpolated stoptimes should already be marked at timepoints by a previous filtering step.
@@ -153,19 +150,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         final int[] sequences  = new int[nStops];
         final int[] departureBuffers = new int[nStops];
         final String[] tracks;
-        final String[] notes;
         if (stopTimes.stream().anyMatch(st -> st.getTrack() != null)) {
             tracks = new String[nStops];
         } else {
             tracks = null;
         }
-
-        if (stopTimes.stream().anyMatch(st -> st.getNote() != null)) {
-            notes = new String[nStops];
-        } else {
-            notes = null;
-        }
-
         boolean hasDepartureBuffers = false;
         final BitSet timepoints = new BitSet(nStops);
         // Times are always shifted to zero. This is essential for frequencies and deduplication.
@@ -182,10 +171,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             if (st.getTrack() != null) {
                 tracks[s] = st.getTrack();
             }
-            if (st.getNote() != null) {
-                notes[s] = st.getNote().getDesc();
-            }
-
             s++;
         }
         if (hasDepartureBuffers) {
@@ -212,11 +197,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         } else {
             this.tracks = null;
         }
-
-        this.notes = notes;
         this.realtimeTracks = null;
         this.realtimeSignText = null;
-
         LOG.trace("trip {} has timepoint at indexes {}", trip, timepoints);
     }
 
@@ -234,7 +216,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.timepoints = object.timepoints;
         this.departureBuffers = object.departureBuffers;
         this.tracks = object.tracks;
-        this.notes = object.notes;
     }
 
     /**
@@ -564,10 +545,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             return realtimeTracks[stop];
         }
         return tracks == null ? null : tracks[stop];
-    }
-
-    public String getNote(int stop) {
-        return notes == null ? null : this.notes[stop];
     }
 
     public void setRealtimeSignText(int stop, String signText) {

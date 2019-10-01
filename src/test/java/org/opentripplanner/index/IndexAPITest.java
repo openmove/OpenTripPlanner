@@ -14,7 +14,13 @@ package org.opentripplanner.index;
 
 import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
-import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
+import com.google.transit.realtime.GtfsRealtime.TripUpdate.
+
+
+
+
+
+        StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -162,7 +168,7 @@ public class IndexAPITest {
 
     @Test
     public void testStopsInBbox() {
-        List<StopDetail> stops = getResponseList(api.getStopsInRadius(40d, -75d, 41d, -74d, null, null, null, false), StopDetail.class);
+        List<StopDetail> stops = getResponseList(api.getStopsInRadius(40d, -75d, 41d, -74d, null, null, null, false, null, null), StopDetail.class);
         List<String> stopIds = stops.stream().map(s -> s.id.getId()).sorted().collect(Collectors.toList());
         assertEquals(Arrays.asList("F", "K", "N"), stopIds);
     }

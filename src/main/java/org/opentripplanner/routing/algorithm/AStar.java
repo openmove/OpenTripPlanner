@@ -152,6 +152,7 @@ public class AStar {
         if (verbose) {
             double w = runState.pq.peek_min_key();
             System.out.println("pq min key = " + w);
+
         }
 
         // interleave some heuristic-improving work (single threaded)
@@ -163,7 +164,7 @@ public class AStar {
         // check that this state has not been dominated
         // and mark vertex as visited
         if (!runState.spt.visit(runState.u)) {
-            // state has been dominated since it was added to the priority queue, so it is
+            // state has been doinated since it was added to the priority queue, so it is
             // not in any optimal path. drop it on the floor and try the next one.
             return false;
         }
@@ -174,9 +175,11 @@ public class AStar {
         
         runState.u_vertex = runState.u.getVertex();
 
-        if (verbose)
+        if (verbose) {
             System.out.println("   vertex " + runState.u_vertex);
-
+            LOG.info("   debug vertex, " + runState.u_vertex.getLat() + ',' + runState.u_vertex.getLon() + "," + runState.u_vertex.getLabel()
+                    + "," + runState.u_vertex.getName()+ "," + runState.u_vertex);
+        }
         runState.nVisited += 1;
         
         Collection<Edge> edges = runState.options.arriveBy ? runState.u_vertex.getIncoming() : runState.u_vertex.getOutgoing();
@@ -237,6 +240,7 @@ public class AStar {
     
     void runSearch(long abortTime){
         /* the core of the A* algorithm */
+
         while (!runState.pq.empty()) { // Until the priority queue is empty:
             /*
              * Terminate based on timeout?
@@ -309,8 +313,12 @@ public class AStar {
         startSearch (options, terminationStrategy, abortTime);
 
         if (runState != null) {
+
             runSearch(abortTime);
             spt = runState.spt;
+            if (verbose) {
+                LOG.info("   new runSearch via ShortestPathTree");
+            }
         }
         
         storeMemory();
@@ -336,6 +344,9 @@ public class AStar {
             
             runSearch(abortTime);
             spt = runState.spt;
+            if (verbose) {
+                LOG.info("   new runSearch via ShortestPathTree from collection of states");
+            }
         }
         
         return spt;

@@ -28,6 +28,15 @@ public class StopDetail extends StopShort {
         this.dist = distance;
     }
 
+    public StopDetail(Stop stop, String cluster) {
+        super(stop, cluster);
+    }
+
+    public StopDetail(Stop stop, int distance, String cluster) {
+        super(stop, cluster);
+        this.dist = distance;
+    }
+
     /** Distance to the stop when it is returned from a location-based query. */
     @JsonInclude(JsonInclude.Include.NON_NULL) public Integer dist;
 

@@ -26,6 +26,8 @@ import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.services.calendar.CalendarService;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.api.resource.CoordinateArrayListSequence;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.geometry.GeometryUtils;
@@ -47,6 +49,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.*;
 
 /**
@@ -708,6 +714,43 @@ public class TripPattern implements Cloneable, Serializable {
     public String getFeedId() {
         // The feed id is the same as the agency id on the route, this allows us to obtain it from there.
         return route.getId().getAgencyId();
+    }
+
+    /**
+     * Determine if the pattern is operating at the given time.
+     *
+     * @return true if operating at the given time
+     */
+    public Boolean operatingAt(Graph graph, String date, Date timeOfInterest) {
+        if(timeOfInterest == null){
+            return true;
+        }
+
+        CalendarService calendar = graph.getCalendarService();
+        ServiceDate serviceDate = new ServiceDate(timeOfInterest);
+        Set<AgencyAndId> serviceIds = calendar.getServiceIdsOnDate(serviceDate);
+
+        String midnightString = date + " 12:00AM"; //This needs to use the date
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mma");
+        Date midnight;
+        try {
+            midnight = format.parse(midnightString);
+        } catch (Exception e){
+            midnight = null;
+        }
+        long secs_since_midnight = (timeOfInterest.getTime() - midnight.getTime())/1000;
+        long secs_since_last_midnight = secs_since_midnight + 24*3600; //This handles trips that cross midnight with seconds > 24*3600
+        Timetable table = this.scheduledTimetable;
+        for (TripTimes tripTime : table.tripTimes) {
+            long tripStartTime = tripTime.getDepartureTime(0);
+            long tripEndTime = tripTime.getArrivalTime(tripTime.getNumStops() - 1);
+            if ( (secs_since_midnight >= tripStartTime && secs_since_midnight <= tripEndTime && serviceIds.contains(tripTime.trip.getServiceId())) ||
+                (secs_since_last_midnight >= tripStartTime && secs_since_last_midnight <= tripEndTime && serviceIds.contains(tripTime.trip.getServiceId())) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

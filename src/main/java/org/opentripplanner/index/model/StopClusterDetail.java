@@ -29,7 +29,7 @@ public class StopClusterDetail {
         if (detail) {
             stops = Lists.newArrayList();
             for (Stop stop : cluster.children) {
-                stops.add(new StopShort(stop));
+                stops.add(new StopShort(stop, id));
             }
         }
     }

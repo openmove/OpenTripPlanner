@@ -995,7 +995,8 @@ public class GTFSPatternHopFactory {
             } else {
                 TransitStop stopVertex = new TransitStop(graph, stop);
                 context.stationStopNodes.put(stop, stopVertex);
-                if (locationType != 2) {
+                // Only actual stops (ie not entrances or extended location types):
+                if (locationType == 0) {
                     // Add a vertex representing arriving at the stop
                     TransitStopArrive arrive = new TransitStopArrive(graph, stop, stopVertex);
                     // FIXME no need for this context anymore, we just put references to these nodes in the stop vertices themselves.

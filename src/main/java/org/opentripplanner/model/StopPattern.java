@@ -52,13 +52,15 @@ public class StopPattern implements Serializable {
     public final Stop[] stops;
     public final int[]  pickups;
     public final int[]  dropoffs;
+    public final String[] notes;
 
     public boolean equals(Object other) {
         if (other instanceof StopPattern) {
             StopPattern that = (StopPattern) other;
-            return Arrays.equals(this.stops,    that.stops) &&
-                   Arrays.equals(this.pickups,  that.pickups) &&
-                   Arrays.equals(this.dropoffs, that.dropoffs);
+            return  Arrays.equals(this.stops,    that.stops) &&
+                    Arrays.equals(this.pickups,  that.pickups) &&
+                    Arrays.equals(this.dropoffs, that.dropoffs) &&
+                    Arrays.equals(this.notes, that.notes) ;
         } else {
             return false;
         }
@@ -71,6 +73,8 @@ public class StopPattern implements Serializable {
         hash += Arrays.hashCode(this.pickups);
         hash *= 31;
         hash += Arrays.hashCode(this.dropoffs);
+        hash *= 31;
+        hash += Arrays.hashCode(this.notes);
         return hash;
     }
 
@@ -78,7 +82,7 @@ public class StopPattern implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append("StopPattern: ");
         for (int i = 0, j = stops.length; i < j; ++i) {
-            sb.append(String.format("%s_%d%d ", stops[i].getCode(), pickups[i], dropoffs[i]));
+            sb.append(String.format("%s_%d%d ", stops[i].getCode(), pickups[i], dropoffs[i], notes[i]));
         }
         return sb.toString();
     }
@@ -88,6 +92,7 @@ public class StopPattern implements Serializable {
         stops     = new Stop[size];
         pickups   = new int[size];
         dropoffs  = new int[size];
+        notes     = new String[size];
     }
 
     /** Assumes that stopTimes are already sorted by time. */
@@ -101,6 +106,12 @@ public class StopPattern implements Serializable {
             // pick/drop messages could be stored in individual trips
             pickups[i] = stopTime.getPickupType();
             dropoffs[i] = stopTime.getDropOffType();
+            if (stopTime.getNote() != null && stopTime.getNote().getDesc() != null )
+            {
+                notes[i] = stopTime.getNote().getDesc();
+            } else {
+                notes[i] = new String();
+            }
         }
         /*
          * TriMet GTFS has many trips that differ only in the pick/drop status of their initial and

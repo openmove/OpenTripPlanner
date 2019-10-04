@@ -78,6 +78,8 @@ public class IndexGraphQLSchema {
 
     private final GtfsRealtimeFuzzyTripMatcher fuzzyTripMatcher;
 
+    public GraphQLOutputType feedType = new GraphQLTypeReference("Feed");
+
     public GraphQLOutputType agencyType = new GraphQLTypeReference("Agency");
 
     public GraphQLOutputType coordinateType = new GraphQLTypeReference("Coordinates");
@@ -753,6 +755,44 @@ public class IndexGraphQLSchema {
                 .build())
             .build();
 
+        feedType = GraphQLObjectType.newObject()
+                .name("Feed")
+                .description("A feed provides routing data (stops, routes, timetables, etc.) from one or more public transport agencies.")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("feedId")
+                        .description("ID of the feed")
+                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                        .dataFetcher(environment -> environment.getSource())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("agencies")
+                        .description("List of agencies which provide data to this feed")
+                        .type(new GraphQLList(agencyType))
+                        .dataFetcher(environment -> index.graph.getAgencies(environment.getSource()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("trips")
+                        .description("Get all trips which provide data to this feed")
+                        .type(new GraphQLList(tripType))
+                        .dataFetcher(environment -> index.tripForId.values()
+                            .stream()
+                                /* TODO: this isn't exactly correct but works for dataset */
+                                /* improve when FeedId is baked into data model */
+                            .filter(trip -> trip.getId().getAgencyId().equals(environment.getSource()))
+                            .collect(Collectors.toList())
+                        )
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("routes")
+                        .description("List of routes operated by this agency")
+                        .type(new GraphQLList(routeType))
+                        .dataFetcher(environment -> index.routeForId.values()
+                                .stream()
+                                .filter(route -> index.graph.getAgencyIds(environment.getSource()).contains(route.getAgency().getId()))
+                                .collect(Collectors.toList()))
+                        .build())
+                .build();
+
         agencyType = GraphQLObjectType.newObject()
             .name("Agency")
             .description("Agency in the graph")
@@ -795,6 +835,7 @@ public class IndexGraphQLSchema {
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("routes")
+                .description("List of routes operated by this agency")
                 .type(new GraphQLList(routeType))
                 .dataFetcher(environment -> index.routeForId.values()
                     .stream()
@@ -825,8 +866,21 @@ public class IndexGraphQLSchema {
                 if (id.type.equals(agencyType.getName())) {
                     return index.getAgencyWithoutFeedId(id.id);
                 }
+                if (id.type.equals(feedType.getName())) {
+                    return index.feedInfoForId.get(id.id);
+                }
                 return null;
             }))
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("feedByFeedId")
+                    .description("Get All of Feed by FeedId")
+                    .type(feedType)
+                    .argument(GraphQLArgument.newArgument()
+                            .name("feedId")
+                            .type(new GraphQLNonNull(Scalars.GraphQLString))
+                            .build())
+                    .dataFetcher(environment -> environment.getArgument("feedId"))
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("agencies")
                 .description("Get all agencies for the specified graph")

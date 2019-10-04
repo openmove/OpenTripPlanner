@@ -911,6 +911,15 @@ public class Graph implements Serializable {
         return agenciesForFeedId.get(feedId);
     }
 
+    public Collection<String> getAgencyIds(String feedId) {
+        List<String> ids = new ArrayList<>();
+        for (Agency a: agenciesForFeedId.get(feedId)) {
+            ids.add(a.getId());
+        }
+        return ids;
+    }
+
+
     public FeedInfo getFeedInfo(String feedId) {
         return feedInfoForId.get(feedId);
     }

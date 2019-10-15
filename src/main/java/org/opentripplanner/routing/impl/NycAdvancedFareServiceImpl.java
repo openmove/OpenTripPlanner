@@ -2132,9 +2132,6 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
 
                                 //Look for indirect route patterns
                                 if(lastRide != null) {
-                                    //if (isLessThan(lastRide.endZone, traveledService.midZone)) {
-                                    //    traveledService.midZone = lastRide.endZone;
-                                    //}
                                     if ((isLessThan(lastRide.endZone, traveledService.midZone) && isLessThan(traveledService.midZone, ride.mergeStartZone)) ||
                                             (isGreaterThan(lastRide.endZone, traveledService.midZone) && isGreaterThan(traveledService.midZone, ride.mergeStartZone))) {
                                         traveledService.midZone = lastRide.endZone;
@@ -2332,12 +2329,12 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
 
     /** check to see if zone A is less than zone B */
     private boolean isLessThan(String zoneA, String zoneB){
-        return Integer.parseInt(zoneA) < Integer.parseInt(zoneB);
+        return Integer.parseInt(zoneA) <= Integer.parseInt(zoneB);
     }
 
     /** check to see if zone A is less than zone B */
     private boolean isGreaterThan(String zoneA, String zoneB){
-        return Integer.parseInt(zoneA) > Integer.parseInt(zoneB);
+        return Integer.parseInt(zoneA) >= Integer.parseInt(zoneB);
     }
 
     /** query transfer rules related to a specific service */

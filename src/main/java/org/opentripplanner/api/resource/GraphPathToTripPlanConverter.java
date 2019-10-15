@@ -898,6 +898,7 @@ public abstract class GraphPathToTripPlanConverter {
             }
             place.vertexType = VertexType.TRANSIT;
             place.track = tripTimes.getTrack(place.stopIndex);
+            place.note = tripTimes.getNote(place.stopIndex);
         } else if(vertex instanceof BikeRentalStationVertex) {
             place.bikeShareId = ((BikeRentalStationVertex) vertex).getId();
             LOG.trace("Added bike share Id {} to place", place.bikeShareId);

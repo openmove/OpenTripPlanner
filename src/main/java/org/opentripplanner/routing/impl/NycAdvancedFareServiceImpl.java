@@ -412,7 +412,7 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         lirrFareMap.put("4to1to4", 10.75f);
         lirrFareMap.put("7to1to4", 12.5f);
         lirrFareMap.put("9to1to4", 14.25f);
-        lirrFareMap.put("10to1to4", 26.25f);
+        lirrFareMap.put("10to1to4", 16.25f);
         lirrFareMap.put("12to1to4", 19.75f);
         lirrFareMap.put("14to1to4", 24.5f);
 

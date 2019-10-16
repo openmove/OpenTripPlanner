@@ -106,7 +106,7 @@ public class StopPattern implements Serializable {
             // pick/drop messages could be stored in individual trips
             pickups[i] = stopTime.getPickupType();
             dropoffs[i] = stopTime.getDropOffType();
-            if (stopTime.getNote() != null && stopTime.getNote().getDesc() != null )
+            if (stopTime != null && stopTime.getNote() != null && stopTime.getNote().getDesc() != null )
             {
                 notes[i] = stopTime.getNote().getDesc();
             } else {

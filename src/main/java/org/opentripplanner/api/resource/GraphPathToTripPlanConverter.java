@@ -974,6 +974,7 @@ public abstract class GraphPathToTripPlanConverter {
                 pattern.directionId, leg.headsign, null, null);
         StopTimesByStop stbs = new StopTimesByStop(stop, stips);
         stbs.limitTimes(time, options.nextDepartureWindow, options.numberOfDepartures);
+
         leg.upcomingStopTimes = stbs.getGroups();
     }
 

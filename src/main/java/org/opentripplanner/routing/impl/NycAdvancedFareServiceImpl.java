@@ -1015,34 +1015,34 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("1to51", 15.5f);
 
         // 12
-        mnrFareMap.put("12to2", 9.5f);
-        mnrFareMap.put("12to11", 3f);
+        mnrFareMap.put("12to11", 9.5f);
+        mnrFareMap.put("12to2", 3f);
         mnrFareMap.put("12to12", 3f);
 
         // 13
-        mnrFareMap.put("13to2", 13.75f);
-        mnrFareMap.put("13to11", 4.25f);
+        mnrFareMap.put("13to11", 13.75f);
+        mnrFareMap.put("13to2", 4.25f);
         mnrFareMap.put("13to12", 3f);
         mnrFareMap.put("13to13", 3f);
 
         // 14
-        mnrFareMap.put("14to2", 11.25f);
-        mnrFareMap.put("14to11", 5f);
+        mnrFareMap.put("14to11", 11.25f);
+        mnrFareMap.put("14to2", 5f);
         mnrFareMap.put("14to12", 4f);
         mnrFareMap.put("14to13", 3.75f);
         mnrFareMap.put("14to14", 3f);
 
         // 15
-        mnrFareMap.put("15to2", 11.25f);
-        mnrFareMap.put("15to11", 5f);
+        mnrFareMap.put("15to11", 11.25f);
+        mnrFareMap.put("15to2", 5f);
         mnrFareMap.put("15to12", 4.75f);
         mnrFareMap.put("15to13", 3.75f);
         mnrFareMap.put("15to14", 3.5f);
         mnrFareMap.put("15to15", 2.75f);
 
         // 16
-        mnrFareMap.put("16to2", 12.5f);
-        mnrFareMap.put("16to11", 6f);
+        mnrFareMap.put("16to11", 12.5f);
+        mnrFareMap.put("16to2", 6f);
         mnrFareMap.put("16to12", 6f);
         mnrFareMap.put("16to13", 5f);
         mnrFareMap.put("16to14", 4.75f);
@@ -1050,8 +1050,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("16to16", 2.75f);
 
         // 17
-        mnrFareMap.put("17to2", 13.5f);
-        mnrFareMap.put("17to11", 7f);
+        mnrFareMap.put("17to11", 13.5f);
+        mnrFareMap.put("17to2", 7f);
         mnrFareMap.put("17to12", 7f);
         mnrFareMap.put("17to13", 6f);
         mnrFareMap.put("17to14", 5.35f);
@@ -1060,8 +1060,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("17to17", 2.75f);
 
         // 18
-        mnrFareMap.put("18to2", 14.5f);
-        mnrFareMap.put("18to11", 8.5f);
+        mnrFareMap.put("18to11", 14.5f);
+        mnrFareMap.put("18to2", 8.5f);
         mnrFareMap.put("18to12", 8.5f);
         mnrFareMap.put("18to13", 7.25f);
         mnrFareMap.put("18to14", 7f);
@@ -1071,8 +1071,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("18to18", 2.75f);
 
         // 19
-        mnrFareMap.put("19to2", 15.75f);
-        mnrFareMap.put("19to11", 10.25f);
+        mnrFareMap.put("19to11", 15.75f);
+        mnrFareMap.put("19to2", 10.25f);
         mnrFareMap.put("19to12", 10.25f);
         mnrFareMap.put("19to13", 9f);
         mnrFareMap.put("19to14", 8.25f);
@@ -1082,8 +1082,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("19to18", 2.75f);
 
         // 20
-        mnrFareMap.put("20to2", 16.75f);
-        mnrFareMap.put("20to11", 11.5f);
+        mnrFareMap.put("20to11", 16.75f);
+        mnrFareMap.put("20to2", 11.5f);
         mnrFareMap.put("20to12", 11.5f);
         mnrFareMap.put("20to13", 10.25f);
         mnrFareMap.put("20to14", 9.5f);
@@ -1095,8 +1095,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("20to20", 2.75f);
 
         // 21
-        mnrFareMap.put("21to2", 18.75f);
-        mnrFareMap.put("21to11", 14f);
+        mnrFareMap.put("21to11", 18.75f);
+        mnrFareMap.put("21to2", 14f);
         mnrFareMap.put("21to12", 14f);
         mnrFareMap.put("21to13", 12.75f);
         mnrFareMap.put("21to14", 12f);
@@ -1109,8 +1109,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("21to21", 2.75f);
 
         // 31
-        mnrFareMap.put("31to2", 12.5f);
-        mnrFareMap.put("31to11", 6f);
+        mnrFareMap.put("31to11", 12.5f);
+        mnrFareMap.put("31to2", 6f);
         mnrFareMap.put("31to12", 6f);
         mnrFareMap.put("31to13", 5f);
         mnrFareMap.put("31to14", 4.75f);
@@ -1124,8 +1124,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("31to31", 2.75f);
 
         // 41
-        mnrFareMap.put("41to2", 13.75f);
-        mnrFareMap.put("41to11", 7.5f);
+        mnrFareMap.put("41to11", 13.75f);
+        mnrFareMap.put("41to2", 7.5f);
         mnrFareMap.put("41to12", 7.5f);
         mnrFareMap.put("41to13", 6.25f);
         mnrFareMap.put("41to14", 6f);
@@ -1140,8 +1140,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("41to41", 2.5f);
 
         // 42
-        mnrFareMap.put("42to2", 14.25f);
-        mnrFareMap.put("42to11", 9.75f);
+        mnrFareMap.put("42to11", 14.25f);
+        mnrFareMap.put("42to2", 9.75f);
         mnrFareMap.put("42to12", 8.5f);
         mnrFareMap.put("42to13", 7.5f);
         mnrFareMap.put("42to14", 7f);
@@ -1157,8 +1157,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("42to42", 2.5f);
 
         // 51
-        mnrFareMap.put("51to2", 16.5f);
-        mnrFareMap.put("51to11", 12f);
+        mnrFareMap.put("51to11", 16.5f);
+        mnrFareMap.put("51to2", 12f);
         mnrFareMap.put("51to12", 11.75f);
         mnrFareMap.put("51to13", 10.75f);
         mnrFareMap.put("51to14", 10.5f);
@@ -1227,34 +1227,34 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("1to51", 20.75f);
 
         // 12
-        mnrFareMap.put("12to2", 12.5f);
-        mnrFareMap.put("12to11", 3f);
+        mnrFareMap.put("12to11", 12.5f);
+        mnrFareMap.put("12to2", 3f);
         mnrFareMap.put("12to12", 3f);
 
         // 13
-        mnrFareMap.put("13to2", 14f);
-        mnrFareMap.put("13to11", 4.25f);
+        mnrFareMap.put("13to11", 14f);
+        mnrFareMap.put("13to2", 4.25f);
         mnrFareMap.put("13to12", 3f);
         mnrFareMap.put("13to13", 3f);
 
         // 14
-        mnrFareMap.put("14to2", 15f);
-        mnrFareMap.put("14to11", 5f);
+        mnrFareMap.put("14to11", 15f);
+        mnrFareMap.put("14to2", 5f);
         mnrFareMap.put("14to12", 4f);
         mnrFareMap.put("14to13", 3.75f);
         mnrFareMap.put("14to14", 3f);
 
         // 15
-        mnrFareMap.put("15to2", 15f);
-        mnrFareMap.put("15to11", 5f);
+        mnrFareMap.put("15to11", 15f);
+        mnrFareMap.put("15to2", 5f);
         mnrFareMap.put("15to12", 4.75f);
         mnrFareMap.put("15to13", 3.75f);
         mnrFareMap.put("15to14", 3.5f);
         mnrFareMap.put("15to15", 2.75f);
 
         // 16
-        mnrFareMap.put("16to2", 16.5f);
-        mnrFareMap.put("16to11", 6f);
+        mnrFareMap.put("16to11", 16.5f);
+        mnrFareMap.put("16to2", 6f);
         mnrFareMap.put("16to12", 6f);
         mnrFareMap.put("16to13", 5f);
         mnrFareMap.put("16to14", 4.75f);
@@ -1262,8 +1262,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("16to16", 2.75f);
 
         // 17
-        mnrFareMap.put("17to2", 17.75f);
-        mnrFareMap.put("17to11", 7f);
+        mnrFareMap.put("17to11", 17.75f);
+        mnrFareMap.put("17to2", 7f);
         mnrFareMap.put("17to12", 7f);
         mnrFareMap.put("17to13", 6f);
         mnrFareMap.put("17to14", 5.35f);
@@ -1272,8 +1272,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("17to17", 2.75f);
 
         // 18
-        mnrFareMap.put("18to2", 19.25f);
-        mnrFareMap.put("18to11", 8.5f);
+        mnrFareMap.put("18to11", 19.25f);
+        mnrFareMap.put("18to2", 8.5f);
         mnrFareMap.put("18to12", 8.5f);
         mnrFareMap.put("18to13", 7.25f);
         mnrFareMap.put("18to14", 7f);
@@ -1283,8 +1283,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("18to18", 2.75f);
 
         // 19
-        mnrFareMap.put("19to2", 21f);
-        mnrFareMap.put("19to11", 10.25f);
+        mnrFareMap.put("19to11", 21f);
+        mnrFareMap.put("19to2", 10.25f);
         mnrFareMap.put("19to12", 10.25f);
         mnrFareMap.put("19to13", 9f);
         mnrFareMap.put("19to14", 8.25f);
@@ -1294,8 +1294,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("19to18", 2.75f);
 
         // 20
-        mnrFareMap.put("20to2", 22.25f);
-        mnrFareMap.put("20to11", 11.5f);
+        mnrFareMap.put("20to11", 22.25f);
+        mnrFareMap.put("20to2", 11.5f);
         mnrFareMap.put("20to12", 11.5f);
         mnrFareMap.put("20to13", 10.25f);
         mnrFareMap.put("20to14", 9.5f);
@@ -1307,8 +1307,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("20to20", 2.75f);
 
         // 21
-        mnrFareMap.put("21to2", 24.75f);
-        mnrFareMap.put("21to11", 14f);
+        mnrFareMap.put("21to11", 24.75f);
+        mnrFareMap.put("21to2", 14f);
         mnrFareMap.put("21to12", 14f);
         mnrFareMap.put("21to13", 12.75f);
         mnrFareMap.put("21to14", 12f);
@@ -1321,8 +1321,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("21to21", 2.75f);
 
         // 31
-        mnrFareMap.put("31to2", 16.5f);
-        mnrFareMap.put("31to11", 6f);
+        mnrFareMap.put("31to11", 16.5f);
+        mnrFareMap.put("31to2", 6f);
         mnrFareMap.put("31to12", 6f);
         mnrFareMap.put("31to13", 5f);
         mnrFareMap.put("31to14", 4.75f);
@@ -1336,8 +1336,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("31to31", 2.75f);
 
         // 41
-        mnrFareMap.put("41to2", 18.25f);
-        mnrFareMap.put("41to11", 7.5f);
+        mnrFareMap.put("41to11", 18.25f);
+        mnrFareMap.put("41to2", 7.5f);
         mnrFareMap.put("41to12", 7.5f);
         mnrFareMap.put("41to13", 6.25f);
         mnrFareMap.put("41to14", 6f);
@@ -1352,8 +1352,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("41to41", 2.5f);
 
         // 42
-        mnrFareMap.put("42to2", 19f);
-        mnrFareMap.put("42to11", 9.75f);
+        mnrFareMap.put("42to11", 19f);
+        mnrFareMap.put("42to2", 9.75f);
         mnrFareMap.put("42to12", 8.5f);
         mnrFareMap.put("42to13", 7.5f);
         mnrFareMap.put("42to14", 7f);
@@ -1369,8 +1369,8 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("42to42", 2.5f);
 
         // 51
-        mnrFareMap.put("51to2", 22f);
-        mnrFareMap.put("51to11", 12f);
+        mnrFareMap.put("51to11", 22f);
+        mnrFareMap.put("51to2", 12f);
         mnrFareMap.put("51to12", 11.75f);
         mnrFareMap.put("51to13", 10.75f);
         mnrFareMap.put("51to14", 10.5f);

@@ -875,7 +875,7 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("4to0", 12.75f);
         mnrFareMap.put("4to1", 12.75f);
         mnrFareMap.put("4to2", 4.25f);
-        mnrFareMap.put("4to3", 4f);
+        mnrFareMap.put("4to3", 3f);
         mnrFareMap.put("4to4", 3f);
         mnrFareMap.put("4to5", 3f);
         mnrFareMap.put("4to6", 6f);
@@ -1146,7 +1146,7 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("42to13", 7.5f);
         mnrFareMap.put("42to14", 7f);
         mnrFareMap.put("42to15", 5.25f);
-        mnrFareMap.put("42to16", 4.25f);
+        mnrFareMap.put("42to16", 4.75f);
         mnrFareMap.put("42to17", 3.5f);
         mnrFareMap.put("42to18", 5f);
         mnrFareMap.put("42to19", 6f);

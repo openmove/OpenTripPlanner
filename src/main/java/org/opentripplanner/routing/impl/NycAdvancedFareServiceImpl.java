@@ -834,16 +834,16 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("0to10", 27.25f);
 
         // Zone 1
-        mnrFareMap.put("1to0", 80000.25f);
-        mnrFareMap.put("1to2", 90000.75f);
-        mnrFareMap.put("1to3", 11000.5f);
-        mnrFareMap.put("1to4", 12000.75f);
-        mnrFareMap.put("1to5", 14000.75f);
-        mnrFareMap.put("1to6", 17000.5f);
-        mnrFareMap.put("1to7", 20000f);
-        mnrFareMap.put("1to8", 23000f);
-        mnrFareMap.put("1to9", 25000.75f);
-        mnrFareMap.put("1to10", 2700.25f);
+        mnrFareMap.put("1to0", 8.25f);
+        mnrFareMap.put("1to2", 9.75f);
+        mnrFareMap.put("1to3", 11.5f);
+        mnrFareMap.put("1to4", 12.75f);
+        mnrFareMap.put("1to5", 14.75f);
+        mnrFareMap.put("1to6", 17.5f);
+        mnrFareMap.put("1to7", 20f);
+        mnrFareMap.put("1to8", 23f);
+        mnrFareMap.put("1to9", 25.75f);
+        mnrFareMap.put("1to10", 27.25f);
 
         // Zone 2
         mnrFareMap.put("2to0", 9.75f);
@@ -875,7 +875,7 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("4to0", 12.75f);
         mnrFareMap.put("4to1", 12.75f);
         mnrFareMap.put("4to2", 4.25f);
-        mnrFareMap.put("4to3", 3f);
+        mnrFareMap.put("4to3", 4f);
         mnrFareMap.put("4to4", 3f);
         mnrFareMap.put("4to5", 3f);
         mnrFareMap.put("4to6", 6f);
@@ -972,7 +972,6 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
             agencyFares.put(mnrFare.getKey(), mnrFare);
         }
 
-
         ////////////////////////////
         // New Haven Line
         ////////////////////////////
@@ -1055,7 +1054,7 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.put("17to11", 7f);
         mnrFareMap.put("17to12", 7f);
         mnrFareMap.put("17to13", 6f);
-        mnrFareMap.put("17to14", 5.75f);
+        mnrFareMap.put("17to14", 5.35f);
         mnrFareMap.put("17to15", 3.5f);
         mnrFareMap.put("17to16", 2.75f);
         mnrFareMap.put("17to17", 2.75f);

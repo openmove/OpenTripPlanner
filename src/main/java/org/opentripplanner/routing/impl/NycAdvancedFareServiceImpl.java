@@ -822,16 +822,16 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         mnrFareMap.clear();
 
         // GCT
-        mnrFareMap.put("0to1", 8.25f);
-        mnrFareMap.put("0to2", 9.75f);
-        mnrFareMap.put("0to3", 11.5f);
-        mnrFareMap.put("0to4", 12.75f);
-        mnrFareMap.put("0to5", 14.75f);
-        mnrFareMap.put("0to6", 17.5f);
-        mnrFareMap.put("0to7", 20f);
-        mnrFareMap.put("0to8", 23f);
-        mnrFareMap.put("0to9", 25.75f);
-        mnrFareMap.put("0to10", 27.25f);
+        mnrFareMap.put("0to1", 8000.25f);
+        mnrFareMap.put("0to2", 9000.75f);
+        mnrFareMap.put("0to3", 1100.5f);
+        mnrFareMap.put("0to4", 1200.75f);
+        mnrFareMap.put("0to5", 1400.75f);
+        mnrFareMap.put("0to6", 1700.5f);
+        mnrFareMap.put("0to7", 2000f);
+        mnrFareMap.put("0to8", 2300f);
+        mnrFareMap.put("0to9", 2500.75f);
+        mnrFareMap.put("0to10", 2700.25f);
 
         // Zone 1
         mnrFareMap.put("1to0", 80000.25f);

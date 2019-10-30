@@ -74,8 +74,11 @@ public class NearbyStopFinder {
             streetSearch.setSearchTerminationStrategy((v, w, s, spt, opt) -> s.getWalkDistance() > radiusMeters);
             // Don't find transfers that use other transfers
             streetSearch.setSkipEdgeStrategy((o, t, c, edge, s, opt) -> edge instanceof TransferEdge || edge instanceof PathwayEdge);
+
+            LOG.info("streetSearch.setSkipEdgeStrategy((o, t, c, edge, s, opt) -> edge instanceof TransferEdge || edge instanceof PathwayEdge); WORKED!!!!!");
         } else {
             // FIXME use the vertex index already in the graph if it exists.
+            LOG.info("new StreetVertexIndexServiceImpl(graph); NO USE STREETS");
             streetIndex = new StreetVertexIndexServiceImpl(graph);
         }
     }

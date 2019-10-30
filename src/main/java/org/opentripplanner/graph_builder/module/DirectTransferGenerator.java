@@ -75,11 +75,13 @@ public class DirectTransferGenerator implements GraphBuilderModule {
         //TODO UNCOMMENT THIS OUT
         /* The linker will use streets if they are available, or straight-line distance otherwise. */
         NearbyStopFinder nearbyStopFinder = new NearbyStopFinder(graph, radiusMeters);
-//        if (nearbyStopFinder.useStreets) {
-//            LOG.info("Creating direct transfer edges between stops using the street network from OSM...");
-//        } else {
-//            LOG.info("Creating direct transfer edges between stops using straight line distance (not streets)...");
-//        }
+        if (nearbyStopFinder.useStreets) {
+            LOG.info("Creating direct transfer edges between stops using the street network from OSM...");
+        } else {
+            LOG.info("Creating direct transfer edges between stops using straight line distance (not streets)...");
+        }
+
+        LOG.info("Made it past Nearby Stop Finder!!!!!!");
 
         int nTransfersTotal = 0;
         int nLinkableStops = 0;

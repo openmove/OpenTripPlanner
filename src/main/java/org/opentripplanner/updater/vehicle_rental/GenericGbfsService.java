@@ -180,9 +180,14 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
         // fetch data from root URL. This file/endpoint is actually not required per the GBFS spec
         // See https://github.com/NABSA/gbfs/blob/master/gbfs.md#files
         InputStream rootData = fetchFromUrl(makeGbfsEndpointUrl("gbfs.json"));
-
+        if (rootData == null) {
+            LOG.warn("gbfs.json not found at {}. Omitting gbfs.json from URL.", rootUrl);
+            // Try without gbfs.json.
+            rootData = fetchFromUrl(rootUrl);
+        }
         // Check to see if data from the root url was able to be fetched. The GBFS.json file is not required.
         if (rootData == null) {
+            LOG.warn("gbfs.json still not found at {}. Attempting to use default GBFS file endpoints.", rootUrl);
             // Root GBFS.json file not able to be fetched, set default endpoints.
             systemInformationUrl = makeGbfsEndpointUrl("system_information.json");
             stationInformationUrl = makeGbfsEndpointUrl("station_information.json");
@@ -383,11 +388,11 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
             }
             // assume pickups and dropoffs are allowed if installed if optional data is not provided
             vehicleRentalStation.allowPickup = station.num_bikes_available > 0 &&
-                (station.is_installed == null || station.is_installed == 1) &&
-                (station.is_renting == null || station.is_renting == 1);
+                (station.is_installed == null || station.is_installed) &&
+                (station.is_renting == null || station.is_renting);
             vehicleRentalStation.allowDropoff = station.num_docks_available > 0 &&
-                (station.is_installed == null || station.is_installed == 1) &&
-                (station.is_returning == null || station.is_returning == 1);
+                (station.is_installed == null || station.is_installed) &&
+                (station.is_returning == null || station.is_returning);
         }
         stations.addAll(stationsByStationId.values());
         if (stations.size() > 0) {

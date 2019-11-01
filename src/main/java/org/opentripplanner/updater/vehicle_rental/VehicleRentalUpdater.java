@@ -166,7 +166,7 @@ public class VehicleRentalUpdater extends PollingGraphUpdater {
                 if (vertex == null) {
                     makeVertex(graph, station);
                 } else if (vertex.hasDifferentApproximatePosition(station)) {
-                    LOG.info("Vehicle rental {} has changed position, re-graphing", station);
+                    LOG.info("Vehicle rental {} has changed position (to {}, {}), re-graphing", station, vertex.getY(), vertex.getX());
 
                     // First remove the old vertices and edges
                     splitter.removeRentalStationVertexAndAssociatedSemiPermanentVerticesAndEdges(vertex);

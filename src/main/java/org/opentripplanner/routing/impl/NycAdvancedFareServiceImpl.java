@@ -2086,8 +2086,9 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
                 NycTraveledService targetPrevTraveledService = null; // the target that applies transfer rule into current ride
                 for (NycTraveledService traveledService : traveledServices) {
                     String prevServiceIdString = traveledService.serviceId.toString();
+                    String thisServiceIdString = ride.agency + "_" + ride.routeType;
 
-                    Set<NycTransferRule> rules = getRelatedTransferRules(prevServiceIdString);
+                    Set<NycTransferRule> rules = getRelatedTransferRules(prevServiceIdString, thisServiceIdString);
                     if (rules.isEmpty()) {
                         continue;
                     }
@@ -2338,12 +2339,12 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
     }
 
     /** query transfer rules related to a specific service */
-    private Set<NycTransferRule> getRelatedTransferRules(String serviceIdString) {
+    private Set<NycTransferRule> getRelatedTransferRules(String serviceIdString, String otherServiceIdString) {
         return transferRules.entrySet().stream()
                 .filter(
                         r -> (
-                                r.getValue().serviceId.toString().equals(serviceIdString) ||
-                                        r.getValue().otherServiceId.toString().equals(serviceIdString)
+                                r.getValue().serviceId.toString().equals(serviceIdString) &&
+                                        r.getValue().otherServiceId.toString().equals(otherServiceIdString)
                         )
                 )
                 .map(p -> p.getValue())

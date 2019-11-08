@@ -166,7 +166,12 @@ public class PathwayEdge extends Edge {
 
                 return null;
             }
-            time = wheelchairTraversalTime;
+
+            if (wheelchairTraversalTime == -1) {
+                time = 1;
+            }else {
+                time = wheelchairTraversalTime;
+            }
         }
         StateEditor s1 = s0.edit(this);
         // Allow transfers to the street if the PathwayEdge is proceeded by a TransferEdge

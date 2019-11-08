@@ -229,10 +229,12 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
                     continue;
                 }
                 Envelope env = geometry.getEnvelopeInternal();
-                if (edgeTree instanceof HashGridSpatialIndex)
+                if (edgeTree instanceof HashGridSpatialIndex) {
                     ((HashGridSpatialIndex)edgeTree).insert(geometry, e);
-                else
+                    LOG.info("COMPELTED ((HashGridSpatialIndex)edgeTree).insert(geometry, e);");
+                } else {
                     edgeTree.insert(env, e);
+                }
             }
             if (v instanceof TransitStop) {
                 Envelope env = new Envelope(v.getCoordinate());

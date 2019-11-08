@@ -13,6 +13,7 @@
 
 package org.opentripplanner.common.geometry;
 
+import com.vividsolutions.jts.geom.Point;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.procedure.TLongProcedure;
 import gnu.trove.set.TLongSet;
@@ -113,31 +114,44 @@ public class HashGridSpatialIndex<T> implements SpatialIndex, Serializable {
     }
 
     public final void insert(LineString geom, final Object item) {
-        Coordinate[] coord = geom.getCoordinates();
-        final TLongSet keys = new TLongHashSet(coord.length * 8);
-        for (int i = 0; i < coord.length - 1; i++) {
-            // TODO Cut the segment if longer than bin size
-            // to reduce the number of wrong bins
-            Envelope env = new Envelope(coord[i], coord[i + 1]);
-            visit(env, true, new BinVisitor<T>() {
+        //TODO validate this with anyone else that knows what they are doing....
+        Point startPoint = geom.getStartPoint();
+        Point endPoint = geom.getEndPoint();
+//        if(startPoint.getX() != -999.0 && startPoint.getY() != -999.0 && endPoint.getX() != -999.0 && endPoint.getY() != -999.0)
+//        {
+            LOG.info("StartPoint = "+startPoint.toString());
+            LOG.info("endPoint = "+endPoint.toString());
+            LOG.info("COORDINATE LENGTH ="+geom.getCoordinates().length);
+            Coordinate[] coord = geom.getCoordinates();
+            final TLongSet keys = new TLongHashSet(coord.length * 8);
+            for (int i = 0; i < coord.length - 1; i++) {
+                // TODO Cut the segment if longer than bin size
+                // to reduce the number of wrong bins
+                Coordinate clampedCoordinateFirst = clamp(coord[i]);
+                Coordinate clampedCoordinateNext = clamp(coord[i+1]);
+                Envelope env = new Envelope(clampedCoordinateFirst, clampedCoordinateNext);
+                visit(env, true, new BinVisitor<T>() {
+                    @Override
+                    public boolean visit(List<T> bin, long mapKey) {
+                        keys.add(mapKey);
+                        return false;
+                    }
+                });
+            }
+            keys.forEach(new TLongProcedure() {
+                @SuppressWarnings("unchecked")
                 @Override
-                public boolean visit(List<T> bin, long mapKey) {
-                    keys.add(mapKey);
-                    return false;
+                public boolean execute(long key) {
+                    // Note: bins have been initialized in the previous visit
+                    bins.get(key).add((T) item);
+                    nEntries++;
+                    return true;
                 }
             });
-        }
-        keys.forEach(new TLongProcedure() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public boolean execute(long key) {
-                // Note: bins have been initialized in the previous visit
-                bins.get(key).add((T) item);
-                nEntries++;
-                return true;
-            }
-        });
-        nObjects++;
+            nObjects++;
+
+            LOG.info("OBJECTS ADDED");
+//        }
     }
 
     @Override

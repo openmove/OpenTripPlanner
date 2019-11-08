@@ -72,6 +72,7 @@ public class DirectTransferGenerator implements GraphBuilderModule {
             graph.index = new GraphIndex(graph);
         }
 
+        //TODO UNCOMMENT THIS OUT
         /* The linker will use streets if they are available, or straight-line distance otherwise. */
         NearbyStopFinder nearbyStopFinder = new NearbyStopFinder(graph, radiusMeters);
         if (nearbyStopFinder.useStreets) {
@@ -79,6 +80,8 @@ public class DirectTransferGenerator implements GraphBuilderModule {
         } else {
             LOG.info("Creating direct transfer edges between stops using straight line distance (not streets)...");
         }
+
+        LOG.info("Made it past Nearby Stop Finder!!!!!!");
 
         int nTransfersTotal = 0;
         int nLinkableStops = 0;
@@ -97,12 +100,13 @@ public class DirectTransferGenerator implements GraphBuilderModule {
 
             /* Make transfers to each nearby stop that is the closest stop on some trip pattern. */
             int n = 0;
-            for (NearbyStopFinder.StopAtDistance sd : nearbyStopFinder.findNearbyStopsConsideringPatterns(ts0)) {
-                /* Skip the origin stop, loop transfers are not needed. */
-                if (sd.tstop == ts0 || pathwayDestinations.contains(sd.tstop)) continue;
-                new SimpleTransfer(ts0, sd.tstop, sd.dist, sd.geom, sd.edges);
-                n += 1;
-            }
+            //TODO UNCOMMENT THIS OUT
+//            for (NearbyStopFinder.StopAtDistance sd : nearbyStopFinder.findNearbyStopsConsideringPatterns(ts0)) {
+//                /* Skip the origin stop, loop transfers are not needed. */
+//                if (sd.tstop == ts0 || pathwayDestinations.contains(sd.tstop)) continue;
+//                new SimpleTransfer(ts0, sd.tstop, sd.dist, sd.geom, sd.edges);
+//                n += 1;
+//            }
             LOG.debug("Linked stop {} to {} nearby stops on other patterns.", ts0.getStop(), n);
             if (n == 0) {
                 LOG.debug(graph.addBuilderAnnotation(new StopNotLinkedForTransfers(ts0)));

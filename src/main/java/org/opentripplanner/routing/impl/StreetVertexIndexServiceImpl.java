@@ -231,7 +231,6 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
                 Envelope env = geometry.getEnvelopeInternal();
                 if (edgeTree instanceof HashGridSpatialIndex) {
                     ((HashGridSpatialIndex)edgeTree).insert(geometry, e);
-                    LOG.info("COMPELTED ((HashGridSpatialIndex)edgeTree).insert(geometry, e);");
                 } else {
                     edgeTree.insert(env, e);
                 }

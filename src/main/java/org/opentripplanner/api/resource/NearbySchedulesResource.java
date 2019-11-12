@@ -222,7 +222,7 @@ public class NearbySchedulesResource {
     private String trackIds = null;
 
     /**
-     *
+     * Sets API to a mode for digital signage features. This removes results that are not in realtime.
      */
     @QueryParam("signMode")
     @DefaultValue("false")

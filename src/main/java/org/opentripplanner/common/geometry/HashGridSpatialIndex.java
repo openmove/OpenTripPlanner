@@ -114,14 +114,8 @@ public class HashGridSpatialIndex<T> implements SpatialIndex, Serializable {
     }
 
     public final void insert(LineString geom, final Object item) {
-        //TODO validate this with anyone else that knows what they are doing....
         Point startPoint = geom.getStartPoint();
         Point endPoint = geom.getEndPoint();
-//        if(startPoint.getX() != -999.0 && startPoint.getY() != -999.0 && endPoint.getX() != -999.0 && endPoint.getY() != -999.0)
-//        {
-            LOG.info("StartPoint = "+startPoint.toString());
-            LOG.info("endPoint = "+endPoint.toString());
-            LOG.info("COORDINATE LENGTH ="+geom.getCoordinates().length);
             Coordinate[] coord = geom.getCoordinates();
             final TLongSet keys = new TLongHashSet(coord.length * 8);
             for (int i = 0; i < coord.length - 1; i++) {
@@ -149,9 +143,6 @@ public class HashGridSpatialIndex<T> implements SpatialIndex, Serializable {
                 }
             });
             nObjects++;
-
-            LOG.info("OBJECTS ADDED");
-//        }
     }
 
     @Override

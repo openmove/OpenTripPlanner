@@ -1023,26 +1023,28 @@ public class StreetEdge extends Edge implements Cloneable {
             weight *
             // These cosine and sine calculations could be precalculated during graph build
             (coefficientOfRollingResistance * Math.cos(beta) + Math.sin(beta));
+        // The interaction of aerodynamics and air density (Cd * A * p)
+        double dragResistance = aerodynamicDrag * airDensity;
 
         double a = (
             -Math.pow(dynamicRollingResistance, 3) / 27.0
         ) + (
             (2.0 * normalizedRollingFriction * dynamicRollingResistance) /
-                (3.0 * aerodynamicDrag * Math.pow(airDensity, 2))
+                (3.0 * Math.pow(dragResistance, 2))
         ) + (
-            watts / (aerodynamicDrag * airDensity)
+            watts / (dragResistance)
         );
         double b = (
-            2.0 / (9.0 * aerodynamicDrag * airDensity)
+            2.0 / (9.0 * dragResistance)
         ) * (
             3.0 * normalizedRollingFriction -
                 (
-                    (2.0 * dynamicRollingResistance) / (aerodynamicDrag * airDensity)
+                    (2.0 * dynamicRollingResistance) / (dragResistance)
                 )
         );
 
         double cardanicCheck = Math.pow(a, 2) + Math.pow(b, 3);
-        double rollingDragComponent = 2.0 / 3.0 * dynamicRollingResistance / (aerodynamicDrag * airDensity);
+        double rollingDragComponent = 2.0 / 3.0 * dynamicRollingResistance / (dragResistance);
         double speed;
         if (cardanicCheck >= 0) {
             double cardanicCheckSqrt = Math.sqrt(cardanicCheck);

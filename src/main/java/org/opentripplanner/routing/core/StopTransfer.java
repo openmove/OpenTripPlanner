@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.model.Stop;
 
 /**
  * StopTransfer class used by TransferTable. Represents a transfer between two stops.
@@ -61,7 +62,7 @@ public class StopTransfer implements Serializable {
         checkNotNull(specificTransfer);
         return specificTransfers.add(specificTransfer);
     }
-    
+
     /**
      * Get the transfer time that should be used when transferring from a trip to another trip.
      * Note that this function does not check whether another specific transfer exists with the
@@ -71,9 +72,11 @@ public class StopTransfer implements Serializable {
      * @return the transfer time in seconds. May contain special (negative) values which meaning
      *   can be found in the *_TRANSFER constants.
      */
-    public int getTransferTime(Trip fromTrip, Trip toTrip) {
+    public TransferDetail getTransferTime(Trip fromTrip, Trip toTrip) {
         // By default the transfer is unknown
         int transferTime = UNKNOWN_TRANSFER;
+        Stop requiredStop = null;
+        TransferDetail transferDetail = new TransferDetail();
         
         // Pick the matching specific transfer with the highest specificity
         int maxFoundSpecificity = SpecificTransfer.MIN_SPECIFICITY - 1;
@@ -83,8 +86,12 @@ public class StopTransfer implements Serializable {
                 if (specificTransfer.matches(fromTrip, toTrip)) {
                     // Set the found transfer time
                     transferTime = specificTransfer.transferTime;
+                    requiredStop = specificTransfer.getRequiredStop();
                     maxFoundSpecificity = specificity;
-                    
+
+                    transferDetail.setRequiredStop(requiredStop);
+                    transferDetail.setTransferTime(transferTime);
+
                     // Break when highest specificity is found
                     if (maxFoundSpecificity == SpecificTransfer.MAX_SPECIFICITY) {
                         break;
@@ -92,9 +99,7 @@ public class StopTransfer implements Serializable {
                 }
             }
         }
-        
-        // Return transfer time
-        return transferTime;
+        return transferDetail;
     }
     
     /**

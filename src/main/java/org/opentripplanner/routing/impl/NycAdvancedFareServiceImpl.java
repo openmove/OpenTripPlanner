@@ -84,6 +84,8 @@ class NycAgencyFare implements Serializable {
     String startZone;
     String endZone;
     String midZone;
+    long startTime;
+    long endTime;
 
     NycAgencyFare(NycServiceId serviceId,
                   FareType fareType,
@@ -92,6 +94,21 @@ class NycAgencyFare implements Serializable {
                   String startZone,
                   String endZone,
                   String midZone) {
+
+        this(serviceId, fareType, fareConditionType, price, startZone, endZone, midZone, 0, 0);
+
+    }
+
+    NycAgencyFare(NycServiceId serviceId,
+                  FareType fareType,
+                  NycFareConditionType fareConditionType,
+                  float price,
+                  String startZone,
+                  String endZone,
+                  String midZone,
+                  long startTime,
+                  long endTime
+                  ) {
         this.serviceId = serviceId;
         this.fareType = fareType;
         this.fareConditionType = fareConditionType;
@@ -99,6 +116,8 @@ class NycAgencyFare implements Serializable {
         this.startZone = startZone;
         this.endZone = endZone;
         this.midZone = midZone;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
     public String getKey() {
@@ -114,6 +133,12 @@ class NycAgencyFare implements Serializable {
         }
         if(this.endZone != null && !this.endZone.isEmpty()) {
             internalKey += "_" + this.endZone;
+        }
+        if (this.startTime != 0) {
+            internalKey += ":" + this.startTime;
+        }
+        if (this.endTime != 0) {
+            internalKey += ":" + this.endTime;
         }
 
 
@@ -2236,21 +2261,28 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
             zoneKey += '_' + ride.endZone;
         }
 
+        String baseFareKey = serviceIdString + '_' + fareType.toString();
+
+
         // check if there's fare without conditions
-        String nonConditionFareKey = serviceIdString + '_' + fareType.toString();
+        String nonConditionFareKey = baseFareKey;
         if(!zoneKey.isEmpty()) {
             nonConditionFareKey += zoneKey;
         }
+
+        nonConditionFareKey = getFareKeyForTime(nonConditionFareKey, ride.startTime);
         NycAgencyFare nonConditionFare = agencyFares.get(nonConditionFareKey);
 
         // check if there's fare with conditions
         NycAgencyFare conditionFare = null;
         for (NycFareConditionType fareConditionType : NycFareConditionType.values()) {
-            String fareKey = serviceIdString + '_' + fareType.toString() + "_" + fareConditionType.toString();
+            String fareKey = baseFareKey + "_" + fareConditionType.toString();
+            fareKey = getFareKeyForTime(fareKey, ride.startTime);
             // first check fixed fare (without startZone & endZone)
             conditionFare = agencyFares.get(fareKey);
             if(conditionFare == null) {
-                fareKey += zoneKey;
+                fareKey = baseFareKey + "_" + fareConditionType.toString() + zoneKey;
+                fareKey = getFareKeyForTime(fareKey, ride.startTime);
                 conditionFare = agencyFares.get(fareKey);
             }
 
@@ -2349,5 +2381,27 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
                 )
                 .map(p -> p.getValue())
                 .collect(Collectors.toSet());
+    }
+
+    /** query for fare key that matches a given datetime */
+    private String getFareKeyForTime(String key, long time) {
+        String fareKey = key; // default to key for all time
+
+        Set<String> fareKeys = agencyFares.keySet()
+                .stream()
+                .filter(s -> (s.startsWith(key) && s.contains(":")))
+                .collect(Collectors.toSet());
+
+        for ( String k : fareKeys ) {
+
+            NycAgencyFare tempFare = agencyFares.get(k);
+
+            if ((time >= tempFare.startTime) && (time <= tempFare.endTime)) {
+                fareKey = k; // returns first key that matches the time constraint
+                break;
+            }
+        }
+
+        return fareKey;
     }
 }

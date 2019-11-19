@@ -64,59 +64,59 @@ public class TestTransferTable extends TestCase {
         TransferTable table = new TransferTable();
         
         // Check transfer times
-        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true));
-        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true));
+        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true).getTransferTime());
+        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true).getTransferTime());
         
         // Add transfer to parent stop, specificity 0
         table.addTransferTime(fromStop, toStopParent, null,null, null, null, null, StopTransfer.PREFERRED_TRANSFER);
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true));
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true).getTransferTime());
         
         // Check going forward and backwards in time
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, false));
-        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(toStop, fromStop, toTrip, fromTrip, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(toStop, fromStop, toTrip, fromTrip, false));
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, false).getTransferTime());
+        assertEquals(StopTransfer.UNKNOWN_TRANSFER, table.getTransferTime(toStop, fromStop, toTrip, fromTrip, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(toStop, fromStop, toTrip, fromTrip, false).getTransferTime());
         
         // Add transfer to child stop, specificity 1
         table.addTransferTime(fromStop, toStop, null,null, toRoute, null, null, StopTransfer.FORBIDDEN_TRANSFER);
-        assertEquals(StopTransfer.FORBIDDEN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true));
+        assertEquals(StopTransfer.FORBIDDEN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true).getTransferTime());
         
         // Add transfer to parent stop, specificity 1
         table.addTransferTime(fromStop, toStopParent, null,null, toRoute2, null, null, StopTransfer.TIMED_TRANSFER);
-        assertEquals(StopTransfer.FORBIDDEN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true));
+        assertEquals(StopTransfer.FORBIDDEN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true).getTransferTime());
         
         // Add transfer to child stop, specificity 2
         table.addTransferTime(fromStop, toStop, null,null, toRoute2, null, toTrip2, 4);
-        assertEquals(StopTransfer.FORBIDDEN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(4, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true));
-        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true));
+        assertEquals(StopTransfer.FORBIDDEN_TRANSFER, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(4, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true).getTransferTime());
+        assertEquals(StopTransfer.PREFERRED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true).getTransferTime());
         
         // Add transfer to parent stop and unknown to child stop, specificity 3
         // WARNING: don't add transfers with StopTransfer.UNKNOWN_TRANSFER in non-testing code
         table.addTransferTime(fromStop, toStop, null, fromRoute, null, null, toTrip, StopTransfer.UNKNOWN_TRANSFER);
         table.addTransferTime(fromStop, toStopParent, null, fromRoute, null, null, toTrip, 5);
-        assertEquals(5, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(4, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true));
-        assertEquals(5, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true));
+        assertEquals(5, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(4, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true).getTransferTime());
+        assertEquals(5, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true).getTransferTime());
         
         // Add transfer to child stop, specificity 4
         table.addTransferTime(fromStop, toStop, null, null, null, fromTrip, toTrip2, 6);
-        assertEquals(5, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true));
-        assertEquals(6, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true));
-        assertEquals(5, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true));
-        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true));
+        assertEquals(5, table.getTransferTime(fromStop, toStop, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(6, table.getTransferTime(fromStop, toStop, fromTrip, toTrip2, true).getTransferTime());
+        assertEquals(5, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip, true).getTransferTime());
+        assertEquals(StopTransfer.TIMED_TRANSFER, table.getTransferTime(fromStop, toStopParent, fromTrip, toTrip2, true).getTransferTime());
     }
 }

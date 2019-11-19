@@ -77,7 +77,8 @@ public class StopTransfer implements Serializable {
         int transferTime = UNKNOWN_TRANSFER;
         Stop requiredStop = null;
         TransferDetail transferDetail = new TransferDetail();
-        
+        transferDetail.setTransferTime(transferTime);
+
         // Pick the matching specific transfer with the highest specificity
         int maxFoundSpecificity = SpecificTransfer.MIN_SPECIFICITY - 1;
         for (SpecificTransfer specificTransfer : specificTransfers) {

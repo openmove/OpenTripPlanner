@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.impl;
 
+// import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;
@@ -70,6 +71,8 @@ public class GraphPathFinder {
     private static final Logger LOG = LoggerFactory.getLogger(GraphPathFinder.class);
     private static final double DEFAULT_MAX_WALK = 2000;
     private static final double CLAMP_MAX_WALK = 15000;
+
+    private boolean verbose = false;
 
     Router router;
 
@@ -296,6 +299,28 @@ public class GraphPathFinder {
         }
         LOG.debug("END SEARCH ({} msec)", System.currentTimeMillis() - searchBeginTime);
         Collections.sort(paths, options.getPathComparator(options.arriveBy));
+
+
+
+        if (verbose) {
+            int i = 0;
+            for (GraphPath p : paths) {
+                int j = 0;
+                int k = 0;
+                LOG.info("New Path {}", i);
+                for (State s: p.states) {
+                    LOG.info("{} {}: ", j, s);
+                    j++;
+                }
+                for (Edge e: p.edges) {
+                    LOG.info("{} {}: ", k, e);
+                    k++;
+                }
+                i++;
+            }
+        }
+
+
         return paths;
     }
 

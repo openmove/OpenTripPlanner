@@ -13,7 +13,7 @@
 
 package org.opentripplanner.routing.impl;
 
-import com.esotericsoftware.minlog.Log;
+// import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;

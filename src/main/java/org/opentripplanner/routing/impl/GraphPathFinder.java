@@ -242,6 +242,7 @@ public class GraphPathFinder {
                 }
 
                 // If this path violates required_stop_id rules ban it
+                /*
                 List<String> previousStops = new ArrayList<String>();
                 Boolean valid = true;
                 for (Edge edge : path.edges) {
@@ -264,6 +265,7 @@ public class GraphPathFinder {
                 if(!valid) {
                     continue;
                 }
+                */
 
                 // Keep Track of the shortest duration of all paths found so far.
                 if (bestDuration == -1.0) {

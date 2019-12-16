@@ -14,7 +14,6 @@
 package org.opentripplanner.routing.impl;
 
 import com.csvreader.CsvReader;
-import com.sun.jdi.connect.spi.TransportService;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
@@ -230,64 +229,48 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         ////////////////////////////////////////////////////////
         // Create Agencies
         ///////////////////////////////////////////////////////
-
-        NycServiceId nyctSubway = new NycServiceId("MTASBWY", 1);
-        NycServiceId nyctLocalBus = new NycServiceId("MTA NYCT", 3);
-        NycServiceId nyctExpressBus = new NycServiceId("MTA NYCT", 702);
-        NycServiceId mtabcLocalBus = new NycServiceId("MTABC", 3);
-        NycServiceId mtabcExpressBus = new NycServiceId("MTABC", 702);
-        NycServiceId lirr = new NycServiceId("LI", 2);
-        NycServiceId mnr = new NycServiceId("MNR", 2);
-        NycServiceId njt = new NycServiceId("NJT", 2); //Just used for West of Hudson MNR Fares
-
-        agencies.put("nyctSubway", nyctSubway);
-        agencies.put("nyctLocalBus", nyctLocalBus);
-        agencies.put("nyctExpressBus", nyctExpressBus);
-        agencies.put("mtabcLocalBus", mtabcLocalBus);
-        agencies.put("mtabcExpressBus", mtabcExpressBus);
-        agencies.put("lirr", lirr);
-        agencies.put("mnr", mnr);
-        agencies.put("njt", njt);
+        loadAgencies("org/opentripplanner/routing/impl/agencies.csv");
 
         ////////////////////////////////////////////////////////
-        // Create Agency Fares
+        // Create Agency Fares and Peak Hours
         ///////////////////////////////////////////////////////
+        Set<String> agencyKeys = agencies.keySet()
+                .stream()
+                .collect(Collectors.toSet());
 
-        loadFares("org/opentripplanner/routing/impl/nyct_subway.csv", nyctSubway);
-        loadFares("org/opentripplanner/routing/impl/nyct_local_bus.csv", nyctLocalBus);
-        loadFares("org/opentripplanner/routing/impl/nyct_express_bus.csv", nyctExpressBus);
-        loadFares("org/opentripplanner/routing/impl/mtabc_local_bus.csv", mtabcLocalBus);
-        loadFares("org/opentripplanner/routing/impl/mtabc_express_bus.csv", mtabcExpressBus);
+        for ( String a : agencyKeys ) {
+            NycServiceId tempServiceId = agencies.get(a);
+            loadFares("org/opentripplanner/routing/impl/"+ a +".csv", tempServiceId);
 
-        loadFares("org/opentripplanner/routing/impl/lirr.csv", lirr);
-
-        loadFares("org/opentripplanner/routing/impl/mnr.csv", mnr);
+            NycAgencyPeakHour peakHours = new NycAgencyPeakHour(tempServiceId, null, null, true);
+            agencyPeakHours.put(peakHours.getKey(), peakHours);
+        }
 
         ////////////////////////////////////////////////////////
         // TRANSFER RULES
         ///////////////////////////////////////////////////////
         loadTransferRules("org/opentripplanner/routing/impl/transfer_rules.csv");
 
+    }
 
-        ////////////////////////////////////////////////////////
-        // Peak Hours
-        ///////////////////////////////////////////////////////
+    private void loadAgencies(String csvFileName) {
+        InputStream is = NycAdvancedFareServiceImpl.class.getClassLoader().getResourceAsStream(csvFileName);
+        CsvReader reader = new CsvReader(is, ',', Charset.forName("UTF-8"));
+        try {
+            reader.readHeaders();
+            while (reader.readRecord()) {
 
-        // Bus and Subway Peak Hours
-        Integer[] weekdays = {1,2,3,4,5};
-        Integer[] hours = {6,7,8,9,10,15,16,17,18,19};
-        NycAgencyPeakHour nyctPeakHours = new NycAgencyPeakHour(nyctExpressBus, weekdays, hours, false);
-        NycAgencyPeakHour mtabcPeakHours = new NycAgencyPeakHour(mtabcExpressBus, weekdays, hours, false);
-        agencyPeakHours.put(nyctPeakHours.getKey(), nyctPeakHours);
-        agencyPeakHours.put(mtabcPeakHours.getKey(), mtabcPeakHours);
+                String serviceIdStr = reader.get("service_id");
+                String agencyId = reader.get("agency_id");
+                int routeType = Integer.parseInt(reader.get("route_type"));
 
-        // LIRR Peak hours
-        NycAgencyPeakHour lirrPeakHours = new NycAgencyPeakHour(lirr, null, null, true);
-        agencyPeakHours.put(lirrPeakHours.getKey(), lirrPeakHours);
+                NycServiceId serviceId = new NycServiceId(agencyId, routeType);
 
-        // MNR Peak hours
-        NycAgencyPeakHour mnrPeakHours = new NycAgencyPeakHour(mnr, null, null, true);
-        agencyPeakHours.put(mnrPeakHours.getKey(), mnrPeakHours);
+                agencies.put(serviceIdStr, serviceId);
+            }
+        } catch (IOException ex) {
+            LOG.error("Exception while loading fare table CSV.");
+        }
     }
 
     private void loadTransferRules(String csvFileName) {

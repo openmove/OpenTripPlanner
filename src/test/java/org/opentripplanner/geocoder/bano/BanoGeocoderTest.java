@@ -1,6 +1,6 @@
 package org.opentripplanner.geocoder.bano;
 
-import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.geocoder.GeocoderResult;
@@ -18,30 +18,27 @@ public class BanoGeocoderTest {
      * if a network connection is not active or the server is down.
      */
     @Test
-    public void testOnLine() throws IOException {
-        assumeConnectedToInternet();
+    @Ignore
+    public void testOnLine() throws Exception {
+        BanoGeocoder banoGeocoder = new BanoGeocoder();
+        // The Presidential palace of the French Republic is not supposed to move often
+        Envelope bbox = new Envelope();
+        bbox.expandToInclude(2.25, 48.8);
+        bbox.expandToInclude(2.35, 48.9);
+        GeocoderResults results = banoGeocoder.geocode("55 Rue du Faubourg Saint-Honoré", bbox);
 
-// commenting out due to some 502 error responses from the Bano Geocoder instance.
-//        BanoGeocoder banoGeocoder = new BanoGeocoder();
-//        // The Presidential palace of the French Republic is not supposed to move often
-//        Envelope bbox = new Envelope();
-//        bbox.expandToInclude(2.25, 48.8);
-//        bbox.expandToInclude(2.35, 48.9);
-//        GeocoderResults results = banoGeocoder.geocode("55 Rue du Faubourg Saint-Honoré", bbox);
-//
-//        assert (results.getResults().size() >= 1);
-//
-//        boolean found = false;
-//        for (GeocoderResult result : results.getResults()) {
-//            if (result.getDescription().startsWith("55 Rue du Faubourg")) {
-//                double dist = SphericalDistanceLibrary.distance(result.getLat(),
-//                        result.getLng(), 48.870637, 2.316939);
-//                assert (dist < 100);
-//                found = true;
-//            }
-//        }
-//        assert (found);
+        assert (results.getResults().size() >= 1);
 
+        boolean found = false;
+        for (GeocoderResult result : results.getResults()) {
+            if (result.getDescription().startsWith("55 Rue du Faubourg")) {
+                double dist = SphericalDistanceLibrary.distance(result.getLat(),
+                        result.getLng(), 48.870637, 2.316939);
+                assert (dist < 100);
+                found = true;
+            }
+        }
+        assert (found);
     }
 
     private static void assumeConnectedToInternet() throws IOException {

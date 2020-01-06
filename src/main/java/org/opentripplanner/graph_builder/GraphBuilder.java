@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -187,11 +188,13 @@ public class GraphBuilder implements Runnable {
         LOG.info(ReflectionLibrary.dumpFields(builderParams));
         // Sort input files so that they are iterated over alphabetically. This ensures that when OTP builds a
         // graph and assigns feed IDs to GTFS files that have no feed_info#feed_id value the numerical IDs are assigned
-        // in a (more) predictable way. This may not entirely account solve https://github.com/opentripplanner/OpenTripPlanner/issues/2645
-        // but it does ensure that when a new OTP process builds a graph, the feed IDs will be assigned in a repeatable
-        // way to the same set of input files.
+        // deterministically. This may not entirely solve https://github.com/opentripplanner/OpenTripPlanner/issues/2645
+        // but it does ensure that when a new OTP process builds a graph, the feed IDs will be assigned in a
+        // deterministic way if the same set of input GTFS filenames are found in the directory.
         File[] inputFiles = dir.listFiles();
-        Arrays.sort(inputFiles);
+        // Note: this avoids the use of File#compareTo due to differences between UNIX and Windows when comparing
+        // pathnames (UNIX considers case in the comparison).
+        Arrays.sort(inputFiles, Comparator.comparing(File::getAbsolutePath));
         for (File file : inputFiles) {
             switch (InputFileType.forFile(file)) {
                 case GTFS:

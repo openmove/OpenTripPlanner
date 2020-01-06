@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -184,8 +185,14 @@ public class GraphBuilder implements Runnable {
         // Load the router config JSON to fail fast, but we will only apply it later when a router starts up
         routerConfig = OTPMain.loadJson(new File(dir, Router.ROUTER_CONFIG_FILENAME));
         LOG.info(ReflectionLibrary.dumpFields(builderParams));
-
-        for (File file : dir.listFiles()) {
+        // Sort input files so that they are iterated over alphabetically. This ensures that when OTP builds a
+        // graph and assigns feed IDs to GTFS files that have no feed_info#feed_id value the numerical IDs are assigned
+        // in a (more) predictable way. This may not entirely account solve https://github.com/opentripplanner/OpenTripPlanner/issues/2645
+        // but it does ensure that when a new OTP process builds a graph, the feed IDs will be assigned in a repeatable
+        // way to the same set of input files.
+        File[] inputFiles = dir.listFiles();
+        Arrays.sort(inputFiles);
+        for (File file : inputFiles) {
             switch (InputFileType.forFile(file)) {
                 case GTFS:
                     LOG.info("Found GTFS file {}", file);

@@ -40,12 +40,4 @@ public class BanoGeocoderTest {
         }
         assert (found);
     }
-
-    private static void assumeConnectedToInternet() throws IOException {
-        try {
-            new URL("http://www.google.com").openConnection().connect();
-        } catch (UnknownHostException e) {
-            Assume.assumeTrue("Skips tests if not on internet.", false);
-        }
-    }
 }

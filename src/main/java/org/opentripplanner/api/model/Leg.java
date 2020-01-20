@@ -255,10 +255,16 @@ public class Leg {
     @JsonSerialize
     public Boolean rentedVehicle;
 
+     /**
+      * Whether this leg involves traveling in a hailed car (Uber or Lyft for example).
+      */
     @XmlAttribute
     @JsonSerialize
     public Boolean hailedCar;
 
+     /**
+      * On legs with hailed car travel, this includes more details specific to TNC travel.
+      */
     @XmlAttribute
     @JsonSerialize
     public TransportationNetworkCompanySummary tncData;

@@ -260,7 +260,9 @@ public class NycAdvancedFareServiceImpl implements FareService, Serializable {
         try {
             is = new FileInputStream(csvFileName);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            LOG.error("expected file not found csvFileName=" + csvFileName);
+            LOG.error("fares will not be generated!");
+            return;
         }
         CsvReader reader = new CsvReader(is, ',', Charset.forName("UTF-8"));
         try {

@@ -96,7 +96,7 @@ public class GraphBuilderParameters {
     /**
      * A specific fares service to use.
      */
-    public FareServiceFactory fareServiceFactory;
+    public final FareServiceFactory fareServiceFactory;
 
     /**
      * A custom OSM namer to use.
@@ -196,7 +196,6 @@ public class GraphBuilderParameters {
         banDiscouragedBiking = config.path("banDiscouragedBiking").asBoolean(false);
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
         maxHopTime = config.path("maxHopTime").asLong(Long.MAX_VALUE);
-
     }
 
 }

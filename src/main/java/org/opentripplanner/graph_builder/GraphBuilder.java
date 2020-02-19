@@ -55,6 +55,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -203,18 +204,20 @@ public class GraphBuilder implements Runnable {
         graphBuilder.setPath(dir);
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
         builderConfig = OTPMain.loadJson(new File(dir, BUILDER_CONFIG_FILENAME));
-        GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
-
-        // Set path of faresdirectory to CommandLineParameters configuration
-        ObjectMapper objectMapper = new ObjectMapper();
-        builderParams.fareServiceFactory = null;
+        // For nyc-york-advanced, set path of faresdirectory to CommandLineParameters configuration
         if (builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
-            ObjectNode faresNode = objectMapper.createObjectNode();
-            faresNode.set("type", builderConfig.with("fares").get("type"));
-            faresNode.put("fareDirectory", dir.toString());
-            builderParams.fareServiceFactory = DefaultFareServiceFactory.fromConfig(faresNode);
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode configNode = objectMapper.createObjectNode();
+            Iterator<String> configFields = builderConfig.fieldNames();
+            while (configFields.hasNext()) {
+                String fieldName = configFields.next();
+                configNode.set(fieldName, builderConfig.get(fieldName));
+                if (fieldName.equals("fares") && builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
+                    configNode.with("fares").put("fareDirectory", dir.toString());
+                }
+            }
         }
-
+        GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
         // Load the router config JSON to fail fast, but we will only apply it later when a router starts up
         routerConfig = OTPMain.loadJson(new File(dir, Router.ROUTER_CONFIG_FILENAME));
         LOG.info(ReflectionLibrary.dumpFields(builderParams));
@@ -300,7 +303,6 @@ public class GraphBuilder implements Runnable {
             }
             GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
             gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
-
             gtfsModule.setMaxHopTime(builderParams.maxHopTime);
 
             graphBuilder.addModule(gtfsModule);
@@ -366,7 +368,6 @@ public class GraphBuilder implements Runnable {
         } else {
             LOG.info("no versionFile found.");
         }
-
         graphBuilder.serializeGraph = ( ! params.inMemory ) || params.preFlight;
         return graphBuilder;
     }

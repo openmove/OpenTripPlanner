@@ -14,6 +14,8 @@
 package org.opentripplanner.graph_builder;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
 import org.opentripplanner.graph_builder.module.CrossFeedTransferGenerator;
@@ -44,6 +46,7 @@ import org.opentripplanner.standalone.GraphBuilderParameters;
 import org.opentripplanner.standalone.OTPMain;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.standalone.S3BucketConfig;
+import org.opentripplanner.routing.impl.NycAdvancedFareServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,7 +202,33 @@ public class GraphBuilder implements Runnable {
         graphBuilder.setPath(dir);
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
         builderConfig = OTPMain.loadJson(new File(dir, BUILDER_CONFIG_FILENAME));
+
+        if (builderConfig.get("fares").has("fareDirectory")) {
+            //    builderConfig.with("fares").put("fareDirectory", dir.toString());
+            ObjectMapper objectMapper = new ObjectMapper();
+            //objectMapper.createObjectNode();
+            ObjectNode builderConfig2 = objectMapper.createObjectNode();
+            builderConfig2.set("stationTransfers", builderConfig.get("stationTransfers"));
+            builderConfig2.set("maxTransferDistance", builderConfig.get("maxTransferDistance"));
+            builderConfig2.set("islandWithoutStopsMaxSize", builderConfig.get("islandWithoutStopsMaxSize"));
+            builderConfig2.set("maxHopTime", builderConfig.get("maxHopTime"));
+
+            ObjectNode faresNode = objectMapper.createObjectNode();
+            faresNode.set("type", builderConfig.with("fares").get("type"));
+            faresNode.put("fareDirectory", dir.toString());
+
+            builderConfig2.set("fares", faresNode);
+            builderConfig = builderConfig2;
+        }
+
+
+
         GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
+
+        if (builderParams.fareServiceFactory.getClass().getSimpleName().equals("NycAdvancedFareServiceFactory")){
+            builderParams.fareServiceFactory.setFareDirectory
+        }
+
         // Load the router config JSON to fail fast, but we will only apply it later when a router starts up
         routerConfig = OTPMain.loadJson(new File(dir, Router.ROUTER_CONFIG_FILENAME));
         LOG.info(ReflectionLibrary.dumpFields(builderParams));
@@ -233,6 +262,8 @@ public class GraphBuilder implements Runnable {
                     LOG.info("Found version file {}", file);
                     versionFile = file;
                     break;
+                case FARES:
+                    LOG.info("Found fares file {}", file);
                 case OTHER:
                     LOG.warn("Skipping unrecognized file '{}'", file);
             }
@@ -283,6 +314,7 @@ public class GraphBuilder implements Runnable {
             }
             GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
             gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
+
             gtfsModule.setMaxHopTime(builderParams.maxHopTime);
 
             graphBuilder.addModule(gtfsModule);
@@ -348,6 +380,7 @@ public class GraphBuilder implements Runnable {
         } else {
             LOG.info("no versionFile found.");
         }
+
         graphBuilder.serializeGraph = ( ! params.inMemory ) || params.preFlight;
         return graphBuilder;
     }
@@ -358,7 +391,7 @@ public class GraphBuilder implements Runnable {
      * types are present. This helps point out when config files have been misnamed (builder-config vs. build-config).
      */
     private static enum InputFileType {
-        GTFS, OSM, DEM, CONFIG, GRAPH, TRANSFERS, LANDMARKS, VERSION, OTHER;
+        GTFS, OSM, DEM, CONFIG, GRAPH, TRANSFERS, LANDMARKS, VERSION, FARES, OTHER;
         public static InputFileType forFile(File file) {
             String name = file.getName();
             if (name.endsWith(".zip")) {
@@ -377,9 +410,10 @@ public class GraphBuilder implements Runnable {
             if (name.equals("feed_transfers.txt")) return TRANSFERS;
             if (name.equals("landmarks.json")) return LANDMARKS;
             if (name.equals("version.json")) return VERSION;
-             if (name.equals(GraphBuilder.BUILDER_CONFIG_FILENAME) || name.equals(Router.ROUTER_CONFIG_FILENAME)) {
+            if (name.equals(GraphBuilder.BUILDER_CONFIG_FILENAME) || name.equals(Router.ROUTER_CONFIG_FILENAME)) {
                 return CONFIG;
             }
+            if (name.endsWith("fares.csv")) return FARES;
             return OTHER;
         }
     }

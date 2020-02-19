@@ -196,6 +196,7 @@ public class GraphBuilderParameters {
         banDiscouragedBiking = config.path("banDiscouragedBiking").asBoolean(false);
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
         maxHopTime = config.path("maxHopTime").asLong(Long.MAX_VALUE);
+
     }
 
 }

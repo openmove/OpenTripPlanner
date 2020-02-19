@@ -38,5 +38,4 @@ public class NycAdvancedFareServiceFactory implements FareServiceFactory {
     @Override
     public void configure(JsonNode config) {
     }
-
 }

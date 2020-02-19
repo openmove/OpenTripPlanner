@@ -14,6 +14,8 @@
 package org.opentripplanner.graph_builder;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
 import org.opentripplanner.graph_builder.module.CrossFeedTransferGenerator;
@@ -39,11 +41,13 @@ import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
 import org.opentripplanner.reflect.ReflectionLibrary;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.impl.DefaultFareServiceFactory;
 import org.opentripplanner.standalone.CommandLineParameters;
 import org.opentripplanner.standalone.GraphBuilderParameters;
 import org.opentripplanner.standalone.OTPMain;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.standalone.S3BucketConfig;
+import org.opentripplanner.routing.impl.NycAdvancedFareServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +55,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -199,6 +204,19 @@ public class GraphBuilder implements Runnable {
         graphBuilder.setPath(dir);
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
         builderConfig = OTPMain.loadJson(new File(dir, BUILDER_CONFIG_FILENAME));
+        // For nyc-york-advanced, set path of faresdirectory to CommandLineParameters configuration
+        if (builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode configNode = objectMapper.createObjectNode();
+            Iterator<String> configFields = builderConfig.fieldNames();
+            while (configFields.hasNext()) {
+                String fieldName = configFields.next();
+                configNode.set(fieldName, builderConfig.get(fieldName));
+                if (fieldName.equals("fares") && builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
+                    configNode.with("fares").put("fareDirectory", dir.toString());
+                }
+            }
+        }
         GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
         // Load the router config JSON to fail fast, but we will only apply it later when a router starts up
         routerConfig = OTPMain.loadJson(new File(dir, Router.ROUTER_CONFIG_FILENAME));
@@ -233,6 +251,8 @@ public class GraphBuilder implements Runnable {
                     LOG.info("Found version file {}", file);
                     versionFile = file;
                     break;
+                case FARES:
+                    LOG.info("Found fares file {}", file);
                 case OTHER:
                     LOG.warn("Skipping unrecognized file '{}'", file);
             }
@@ -358,7 +378,7 @@ public class GraphBuilder implements Runnable {
      * types are present. This helps point out when config files have been misnamed (builder-config vs. build-config).
      */
     private static enum InputFileType {
-        GTFS, OSM, DEM, CONFIG, GRAPH, TRANSFERS, LANDMARKS, VERSION, OTHER;
+        GTFS, OSM, DEM, CONFIG, GRAPH, TRANSFERS, LANDMARKS, VERSION, FARES, OTHER;
         public static InputFileType forFile(File file) {
             String name = file.getName();
             if (name.endsWith(".zip")) {
@@ -377,9 +397,10 @@ public class GraphBuilder implements Runnable {
             if (name.equals("feed_transfers.txt")) return TRANSFERS;
             if (name.equals("landmarks.json")) return LANDMARKS;
             if (name.equals("version.json")) return VERSION;
-             if (name.equals(GraphBuilder.BUILDER_CONFIG_FILENAME) || name.equals(Router.ROUTER_CONFIG_FILENAME)) {
+            if (name.equals(GraphBuilder.BUILDER_CONFIG_FILENAME) || name.equals(Router.ROUTER_CONFIG_FILENAME)) {
                 return CONFIG;
             }
+            if (name.endsWith("fares.csv")) return FARES;
             return OTHER;
         }
     }

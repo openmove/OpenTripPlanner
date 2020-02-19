@@ -39,8 +39,4 @@ public class NycAdvancedFareServiceFactory implements FareServiceFactory {
     public void configure(JsonNode config) {
     }
 
-    public void setFareDirectory(String directory) {
-        this.fareDirectory = directory;
-    }
-
 }

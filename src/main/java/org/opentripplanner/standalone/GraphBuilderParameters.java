@@ -96,7 +96,7 @@ public class GraphBuilderParameters {
     /**
      * A specific fares service to use.
      */
-    public final FareServiceFactory fareServiceFactory;
+    public FareServiceFactory fareServiceFactory;
 
     /**
      * A custom OSM namer to use.

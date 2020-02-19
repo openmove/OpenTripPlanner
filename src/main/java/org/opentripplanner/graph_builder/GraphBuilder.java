@@ -41,6 +41,7 @@ import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
 import org.opentripplanner.reflect.ReflectionLibrary;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.impl.DefaultFareServiceFactory;
 import org.opentripplanner.standalone.CommandLineParameters;
 import org.opentripplanner.standalone.GraphBuilderParameters;
 import org.opentripplanner.standalone.OTPMain;
@@ -202,31 +203,16 @@ public class GraphBuilder implements Runnable {
         graphBuilder.setPath(dir);
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
         builderConfig = OTPMain.loadJson(new File(dir, BUILDER_CONFIG_FILENAME));
+        GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
 
-        if (builderConfig.get("fares").has("fareDirectory")) {
-            //    builderConfig.with("fares").put("fareDirectory", dir.toString());
-            ObjectMapper objectMapper = new ObjectMapper();
-            //objectMapper.createObjectNode();
-            ObjectNode builderConfig2 = objectMapper.createObjectNode();
-            builderConfig2.set("stationTransfers", builderConfig.get("stationTransfers"));
-            builderConfig2.set("maxTransferDistance", builderConfig.get("maxTransferDistance"));
-            builderConfig2.set("islandWithoutStopsMaxSize", builderConfig.get("islandWithoutStopsMaxSize"));
-            builderConfig2.set("maxHopTime", builderConfig.get("maxHopTime"));
-
+        // Set path of faresdirectory to CommandLineParameters configuration
+        ObjectMapper objectMapper = new ObjectMapper();
+        builderParams.fareServiceFactory = null;
+        if (builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
             ObjectNode faresNode = objectMapper.createObjectNode();
             faresNode.set("type", builderConfig.with("fares").get("type"));
             faresNode.put("fareDirectory", dir.toString());
-
-            builderConfig2.set("fares", faresNode);
-            builderConfig = builderConfig2;
-        }
-
-
-
-        GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
-
-        if (builderParams.fareServiceFactory.getClass().getSimpleName().equals("NycAdvancedFareServiceFactory")){
-            builderParams.fareServiceFactory.setFareDirectory
+            builderParams.fareServiceFactory = DefaultFareServiceFactory.fromConfig(faresNode);
         }
 
         // Load the router config JSON to fail fast, but we will only apply it later when a router starts up

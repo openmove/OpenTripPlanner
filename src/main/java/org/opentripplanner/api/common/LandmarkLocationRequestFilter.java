@@ -70,32 +70,33 @@ public class LandmarkLocationRequestFilter implements ContainerRequestFilter {
     @GET
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-
         /** The start location */
         GenericLocation from = new GenericLocation("from", requestContext.getUriInfo().getQueryParameters().get("fromPlace").toString());
         Coordinate coordFrom = new Coordinate(from.lat, from.lng);
         /** The end location */
         GenericLocation to = new GenericLocation("to", requestContext.getUriInfo().getQueryParameters().get("toPlace").toString());
         Coordinate coordTo = new Coordinate(to.lat, to.lng);
-
-
         LOG.info("Landmark fromPlace: {}, toPlace: {}", from.toString(), to.toString());
-
         if (this.contains(coordTo, lga.landmarkArea)) {
-            UriBuilder builder = requestContext.getUriInfo().getRequestUriBuilder();
-            builder.replaceQueryParam("toPlace", lga.getLandmarketTarget());
-            requestContext.setRequestUri(builder.build());
-            LOG.info("Landmark new toPlace: " + lga.getLandmarketTarget());
+            try {
+                UriBuilder builder = requestContext.getUriInfo().getRequestUriBuilder();
+                builder.replaceQueryParam("toPlace", lga.getLandmarketTarget());
+                requestContext.setRequestUri(builder.build());
+                LOG.info("Landmark new toPlace: " + lga.getLandmarketTarget());
+            } catch (Exception ex) {
+                LOG.info("Remapping Landmark new toPlace failed", ex);
+            }
         }
-
         if (this.contains(coordFrom, lga.landmarkArea)) {
-            UriBuilder builder = requestContext.getUriInfo().getRequestUriBuilder();
-            builder.replaceQueryParam("fromPlace", lga.getLandmarketTarget());
-            requestContext.setRequestUri(builder.build());
-            LOG.info("Landmark new fromPlace:" + lga.getLandmarketTarget());
+            try {
+                UriBuilder builder = requestContext.getUriInfo().getRequestUriBuilder();
+                builder.replaceQueryParam("fromPlace", lga.getLandmarketTarget());
+                requestContext.setRequestUri(builder.build());
+                LOG.info("Landmark new fromPlace:" + lga.getLandmarketTarget());
+            } catch (Exception ex) {
+                LOG.info("Remapping Landmark new toPlace failed", ex);
+            }
         }
-
-
     }
 
     public boolean contains(Coordinate coord, Coordinate[] coords) {

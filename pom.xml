@@ -117,13 +117,6 @@
     </repositories>
 
 
-    <scm>
-        <connection>scm:git:git@github.com:onebusawway/onebusaway-cloud-services.git</connection>
-        <developerConnection>scm:git:git@github.com:onebusaway/onebusaway-cloud-services.git</developerConnection>
-        <url>scm:git:git@github.com:onebusaway/onebusaway-cloud-services</url>
-        <tag>onebusaway-cloud-services-0.0.10</tag>
-    </scm>
-
     <distributionManagement>
         <repository>
             <id>releases-camsys-public-repo</id>

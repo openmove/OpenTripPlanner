@@ -205,17 +205,22 @@ public class GraphBuilder implements Runnable {
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
         builderConfig = OTPMain.loadJson(new File(dir, BUILDER_CONFIG_FILENAME));
         // For nyc-york-advanced, set path of faresdirectory to CommandLineParameters configuration
-        if (builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode configNode = objectMapper.createObjectNode();
-            Iterator<String> configFields = builderConfig.fieldNames();
-            while (configFields.hasNext()) {
-                String fieldName = configFields.next();
-                configNode.set(fieldName, builderConfig.get(fieldName));
-                if (fieldName.equals("fares") && builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
-                    configNode.with("fares").put("fareDirectory", dir.toString());
+        try {
+            // TODO clean this up / prevent NPE
+            if (builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                ObjectNode configNode = objectMapper.createObjectNode();
+                Iterator<String> configFields = builderConfig.fieldNames();
+                while (configFields.hasNext()) {
+                    String fieldName = configFields.next();
+                    configNode.set(fieldName, builderConfig.get(fieldName));
+                    if (fieldName.equals("fares") && builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
+                        configNode.with("fares").put("fareDirectory", dir.toString());
+                    }
                 }
             }
+        } catch (NullPointerException npe) {
+            LOG.error("attempt to set fareDirectory failed:" + npe);
         }
         GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
         // Load the router config JSON to fail fast, but we will only apply it later when a router starts up

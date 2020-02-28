@@ -205,7 +205,7 @@ public class GraphBuilder implements Runnable {
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
         builderConfig = OTPMain.loadJson(new File(dir, BUILDER_CONFIG_FILENAME));
         // For nyc-york-advanced, set path of faresdirectory to CommandLineParameters configuration
-        try {
+       /*try {
             // TODO clean this up / prevent NPE
             if (builderConfig.with("fares").get("type").textValue().equals("new-york-advanced")) {
                 ObjectMapper objectMapper = new ObjectMapper();
@@ -221,7 +221,7 @@ public class GraphBuilder implements Runnable {
             }
         } catch (NullPointerException npe) {
             LOG.error("attempt to set fareDirectory failed:" + npe);
-        }
+        }*/
         GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
         // Load the router config JSON to fail fast, but we will only apply it later when a router starts up
         routerConfig = OTPMain.loadJson(new File(dir, Router.ROUTER_CONFIG_FILENAME));

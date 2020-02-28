@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.nio.file.Paths;
 import java.util.Iterator;
 
 /**
@@ -223,6 +224,13 @@ public class OTPMain {
             mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
             mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
             JsonNode config = mapper.readTree(jsonStream);
+            if(file.getPath().contains("build-config.json") && config.with("fares").get("type").textValue().equals("new-york-advanced")) {
+                String filePath = Paths.get(file.getPath()).getParent().toString();
+                String configStr = mapper.writeValueAsString(config);
+                configStr = configStr.replace("null", filePath);
+                config = mapper.readTree(configStr);
+                LOG.info("Found and updated path to farsedirectory ", file);
+            }
             LOG.info("Found and loaded JSON configuration file '{}'", file);
             return config;
         } catch (FileNotFoundException ex) {

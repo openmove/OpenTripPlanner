@@ -229,7 +229,7 @@ public class OTPMain {
                 String configStr = mapper.writeValueAsString(config);
                 configStr = configStr.replace("null", filePath);
                 config = mapper.readTree(configStr);
-                LOG.info("Found and updated path to farsedirectory ", file);
+                LOG.info("Found and updated path to fareDirectory ", file);
             }
             LOG.info("Found and loaded JSON configuration file '{}'", file);
             return config;

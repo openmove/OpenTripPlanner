@@ -2,6 +2,7 @@ package org.opentripplanner.api.common;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 import org.opentripplanner.common.model.GenericLocation;
 
@@ -16,8 +17,6 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Coordinate;
-
-
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,7 @@ class AreaLandmark implements Serializable {
 public class LandmarkLocationRequestFilter implements ContainerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(LandmarkLocationRequestFilter.class);
+    private static final Pattern coordRegex = Pattern.compile("-?\\d{1,3}(.\\d*)?");
     private static GeometryFactory GeometryFactory = new GeometryFactory();
 
     private Coordinate[] lgacoords  =
@@ -70,15 +70,22 @@ public class LandmarkLocationRequestFilter implements ContainerRequestFilter {
     @GET
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        /** The start location */
         if (requestContext.getUriInfo().getQueryParameters().containsKey("fromPlace")) {
             GenericLocation from = new GenericLocation("from", requestContext.getUriInfo().getQueryParameters().get("fromPlace").toString());
-            Coordinate coordFrom = new Coordinate(from.lat, from.lng);
-            /** The end location */
             GenericLocation to = new GenericLocation("to", requestContext.getUriInfo().getQueryParameters().get("toPlace").toString());
-            Coordinate coordTo = new Coordinate(to.lat, to.lng);
+            Coordinate coordFrom = null;
+            Coordinate coordTo = null;
+
+            if ((from != null) && (from.lat instanceof Double) && (from.lng instanceof Double)) {
+                coordFrom = new Coordinate(from.lat, from.lng);
+            }
+
+            if ((to != null) && (to.lat instanceof Double) && (to.lng instanceof Double)){
+                coordTo = new Coordinate(to.lat, to.lng);
+            }
+
             LOG.info("Landmark fromPlace: {}, toPlace: {}", from.toString(), to.toString());
-            if (this.contains(coordTo, lga.landmarkArea)) {
+            if (coordTo != null && this.contains(coordTo, lga.landmarkArea)) {
                 try {
                     UriBuilder builder = requestContext.getUriInfo().getRequestUriBuilder();
                     builder.replaceQueryParam("toPlace", lga.getLandmarketTarget());
@@ -88,7 +95,7 @@ public class LandmarkLocationRequestFilter implements ContainerRequestFilter {
                     LOG.info("Remapping Landmark new toPlace failed", ex);
                 }
             }
-            if (this.contains(coordFrom, lga.landmarkArea)) {
+            if (coordFrom != null && this.contains(coordFrom, lga.landmarkArea)) {
                 try {
                     UriBuilder builder = requestContext.getUriInfo().getRequestUriBuilder();
                     builder.replaceQueryParam("fromPlace", lga.getLandmarketTarget());

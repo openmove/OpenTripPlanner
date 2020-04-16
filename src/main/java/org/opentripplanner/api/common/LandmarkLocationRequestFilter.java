@@ -2,7 +2,6 @@ package org.opentripplanner.api.common;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.regex.Pattern;
 
 import org.opentripplanner.common.model.GenericLocation;
 
@@ -12,6 +11,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.ext.Provider;
 
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
@@ -21,7 +21,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** An AreaLandmark is a Landmark described by a polygon and maps to specifc point or set of points. **/
+/** An AreaLandmark is a Landmark described by a polygon and maps to a specific point or set of points. **/
 class AreaLandmark implements Serializable {
     String landmarkName;
     Coordinate[] landmarkArea;
@@ -42,13 +42,12 @@ class AreaLandmark implements Serializable {
     }
 }
 
-
+@Provider
 @Path("routers/{routerId}/plan")
 @PreMatching
 public class LandmarkLocationRequestFilter implements ContainerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(LandmarkLocationRequestFilter.class);
-    private static final Pattern coordRegex = Pattern.compile("-?\\d{1,3}(.\\d*)?");
     private static GeometryFactory GeometryFactory = new GeometryFactory();
 
     private Coordinate[] lgacoords  =
@@ -67,7 +66,7 @@ public class LandmarkLocationRequestFilter implements ContainerRequestFilter {
     //GenericLocation loc = new GenericLocation(40.7746067, -73.8718579);
     AreaLandmark lga = new AreaLandmark("LGA Airport", lgacoords, lgatarget);
 
-    @GET
+    //@GET
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         if (requestContext.getUriInfo().getQueryParameters().containsKey("fromPlace")) {

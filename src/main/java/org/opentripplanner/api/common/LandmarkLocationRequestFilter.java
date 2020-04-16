@@ -69,7 +69,8 @@ public class LandmarkLocationRequestFilter implements ContainerRequestFilter {
     //@GET
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        if (requestContext.getUriInfo().getQueryParameters().containsKey("fromPlace")) {
+        if (requestContext.getUriInfo().getQueryParameters() != null
+                && requestContext.getUriInfo().getQueryParameters().containsKey("fromPlace")) {
             GenericLocation from = new GenericLocation("from", requestContext.getUriInfo().getQueryParameters().get("fromPlace").toString());
             GenericLocation to = new GenericLocation("to", requestContext.getUriInfo().getQueryParameters().get("toPlace").toString());
             Coordinate coordFrom = null;

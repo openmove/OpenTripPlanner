@@ -227,9 +227,16 @@ public class OTPMain {
             if(file.getPath().contains("build-config.json") && config.with("fares").get("type").textValue().equals("new-york-advanced")) {
                 String filePath = Paths.get(file.getPath()).getParent().toString();
                 String configStr = mapper.writeValueAsString(config);
-                configStr = configStr.replace("null", filePath);
+                configStr = configStr.replace("fareDirectory-null", filePath);
                 config = mapper.readTree(configStr);
                 LOG.info("Found and updated path to fareDirectory ", file);
+            }
+            if(file.getPath().contains("build-config.json") && config.has("landmarksFilter")) {
+                String filePath = Paths.get(file.getPath()).getParent().toString();
+                String configStr = mapper.writeValueAsString(config);
+                configStr = configStr.replace("landmarksFilterDirectory-null", filePath);
+                config = mapper.readTree(configStr);
+                LOG.info("Found and updated path to landmarks-filter ", file);
             }
             LOG.info("Found and loaded JSON configuration file '{}'", file);
             return config;

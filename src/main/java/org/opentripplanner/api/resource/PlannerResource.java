@@ -19,6 +19,7 @@ import org.opentripplanner.api.model.error.PlannerError;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public class PlannerResource extends RoutingResource {
     // Jersey uses @Context to inject internal types and @InjectParam or @Resource for DI objects.
     @GET
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML + Q, MediaType.TEXT_XML + Q })
-    public Response plan(@Context UriInfo uriInfo, @Context Request grizzlyRequest) {
+    public Response plan(@Context UriInfo uriInfo, @Context Request grizzlyRequest, @Context OTPServer otpServer) {
 
         /*
          * TODO: add Lang / Locale parameter, and thus get localized content (Messages & more...)
@@ -62,6 +63,17 @@ public class PlannerResource extends RoutingResource {
 
         // Create response object, containing a copy of all request parameters. Maybe they should be in the debug section of the response.
         Response response = new Response(uriInfo);
+        // response.requestParameters.replace("fromPlace", "40.7584403,-73.88013839721681");
+        LandmarksFilter landmarksFilter = new LandmarksFilter();
+        String newLoc[] = {landmarksFilter.testLoc(response.requestParameters.get("fromPlace")),landmarksFilter.testLoc(response.requestParameters.get("toPlace"))};
+        if (newLoc[0] != null) {
+            this.fromPlace = newLoc[0];
+            response.requestParameters.replace("fromPlace", newLoc[0]);
+        }
+        if (newLoc[1] != null) {
+            this.toPlace = newLoc[1];
+            response.requestParameters.replace("toPlace", newLoc[1]);
+        }
         RoutingRequest request = null;
         Router router = null;
         List<GraphPath> paths = null;

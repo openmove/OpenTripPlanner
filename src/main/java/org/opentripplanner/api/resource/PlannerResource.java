@@ -72,17 +72,18 @@ public class PlannerResource extends RoutingResource {
             request = super.buildRequest();
             router = otpServer.getRouter(request.routerId);
 
+            // Replace fromPlace and toPlace with new coordinate if they are within a LandmarksFilter area
             LandmarksFilter landmarksFilter = new LandmarksFilter();
-            String newLoc[] = {landmarksFilter.testLoc(response.requestParameters.get("fromPlace"), router.graph.routerConfig),landmarksFilter.testLoc(response.requestParameters.get("toPlace"),router.graph.routerConfig)};
-            if (newLoc[0] != null) {
-                this.fromPlace = newLoc[0];
-                response.requestParameters.replace("fromPlace", newLoc[0]);
-                request.setFromString(newLoc[0]);
+            String[] updatedLoc = (landmarksFilter.testLoc(response, router.graph.routerConfig));
+            if (updatedLoc[0] != null) {
+                this.fromPlace = updatedLoc[0];
+                response.requestParameters.replace("fromPlace",  updatedLoc[0]);
+                request.setFromString(updatedLoc[0]);
             }
-            if (newLoc[1] != null) {
-                this.toPlace = newLoc[1];
-                response.requestParameters.replace("toPlace", newLoc[1]);
-                request.setToString(newLoc[1]);
+            if (updatedLoc[1] != null) {
+                this.toPlace = updatedLoc[1];
+                response.requestParameters.replace("toPlace",  updatedLoc[1]);
+                request.setToString(updatedLoc[1]);
             }
 
 

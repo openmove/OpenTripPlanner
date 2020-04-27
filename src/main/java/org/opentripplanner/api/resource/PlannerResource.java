@@ -51,7 +51,7 @@ public class PlannerResource extends RoutingResource {
     // Jersey uses @Context to inject internal types and @InjectParam or @Resource for DI objects.
     @GET
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML + Q, MediaType.TEXT_XML + Q })
-    public Response plan(@Context UriInfo uriInfo, @Context Request grizzlyRequest, @Context OTPServer otpServer) {
+    public Response plan(@Context UriInfo uriInfo, @Context Request grizzlyRequest) {
 
         /*
          * TODO: add Lang / Locale parameter, and thus get localized content (Messages & more...)
@@ -63,17 +63,6 @@ public class PlannerResource extends RoutingResource {
 
         // Create response object, containing a copy of all request parameters. Maybe they should be in the debug section of the response.
         Response response = new Response(uriInfo);
-        // response.requestParameters.replace("fromPlace", "40.7584403,-73.88013839721681");
-        LandmarksFilter landmarksFilter = new LandmarksFilter();
-        String newLoc[] = {landmarksFilter.testLoc(response.requestParameters.get("fromPlace")),landmarksFilter.testLoc(response.requestParameters.get("toPlace"))};
-        if (newLoc[0] != null) {
-            this.fromPlace = newLoc[0];
-            response.requestParameters.replace("fromPlace", newLoc[0]);
-        }
-        if (newLoc[1] != null) {
-            this.toPlace = newLoc[1];
-            response.requestParameters.replace("toPlace", newLoc[1]);
-        }
         RoutingRequest request = null;
         Router router = null;
         List<GraphPath> paths = null;
@@ -82,6 +71,20 @@ public class PlannerResource extends RoutingResource {
             /* Fill in request fields from query parameters via shared superclass method, catching any errors. */
             request = super.buildRequest();
             router = otpServer.getRouter(request.routerId);
+
+            LandmarksFilter landmarksFilter = new LandmarksFilter();
+            String newLoc[] = {landmarksFilter.testLoc(response.requestParameters.get("fromPlace"), router.graph.routerConfig),landmarksFilter.testLoc(response.requestParameters.get("toPlace"),router.graph.routerConfig)};
+            if (newLoc[0] != null) {
+                this.fromPlace = newLoc[0];
+                response.requestParameters.replace("fromPlace", newLoc[0]);
+                request.setFromString(newLoc[0]);
+            }
+            if (newLoc[1] != null) {
+                this.toPlace = newLoc[1];
+                response.requestParameters.replace("toPlace", newLoc[1]);
+                request.setToString(newLoc[1]);
+            }
+
 
             /* Find some good GraphPaths through the OTP Graph. */
             GraphPathFinder gpFinder = new GraphPathFinder(router); // we could also get a persistent router-scoped GraphPathFinder but there's no setup cost here

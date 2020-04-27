@@ -1,17 +1,27 @@
 package org.opentripplanner.api.resource;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.io.ParseException;
+import org.opentripplanner.common.geometry.GeometryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.vividsolutions.jts.io.WKTReader;
 
+import java.io.IOException;
 import java.io.Serializable;
-
+import java.util.ArrayList;
+import java.util.List;
 
 public class LandmarksFilter {
     private static final Logger LOG = LoggerFactory.getLogger(LandmarksFilter.class);
+
+    /*
+    private Coordinate coord;
+    private Coordinate[] coords;
     class AreaLandmark implements Serializable {
         String landmarkName;
         Coordinate[] landmarkArea;
@@ -31,6 +41,7 @@ public class LandmarksFilter {
             this.landmarkTarget = landmarkTarget;
         }
     }
+
     private Coordinate[] lgacoords  =
             new Coordinate[] {
                     new Coordinate(40.7799078, -73.8829494),
@@ -40,32 +51,52 @@ public class LandmarksFilter {
                     new Coordinate(40.7799078, -73.8829494)
             };
     private Coordinate lgatarget =
-                    new Coordinate (40.7746067, -73.8718579);
+                   new Coordinate (40.7746067, -73.8718579);
 
     AreaLandmark lga = new AreaLandmark("LGA Airport", lgacoords, lgatarget);
+*/
+    public String testLoc(String location, String routerConfig) throws ParseException, IOException {
 
-    public String testLoc(String location) {
         LOG.info("LandmarksFilter found");
-        String[] locationArray = location.split(",",2);
-        Coordinate locationCoord =
-                new Coordinate(Double.parseDouble(locationArray[0]), Double.parseDouble(locationArray[1]));
+        String lgaTargetWkt = new String();
+        String lgaAreaWkt = new String();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode routerConfigJson = mapper.readTree(routerConfig);
+            lgaTargetWkt = routerConfigJson.get("landmarksFilter").get(0).get("target").textValue();
+            lgaAreaWkt = routerConfigJson.get("landmarksFilter").get(0).get("area").textValue();
+        } catch (IOException ioe) {
+            LOG.info("Couldn't read in routeConfig", ioe);
+            return null;
+        }
+        //String lgaTargetWkt = "POINT (40.7746067 -73.8718579)";
+        //String lgaAreaWkt = "POLYGON ((40.7799078 -73.8829494, 40.7709544 -73.8831425, 40.7703856 -73.8627577, 40.7800540 -73.8624573, 40.7799078 -73.8829494))";
+        WKTReader reader = new WKTReader();
+        Geometry lgaTarget = reader.read(lgaTargetWkt);
+        Geometry lgaArea = reader.read(lgaAreaWkt);
 
-        if (locationCoord != null && this.contains(locationCoord, lga.landmarkArea)) {
-            return (lgatarget.x+","+lgatarget.y);
+        String[] locationArray=location.split(",");
+        String locationWkt = "POINT ("+locationArray[0] + " " + locationArray[1] + ")";
+        Geometry locationGeometry = reader.read(locationWkt);
+        if (locationGeometry != null && lgaArea.contains(locationGeometry)) {
+            return (lgaTarget.getCoordinate().x+","+lgaTarget.getCoordinate().y);
         } else {
             return null;
         }
 
     }
 
-    public boolean contains(Coordinate coord, Coordinate[] coords) {
+
+/*
+    public boolean containsCustom(Coordinate coord, Coordinate[] coords) {
         // Based off of org/opentripplanner/analyst/batch/GraphGeographicFilter.java
         GeometryFactory geometryFactory = new GeometryFactory();
 
         Point referencePoint = geometryFactory.createPoint(coord);
         Polygon landmarkArea = geometryFactory.createPolygon(coords);
-        boolean contains = landmarkArea.contains(referencePoint);
-        LOG.info("testing for point in Landmark polygon");
-        return contains;
+        boolean areaContains = landmarkArea.contains(referencePoint);
+        LOG.info("testing for coord in Landmark coords");
+        return areaContains;
     }
+*/
 }

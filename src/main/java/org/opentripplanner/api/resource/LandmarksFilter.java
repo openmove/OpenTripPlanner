@@ -20,32 +20,43 @@ public class LandmarksFilter {
         String[] locationUpdate = {null, null};
         fromPlace = response.requestParameters.get("fromPlace").replaceAll(","," ");
         toPlace = response.requestParameters.get("toPlace").replaceAll(","," ");
-
+        JsonNode landmarksTree;
         try {
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode landmarksTree = mapper.readTree(routerConfig).get("landmarksFilter");
-            Iterator<JsonNode> landmarksIterator = landmarksTree.iterator();
-            WKTReader reader = new WKTReader();
-            while (landmarksIterator.hasNext()) {
-                JsonNode currentLandmark = landmarksIterator.next();
-                String targetWkt = currentLandmark.get("target").textValue();
-                String areaWkt = currentLandmark.get("area").textValue();
-                Geometry targetGeometry = reader.read(targetWkt);
-                Geometry areaGeometry = reader.read(areaWkt);
-                Geometry locationGeometry = reader.read("POINT (" + fromPlace + ")");
-                if (locationGeometry != null && areaGeometry.contains(locationGeometry)) {
-                    locationUpdate[0] = targetGeometry.getCoordinate().x+","+targetGeometry.getCoordinate().y;
-                }
-                locationGeometry = reader.read("POINT (" + toPlace + ")");
-                if (locationGeometry != null && areaGeometry.contains(locationGeometry)) {
-                    locationUpdate[1] = targetGeometry.getCoordinate().x+","+targetGeometry.getCoordinate().y;
-                }
-            }
-            LOG.info("New from: {}, New to: {}", locationUpdate[0], locationUpdate[1]);
+            landmarksTree = mapper.readTree(routerConfig).get("landmarksFilter");
+            LOG.info("Read in routeConfig: {}", routerConfig);
         } catch (IOException ioe) {
-            LOG.info("Couldn't read in routeConfig", ioe);
+            LOG.info("Couldn't read in routeConfig: {}, ioe: {}", routerConfig, ioe);
             return null;
         }
+        Iterator<JsonNode> landmarksIterator = landmarksTree.iterator();
+        WKTReader reader = new WKTReader();
+        while (landmarksIterator.hasNext()) {
+            JsonNode currentLandmark = landmarksIterator.next();
+            String targetWkt = currentLandmark.get("target").textValue();
+            String areaWkt = currentLandmark.get("area").textValue();
+            Geometry targetGeometry;
+            Geometry areaGeometry;
+            Geometry locationGeometry;
+            try {
+                targetGeometry = reader.read(targetWkt);
+                areaGeometry = reader.read(areaWkt);
+                locationGeometry = reader.read("POINT (" + fromPlace + ")");
+            } catch (ParseException pe){
+                LOG.info("Couldn't convert wkt to jts geometry", pe);
+                return null;
+            }
+
+            if (locationGeometry != null && areaGeometry.contains(locationGeometry)) {
+                locationUpdate[0] = targetGeometry.getCoordinate().x+","+targetGeometry.getCoordinate().y;
+            }
+            locationGeometry = reader.read("POINT (" + toPlace + ")");
+            if (locationGeometry != null && areaGeometry.contains(locationGeometry)) {
+                locationUpdate[1] = targetGeometry.getCoordinate().x+","+targetGeometry.getCoordinate().y;
+            }
+            }
+            LOG.info("New from: {}, New to: {}", locationUpdate[0], locationUpdate[1]);
+
 
         return locationUpdate;
     }

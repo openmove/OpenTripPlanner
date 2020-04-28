@@ -41,6 +41,7 @@ public class LandmarksFilter {
                     locationUpdate[1] = targetGeometry.getCoordinate().x+","+targetGeometry.getCoordinate().y;
                 }
             }
+            LOG.info("New from: {}, New to: {}", locationUpdate[0], locationUpdate[1]);
         } catch (IOException ioe) {
             LOG.info("Couldn't read in routeConfig", ioe);
             return null;

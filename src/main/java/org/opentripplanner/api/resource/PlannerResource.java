@@ -73,19 +73,20 @@ public class PlannerResource extends RoutingResource {
             router = otpServer.getRouter(request.routerId);
 
             // Replace fromPlace and toPlace with new coordinate if they are within a LandmarksFilter area
-            LandmarksFilter landmarksFilter = new LandmarksFilter();
-            String[] updatedLoc = (landmarksFilter.testLoc(response, router.graph.routerConfig));
-            if (updatedLoc[0] != null) {
-                this.fromPlace = updatedLoc[0];
-                response.requestParameters.replace("fromPlace",  updatedLoc[0]);
-                request.setFromString(updatedLoc[0]);
+            if ((request.to.lat instanceof Double) || (request.from.lat instanceof Double)) {
+                LandmarksFilter landmarksFilter = new LandmarksFilter();
+                String[] updatedLoc = (landmarksFilter.testLoc(response, router.graph.routerConfig));
+                if (updatedLoc[0] != null) {
+                    this.fromPlace = updatedLoc[0];
+                    response.requestParameters.replace("fromPlace",  updatedLoc[0]);
+                    request.setFromString(updatedLoc[0]);
+                }
+                if (updatedLoc[1] != null) {
+                    this.toPlace = updatedLoc[1];
+                    response.requestParameters.replace("toPlace",  updatedLoc[1]);
+                    request.setToString(updatedLoc[1]);
+                }
             }
-            if (updatedLoc[1] != null) {
-                this.toPlace = updatedLoc[1];
-                response.requestParameters.replace("toPlace",  updatedLoc[1]);
-                request.setToString(updatedLoc[1]);
-            }
-
 
             /* Find some good GraphPaths through the OTP Graph. */
             GraphPathFinder gpFinder = new GraphPathFinder(router); // we could also get a persistent router-scoped GraphPathFinder but there's no setup cost here

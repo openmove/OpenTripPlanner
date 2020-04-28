@@ -14,7 +14,7 @@ public class LandmarksFilter {
     private static final Logger LOG = LoggerFactory.getLogger(LandmarksFilter.class);
 
     public String[] testLoc(Response response, String routerConfig) throws ParseException {
-        LOG.info("LandmarksFilter found");
+        LOG.info("LandmarksFilter found with routerConfig: {}", routerConfig);
         String fromPlace;
         String toPlace;
         String[] locationUpdate = {null, null};
@@ -26,7 +26,10 @@ public class LandmarksFilter {
             landmarksTree = mapper.readTree(routerConfig).get("landmarksFilter");
             LOG.info("Read in routeConfig: {}", routerConfig);
         } catch (IOException ioe) {
-            LOG.info("Couldn't read in routeConfig: {}, ioe: {}", routerConfig, ioe);
+            LOG.info("Couldn't read in routeConfig: ", ioe);
+            return null;
+        } catch (NullPointerException npe) {
+            LOG.info("Received null pointer exception: ", npe);
             return null;
         }
         Iterator<JsonNode> landmarksIterator = landmarksTree.iterator();

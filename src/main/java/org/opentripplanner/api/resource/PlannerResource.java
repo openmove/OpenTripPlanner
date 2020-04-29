@@ -77,12 +77,12 @@ public class PlannerResource extends RoutingResource {
                     && ((request.to.lat instanceof Double) || (request.from.lat instanceof Double))) {
                 LandmarksFilter landmarksFilter = new LandmarksFilter();
                 String[] updatedLoc = (landmarksFilter.testLoc(response, router.graph.routerConfig));
-                if (updatedLoc[0] != null) {
+                if (updatedLoc != null && updatedLoc[0] != null) {
                     this.fromPlace = updatedLoc[0];
                     response.requestParameters.replace("fromPlace",  updatedLoc[0]);
                     request.setFromString(updatedLoc[0]);
                 }
-                if (updatedLoc[1] != null) {
+                if (updatedLoc != null && updatedLoc[1] != null) {
                     this.toPlace = updatedLoc[1];
                     response.requestParameters.replace("toPlace",  updatedLoc[1]);
                     request.setToString(updatedLoc[1]);

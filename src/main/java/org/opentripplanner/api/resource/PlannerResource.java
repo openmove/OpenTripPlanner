@@ -73,7 +73,8 @@ public class PlannerResource extends RoutingResource {
             router = otpServer.getRouter(request.routerId);
 
             // Replace fromPlace and toPlace with new coordinate if they are within a LandmarksFilter area
-            if ( router.graph.routerConfig != null && ((request.to.lat instanceof Double) || (request.from.lat instanceof Double))) {
+            if ((router.graph.routerConfig != null) && router.graph.routerConfig.contains("landmarksFilter")
+                    && ((request.to.lat instanceof Double) || (request.from.lat instanceof Double))) {
                 LandmarksFilter landmarksFilter = new LandmarksFilter();
                 String[] updatedLoc = (landmarksFilter.testLoc(response, router.graph.routerConfig));
                 if (updatedLoc[0] != null) {

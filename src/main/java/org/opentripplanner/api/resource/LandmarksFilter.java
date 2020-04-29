@@ -14,7 +14,6 @@ public class LandmarksFilter {
     private static final Logger LOG = LoggerFactory.getLogger(LandmarksFilter.class);
 
     public String[] testLoc(Response response, String routerConfig) throws ParseException {
-        LOG.info("LandmarksFilter found with routerConfig: {}", routerConfig);
         String fromPlace;
         String toPlace;
         String[] locationUpdate = {null, null};
@@ -24,12 +23,12 @@ public class LandmarksFilter {
         try {
             ObjectMapper mapper = new ObjectMapper();
             landmarksTree = mapper.readTree(routerConfig).get("landmarksFilter");
-            LOG.info("Read in routeConfig: {}", routerConfig);
+            LOG.info("Landmarks filter read in routeConfig");
         } catch (IOException ioe) {
-            LOG.info("Couldn't read in routeConfig: ", ioe);
+            LOG.info("Landmarks filter couldn't read in routeConfig: ", ioe);
             return null;
         } catch (NullPointerException npe) {
-            LOG.info("Received null pointer exception: ", npe);
+            LOG.info("Landmarks filter received null pointer exception: ", npe);
             return null;
         }
         Iterator<JsonNode> landmarksIterator = landmarksTree.iterator();
@@ -49,7 +48,6 @@ public class LandmarksFilter {
                 LOG.info("Couldn't convert wkt to jts geometry", pe);
                 return null;
             }
-
             if (locationGeometry != null && areaGeometry.contains(locationGeometry)) {
                 locationUpdate[0] = targetGeometry.getCoordinate().x+","+targetGeometry.getCoordinate().y;
             }
@@ -57,10 +55,8 @@ public class LandmarksFilter {
             if (locationGeometry != null && areaGeometry.contains(locationGeometry)) {
                 locationUpdate[1] = targetGeometry.getCoordinate().x+","+targetGeometry.getCoordinate().y;
             }
-            }
+        }
             LOG.info("New from: {}, New to: {}", locationUpdate[0], locationUpdate[1]);
-
-
         return locationUpdate;
     }
 }

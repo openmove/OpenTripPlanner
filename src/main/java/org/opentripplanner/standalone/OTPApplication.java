@@ -104,8 +104,7 @@ public class OTPApplication extends Application {
             MultiPartFeature.class,
             NearbySchedulesResource.class,
             RoutePatternsResource.class,
-            PatternGraphAPI.class,
-            LandmarksFilter.class
+            PatternGraphAPI.class
         ));
 
         // Optionally: add classes defined by an ApiPlugin

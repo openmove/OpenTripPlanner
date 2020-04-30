@@ -81,10 +81,10 @@ public class PlannerResource extends RoutingResource {
             LOG.info("planner router  : {} ", router);
             LOG.info("planner otpserver : {} ", otpServer);
             // Replace fromPlace and toPlace with new coordinate if they are within a LandmarksFilter area
-            if ((router.graph.routerConfig != null) && router.graph.routerConfig.contains("landmarksFilter")
+            if ((router.graph.builderConfig != null) && router.graph.builderConfig.contains("landmarksFilter")
                     && ((request.to.lat instanceof Double) || (request.from.lat instanceof Double))) {
                 LandmarksFilter landmarksFilter = new LandmarksFilter();
-                String[] updatedLoc = (landmarksFilter.testLoc(response, router.graph.routerConfig));
+                String[] updatedLoc = (landmarksFilter.testLoc(response, router.graph.builderConfig));
                 if (updatedLoc != null && updatedLoc[0] != null) {
                     this.fromPlace = updatedLoc[0];
                     response.requestParameters.replace("fromPlace",  updatedLoc[0]);

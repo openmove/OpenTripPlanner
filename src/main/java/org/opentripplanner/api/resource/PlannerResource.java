@@ -72,7 +72,11 @@ public class PlannerResource extends RoutingResource {
             request = super.buildRequest();
             router = otpServer.getRouter(request.routerId);
             LOG.info("tolat is Double: {}, fromlat is Double: {}", (request.to.lat instanceof Double), (request.from.lat instanceof Double));
-            LOG.info("planner router graph config : {} ", router.graph.routerConfig);
+            LOG.info("planner router graph router-config : {} ", router.graph.routerConfig);
+            LOG.info("planner router graph builder-config : {} ", router.graph.builderConfig);
+            LOG.info("planner router graph routerID : {} ", router.graph.routerId);
+            LOG.info("planner router defaultRoutingRequest : {} ", router.defaultRoutingRequest);
+            LOG.info("planner router routingDefaultsNode: {} ", router.routingDefaultsNode);
             LOG.info("planner router graph : {} ", router.graph);
             LOG.info("planner router  : {} ", router);
             LOG.info("planner otpserver : {} ", otpServer);

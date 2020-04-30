@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class LandmarksFilter {
     private static final Logger LOG = LoggerFactory.getLogger(LandmarksFilter.class);
 
-    public String[] testLoc(Response response, String routerConfig) throws ParseException {
+    public String[] testLoc(Response response, String builderConfig) throws ParseException {
         String fromPlace;
         String toPlace;
         String[] locationUpdate = {null, null};
@@ -22,7 +22,7 @@ public class LandmarksFilter {
         JsonNode landmarksTree;
         try {
             ObjectMapper mapper = new ObjectMapper();
-            landmarksTree = mapper.readTree(routerConfig).get("landmarksFilter");
+            landmarksTree = mapper.readTree(builderConfig).get("landmarksFilter");
             LOG.info("Landmarks filter read in routeConfig");
         } catch (IOException ioe) {
             LOG.info("Landmarks filter couldn't read in routeConfig: ", ioe);

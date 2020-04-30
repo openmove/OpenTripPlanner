@@ -71,7 +71,8 @@ public class PlannerResource extends RoutingResource {
             /* Fill in request fields from query parameters via shared superclass method, catching any errors. */
             request = super.buildRequest();
             router = otpServer.getRouter(request.routerId);
-
+            LOG.info("tolat is Double: {}, fromlat is Double: {}", (request.to.lat instanceof Double), (request.from.lat instanceof Double));
+            LOG.info("planner request graph config: {} ",router.graph.routerConfig);
             // Replace fromPlace and toPlace with new coordinate if they are within a LandmarksFilter area
             if ((router.graph.routerConfig != null) && router.graph.routerConfig.contains("landmarksFilter")
                     && ((request.to.lat instanceof Double) || (request.from.lat instanceof Double))) {

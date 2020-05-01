@@ -220,6 +220,7 @@ public class InputStreamGraphSource implements GraphSource {
             }
             Router newRouter = new Router(routerId, newGraph);
             newRouter.startup(config);
+            LOG.info("inputstreamgraphsource router router-config : {} ", newRouter.graph.routerConfig);
             return newRouter;
         } catch (IOException e) {
             LOG.error("Can't read config file.");

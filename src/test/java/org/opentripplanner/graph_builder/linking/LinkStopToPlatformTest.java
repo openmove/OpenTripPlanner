@@ -72,17 +72,17 @@ public class LinkStopToPlatformTest {
      */
     @Test
     public void testLinkStopWithoutExtraEdges() {
-        SimpleStreetSplitter splitter = new SimpleStreetSplitter(graph);
-        splitter.link();
+        StreetSplitter splitter = new StreetSplitter(graph);
+        splitter.linkAllStationsToGraph();
 
         assertEquals(16, graph.getEdges().size());
     }
 
     @Test
     public void testLinkStopWithExtraEdges() {
-        SimpleStreetSplitter splitter = new SimpleStreetSplitter(graph);
+        StreetSplitter splitter = new StreetSplitter(graph);
         splitter.setAddExtraEdgesToAreas(true);
-        splitter.link();
+        splitter.linkAllStationsToGraph();
 
         assertEquals(38, graph.getEdges().size());
     }
@@ -93,7 +93,7 @@ public class LinkStopToPlatformTest {
                 v2.getCoordinate());
         I18NString name = new LocalizedString(nameString, new OSMWithTags());
 
-        AreaEdge areaEdge = new AreaEdge(v1, v2, line, name, line.getLength(), StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, false, area );
+        AreaEdge areaEdge = new AreaEdge(v1, v2, line, name, line.getLength(), StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE_AND_MICROMOBILITY, false, area );
 
         return areaEdge;
     }

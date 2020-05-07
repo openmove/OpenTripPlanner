@@ -1,14 +1,14 @@
 package org.opentripplanner.routing.core;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.trippattern.TripTimes;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * StateData contains the components of search state that are unlikely to be changed as often as
@@ -24,7 +24,7 @@ public class StateData implements Cloneable {
     protected TripTimes tripTimes;
 
     protected FeedScopedId tripId;
-    
+
     protected Trip previousTrip;
 
     protected double lastTransitWalk = 0;
@@ -39,10 +39,27 @@ public class StateData implements Cloneable {
 
     protected boolean usingRentedBike;
 
+    protected boolean usingRentedCar;
+
+    protected boolean hasRentedCarPostTransit = false;
+    protected boolean hasRentedCarPreTransit = false;
+
+    protected boolean usingRentedVehicle;
+
+    protected boolean hasRentedVehiclePostTransit = false;
+    protected boolean hasRentedVehiclePreTransit = false;
+
+    public boolean rentedVehicleAllowsFloatingDropoffs;
+
+    protected boolean usingHailedCar;
+
+    protected boolean hasHailedCarPostTransit = false;
+    protected boolean hasHailedCarPreTransit = false;
+
     protected boolean carParked;
 
     protected boolean bikeParked;
-    
+
     protected Stop previousStop;
 
     protected long lastAlightedTime;
@@ -61,7 +78,7 @@ public class StateData implements Cloneable {
 
     protected TraverseMode nonTransitMode;
 
-    /** 
+    /**
      * This is the wait time at the beginning of the trip (or at the end of the trip for
      * reverse searches). In Analyst anyhow, this is is subtracted from total trip length of each
      * final State in lieu of reverse optimization. It is initially set to zero so that it will be
@@ -84,6 +101,22 @@ public class StateData implements Cloneable {
 
     public Set<String> bikeRentalNetworks;
 
+    public Set<String> carRentalNetworks;
+
+    // A list of possible vehicle rental networks that the state can be associated with. This data structure is a set
+    // because in an arrive-by search, the search progresses backwards from a street edge where potentially multiple
+    // vehicle rental providers allow floating drop-offs at the edge.
+    public Set<String> vehicleRentalNetworks;
+
+    // The ids of cars that have been rented so far
+    protected Set<String> rentedCars = new HashSet<>();
+
+    // The ids of vehicles that have been rented so far
+    protected Set<String> rentedVehicles = new HashSet<>();
+
+    // whether the currently rented car can be dropped off anywhere inside a car rental region
+    protected boolean rentedCarAllowsFloatingDropoffs;
+
     /* This boolean is set to true upon transition from a normal street to a no-through-traffic street. */
     protected boolean enteredNoThroughTrafficArea;
 
@@ -95,13 +128,26 @@ public class StateData implements Cloneable {
             nonTransitMode = TraverseMode.WALK;
         else if (modes.getBicycle())
             nonTransitMode = TraverseMode.BICYCLE;
+        else if (modes.getMicromobility())
+            nonTransitMode = TraverseMode.MICROMOBILITY;
         else
             nonTransitMode = null;
     }
 
     protected StateData clone() {
         try {
-            return (StateData) super.clone();
+            StateData clonedStateData = (StateData) super.clone();
+            // When HashSets (and other collections) are cloned, they contain references to the original HashSet (see
+            // https://stackoverflow.com/a/7537385/269834). Therefore, any Collection in a StateData instance must be
+            // recreated using a copy constructor if data is added to the Collection throughout a shortest path search.
+            // This will then ensure the Collections don't contain data that is specific to a certain path.
+            // For example, the rentedCars and rentedVehicles HashSets are populated with IDs of vehicles that were
+            // rented at some point during a shortest path search. However, other fields like vehicleRentalNetworks are
+            // only set once using data from a StreetEdge and are not added to throughout a shortest path search.
+            // See https://github.com/ibi-group/OpenTripPlanner/pull/15 for more discussion.
+            clonedStateData.rentedCars = new HashSet<>(this.rentedCars);
+            clonedStateData.rentedVehicles = new HashSet<>(this.rentedVehicles);
+            return clonedStateData;
         } catch (CloneNotSupportedException e1) {
             throw new IllegalStateException("This is not happening");
         }
@@ -111,4 +157,23 @@ public class StateData implements Cloneable {
         return numBoardings;
     }
 
+    public boolean hasHailedCarPostTransit() { return hasHailedCarPostTransit; }
+
+    public boolean hasHailedCarPreTransit() { return hasHailedCarPreTransit; }
+
+    public boolean hasRentedCarPostTransit() { return hasRentedCarPostTransit; }
+
+    public boolean hasRentedCarPreTransit() { return hasRentedCarPreTransit; }
+
+    public boolean rentedCarAllowsFloatingDropoffs() { return rentedCarAllowsFloatingDropoffs; }
+
+    public Set<String> getRentedCars() { return rentedCars; }
+
+    public Set<String> getRentedVehicles() { return rentedVehicles; }
+
+    public boolean hasRentedVehiclePostTransit() { return hasRentedVehiclePostTransit; }
+
+    public boolean hasRentedVehiclePreTransit() { return hasRentedVehiclePreTransit; }
+
+    public boolean rentedVehicleAllowsFloatingDropoffs() { return rentedVehicleAllowsFloatingDropoffs; }
 }

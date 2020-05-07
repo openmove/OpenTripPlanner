@@ -22,7 +22,6 @@ import java.util.Set;
  * the implementation.
  */
 class TemporaryVertexDispose {
-
     /**
      * A list of all Vertexes not yet processed.
      */

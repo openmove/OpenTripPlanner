@@ -1,6 +1,8 @@
 ![OTP Logo](otp-logo.svg)
 # OpenTripPlanner
 
+**IMPORTANT NOTE: This documentation is mainly for the IBI fork of OpenTripPlanner. All of the links in here should point to documentation that mostly matches the `dev-1.x` branch of OpenTripPlanner, but deviates for special items that IBI has implemented.**
+
 _This documentation is targeted primarily at the OTP development community and more technical users. For high-level information about the project, please visit [**www.opentripplanner.org**](http://www.opentripplanner.org)_
 
 **OpenTripPlanner** (OTP) is an open source multi-modal trip planner, which runs on Linux, Mac, Windows, or potentially any platform with a Java virtual machine. OTP is released under the [LGPL license](https://opensource.org/licenses/LGPL-3.0). The code is under active development with a variety of [deployments](Deployments) around the world.
@@ -16,8 +18,8 @@ It is generated automatically by [Enunciate](http://enunciate.codehaus.org/) fro
 so may be incomplete or overly verbose in places.
 These documents are organized into folders for different release versions of OTP.
 
- * [OTP Javadoc](http://dev.opentripplanner.org/javadoc/)
- * [OTP web service API documentation](http://dev.opentripplanner.org/apidoc/)
+ * [OTP Javadoc](http://otp-docs.ibi-transit.com/JavaDoc/)
+ * [OTP web service API documentation](http://otp-docs.ibi-transit.com/api/)
 
 ## Contact Info
 

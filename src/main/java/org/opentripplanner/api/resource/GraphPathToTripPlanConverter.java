@@ -3,7 +3,15 @@ package org.opentripplanner.api.resource;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
-import org.opentripplanner.api.model.*;
+import org.opentripplanner.api.model.BoardAlightType;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.RelativeDirection;
+import org.opentripplanner.api.model.TransportationNetworkCompanySummary;
+import org.opentripplanner.api.model.TripPlan;
+import org.opentripplanner.api.model.VertexType;
+import org.opentripplanner.api.model.WalkStep;
 import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
@@ -15,8 +23,27 @@ import org.opentripplanner.model.Trip;
 import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
-import org.opentripplanner.routing.core.*;
-import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.core.RoutingContext;
+import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.core.StateEditor;
+import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.edgetype.AreaEdge;
+import org.opentripplanner.routing.edgetype.ElevatorAlightEdge;
+import org.opentripplanner.routing.edgetype.ElevatorBoardEdge;
+import org.opentripplanner.routing.edgetype.FreeEdge;
+import org.opentripplanner.routing.edgetype.HopEdge;
+import org.opentripplanner.routing.edgetype.OnboardEdge;
+import org.opentripplanner.routing.edgetype.PathwayEdge;
+import org.opentripplanner.routing.edgetype.PatternEdge;
+import org.opentripplanner.routing.edgetype.PatternInterlineDwell;
+import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
+import org.opentripplanner.routing.edgetype.RentABikeOnEdge;
+import org.opentripplanner.routing.edgetype.SimpleTransfer;
+import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TripPattern;
+import org.opentripplanner.routing.error.TransportationNetworkCompanyAvailabilityException;
 import org.opentripplanner.routing.edgetype.flex.PartialPatternHop;
 import org.opentripplanner.routing.edgetype.flex.TemporaryDirectPatternHop;
 import org.opentripplanner.routing.error.TrivialPathException;
@@ -26,13 +53,33 @@ import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.location.TemporaryStreetLocation;
 import org.opentripplanner.routing.services.FareService;
 import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.routing.transportation_network_company.ArrivalTime;
+import org.opentripplanner.routing.transportation_network_company.RideEstimate;
+import org.opentripplanner.routing.transportation_network_company.TransportationNetworkCompanyService;
 import org.opentripplanner.routing.trippattern.TripTimes;
-import org.opentripplanner.routing.vertextype.*;
+import org.opentripplanner.routing.vertextype.BikeParkVertex;
+import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
+import org.opentripplanner.routing.vertextype.CarRentalStationVertex;
+import org.opentripplanner.routing.vertextype.ExitVertex;
+import org.opentripplanner.routing.vertextype.OnboardDepartVertex;
+import org.opentripplanner.routing.vertextype.StreetVertex;
+import org.opentripplanner.routing.vertextype.TransitVertex;
+import org.opentripplanner.routing.vertextype.VehicleRentalStationVertex;
 import org.opentripplanner.util.PolylineEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * A library class with only static methods used in converting internal GraphPaths to TripPlans, which are
@@ -90,6 +137,31 @@ public abstract class GraphPathToTripPlanConverter {
             // do not include in plan
             if(itinerary.transitTime > 0 && itinerary.walkTime > bestNonTransitTime) continue;
 
+            // If this is a transit option and minTransitDistance is specified, do not include in plan if the
+            // itinerary's total transit distance is less than minTransitDistance
+            if (itinerary.transitTime > 0 && request.minTransitDistance != null) {
+                double totalDistance = 0, transitDistance = 0;
+                for (Leg leg : itinerary.legs) {
+                    totalDistance += leg.distance;
+                    if (leg.isTransitLeg()) transitDistance += leg.distance;
+                }
+
+                // Handle percentage case
+                // TODO: handle number formatting errors
+                if (request.minTransitDistance.endsWith("%")) {
+                    double pctTransit = transitDistance / totalDistance;
+                    double minPct = Double.parseDouble(request.minTransitDistance.substring(0, request.minTransitDistance.length() - 1)) / 100;
+                    if (pctTransit < minPct) continue;
+                }
+
+                // TODO: handle explicit distance case
+            }
+
+            // Add TNC data after the filter stage so that OTP does not make requests to a
+            // rate-limited TNC API service for itineraries that ultimately never make it back to
+            // the requester. It is possible that TNC service may not actually be available, so if
+            // the method returns false, don't include this itinerary in the results.
+            if (!addTNCData(exemplar, itinerary)) continue;
             plan.addItinerary(itinerary);
         }
 
@@ -161,7 +233,6 @@ public abstract class GraphPathToTripPlanConverter {
         }
 
         addWalkSteps(graph, itinerary.legs, legsStates, requestedLocale);
-
         fixupLegs(itinerary.legs, legsStates);
 
         itinerary.duration = lastState.getElapsedTimeSeconds();
@@ -331,10 +402,156 @@ public abstract class GraphPathToTripPlanConverter {
 
         leg.rentedBike = states[0].isBikeRenting() && states[states.length - 1].isBikeRenting();
 
-        addModeAndAlerts(graph, leg, states, disableAlertFiltering, requestedLocale);
-        if (leg.isTransitLeg()) addRealTimeData(leg, states);
+        leg.rentedCar = states[0].isCarRenting() && states[states.length - 1].isCarRenting();
 
+        leg.rentedVehicle = states[0].isVehicleRenting() && states[states.length - 1].isVehicleRenting();
+
+        // check at start or end because either could be the very beginning or end of the trip
+        // which are temporary edges and stuff
+        leg.hailedCar = states[0].isUsingHailedCar() || states[states.length - 1].isUsingHailedCar();
+
+        addModeAndAlerts(graph, leg, states, disableAlertFiltering, requestedLocale);
+        if (leg.isTransitLeg()) {
+            addRealTimeData(leg, states);
+
+            leg.interStopGeometry = new ArrayList<>();
+            for (Edge edge : edges) {
+                if (edge instanceof HopEdge) {
+                    LineString edgeGeom = edge.getGeometry();
+                    CoordinateArrayListSequence edgeCoords = new CoordinateArrayListSequence();
+                    edgeCoords.extend(edgeGeom.getCoordinates());
+                    Geometry geom = GeometryUtils.getGeometryFactory().createLineString(edgeCoords);
+                    leg.interStopGeometry.add(PolylineEncoder.createEncodings(geom));
+                }
+            }
+        }
         return leg;
+    }
+
+    /**
+     * Adds TNC data to legs with {@link Leg#hailedCar}=true. This makes asynchronous, concurrent requests to the TNC
+     * provider's API for price and ETA estimates and associates this data with its respective TNC leg.
+     *
+     * @return boolean. If false, this means that the availability of TNC service cannot be confirmed.
+     */
+    private static boolean addTNCData(
+        GraphPath path,
+        Itinerary itinerary
+    ) {
+        Graph graph = path.getRoutingContext().graph;
+        RoutingRequest request = path.states.getFirst().getOptions();
+        String companies = request.companies;
+        if (companies == null) {
+            // no companies, therefore this request doesn't have any TNC data to add. Return true
+            // to indicate no need for removal of this itinerary.
+            return true;
+        }
+        // Store async tasks in lists for any TNC legs that need info.
+        List<Callable<List<ArrivalTime>>> arrivalEstimateTasks = new ArrayList<>();
+        List<Callable<List<RideEstimate>>> priceEstimateTasks = new ArrayList<>();
+        // Keep track of TNC legs here (so the TNC responses can be filled in later).
+        List<Leg> tncLegs = new ArrayList<>();
+        List<Boolean> tncLegsAreFromOrigin = new ArrayList<>();
+        TransportationNetworkCompanyService service = graph.getService(TransportationNetworkCompanyService.class);
+        // Accumulate TNC request tasks for each TNC leg.
+        for (int i = 0; i < itinerary.legs.size(); i++) {
+            Leg leg = itinerary.legs.get(i);
+            if (!leg.hailedCar) continue;
+            tncLegs.add(leg);
+            // If handling the first or second leg, do not attempt to get an arrival estimate for
+            // the leg from location and instead use the trip's start location.  Do this is because:
+            // 1.  If it is the first leg, this means the trip began with a user taking a TNC
+            // 2.  If it is the second leg and the first leg was walking, the itinerary includes
+            // walking a little bit to the TNC pickup location, but the graph search still used the
+            // ETA for the request's from location.
+            //
+            // This avoids unnecessary/redundant API requests to TNC providers.
+            Place from = leg.from;
+            if (request.transportationNetworkCompanyEtaAtOrigin > -1 &&
+                (i == 0 || (i == 1 && itinerary.legs.get(0).mode.equals("WALK")))) {
+                from = new Place(request.from.lng, request.from.lat, request.from.name);
+                tncLegsAreFromOrigin.add(true);
+            } else {
+                tncLegsAreFromOrigin.add(false);
+            }
+            Place finalFrom = from;
+            priceEstimateTasks.add(() -> service.getRideEstimates(companies, finalFrom, leg.to));
+            arrivalEstimateTasks.add(() -> service.getArrivalTimes(companies, finalFrom));
+        }
+
+        // This variable is used to keep track of whether an API error was encountered thus calling
+        // into question whether the TNC trip is possible at all. This typically happens when a TNC
+        // company says that it does not provide service at an error. Since the TNC companies don't
+        // have readily available APIs it's kinda anyone's best guess as to whether TNC service is
+        // available somewhere, but for the most part OTP assumes that TNC service is available
+        // within walking distance of transit.
+        boolean encounteredError = false;
+        if (tncLegs.size() > 0) {
+            // Use a thread pool so that requests are asynchronous and concurrent. # of threads
+            // should accommodate 2x however many TNC legs there are.
+            ExecutorService pool = Executors.newFixedThreadPool(tncLegs.size() * 2);
+
+            try {
+                // Execute TNC requests.
+                List<Future<List<ArrivalTime>>> etaResults = pool.invokeAll(arrivalEstimateTasks);
+                List<Future<List<RideEstimate>>> priceResults = pool.invokeAll(priceEstimateTasks);
+                int resultCount = priceResults.size() + etaResults.size();
+                LOG.info("Collating {} TNC results for {} legs for {}", resultCount, tncLegs.size(), itinerary);
+                // Collate results into itinerary legs.
+                for (int i = 0; i < tncLegs.size(); i++) {
+                    // Choose the TNC result with the fastest ride time or ride time and ETA time if it is the first leg
+                    int bestTime = Integer.MAX_VALUE;
+                    ArrivalTime bestArrivalTime = null;
+                    RideEstimate bestRideEstimate = null;
+
+                    List<ArrivalTime> arrivalTimes = etaResults.get(i).get();
+                    List<RideEstimate> rideEstimates = priceResults.get(i).get();
+                    boolean tncLegIsFromOrigin = tncLegsAreFromOrigin.get(i);
+
+                    for (ArrivalTime arrivalTime : arrivalTimes) {
+                        for (RideEstimate rideEstimate : rideEstimates) {
+                            // check if the arrival and ride estimate match and also if the
+                            // arrival and ride estimate match the wheelchair accessibility option
+                            // set in the routing request
+                            if (
+                                arrivalTime.company.equals(rideEstimate.company) &&
+                                    arrivalTime.productId.equals(rideEstimate.rideType) &&
+                                    arrivalTime.wheelchairAccessible == request.wheelchairAccessible &&
+                                    rideEstimate.wheelchairAccessible == request.wheelchairAccessible
+                            ) {
+                                int combinedTime = rideEstimate.duration +
+                                    (tncLegIsFromOrigin ? arrivalTime.estimatedSeconds : 0);
+                                if (combinedTime < bestTime) {
+                                    bestTime = combinedTime;
+                                    bestArrivalTime = arrivalTime;
+                                    bestRideEstimate = rideEstimate;
+                                }
+                            }
+                        }
+                    }
+                    if (bestArrivalTime == null || bestRideEstimate == null) {
+                        // this occurs when TNC service is actually not available at a certain
+                        // location which results in empty responses for arrival and ride estimates.
+                        // The error thrown here is caught within this method below.
+                        throw new TransportationNetworkCompanyAvailabilityException();
+                    }
+                    tncLegs.get(i).tncData = new TransportationNetworkCompanySummary(
+                        bestRideEstimate,
+                        bestArrivalTime
+                    );
+                }
+            } catch (TransportationNetworkCompanyAvailabilityException e) {
+                LOG.warn("Removing itinerary due to TNC unavailability");
+                encounteredError = true;
+            } catch (Exception e) {
+                LOG.error("Error fetching TNC data");
+                e.printStackTrace();
+                encounteredError = true;
+            }
+            // Shutdown thread pool.
+            pool.shutdown();
+        }
+        return !encounteredError;
     }
 
     private static void addFrequencyFields(State[] states, Leg leg) {
@@ -477,18 +694,18 @@ public abstract class GraphPathToTripPlanConverter {
             if (state.getBackMode() == null) continue;
 
             switch (state.getBackMode()) {
-                default:
-                    itinerary.transitTime += state.getTimeDeltaSeconds();
-                    break;
+            default:
+                itinerary.transitTime += state.getTimeDeltaSeconds();
+                break;
 
-                case LEG_SWITCH:
-                    itinerary.waitingTime += state.getTimeDeltaSeconds();
-                    break;
+            case LEG_SWITCH:
+                itinerary.waitingTime += state.getTimeDeltaSeconds();
+                break;
 
-                case WALK:
-                case BICYCLE:
-                case CAR:
-                    itinerary.walkTime += state.getTimeDeltaSeconds();
+            case WALK:
+            case BICYCLE:
+            case CAR:
+                itinerary.walkTime += state.getTimeDeltaSeconds();
             }
         }
     }
@@ -647,9 +864,9 @@ public abstract class GraphPathToTripPlanConverter {
         Vertex lastVertex = states[states.length - 1].getVertex();
 
         Stop firstStop = firstVertex instanceof TransitVertex ?
-                ((TransitVertex) firstVertex).getStop(): null;
+            ((TransitVertex) firstVertex).getStop(): null;
         Stop lastStop = lastVertex instanceof TransitVertex ?
-                ((TransitVertex) lastVertex).getStop(): null;
+            ((TransitVertex) lastVertex).getStop(): null;
         TripTimes tripTimes = states[states.length - 1].getTripTimes();
 
         leg.from = makePlace(states[0], firstVertex, edges[0], firstStop, tripTimes, requestedLocale);
@@ -706,10 +923,12 @@ public abstract class GraphPathToTripPlanConverter {
             name = ((StreetVertex) vertex).getIntersectionName(requestedLocale).toString(requestedLocale);
         }
         Place place = new Place(vertex.getX(), vertex.getY(), name,
-                makeCalendar(state), makeCalendar(state));
+            makeCalendar(state), makeCalendar(state));
 
         if (endOfLeg) edge = state.getBackEdge();
 
+        // Add vertex type information to the place. For example, a transit stop gets stop attributes attached and bike
+        // share (or other vehicle rental types) will get information about the vehicle ID and networks served.
         if (vertex instanceof TransitVertex && edge instanceof OnboardEdge) {
             place.stopId = stop.getId();
             place.stopCode = stop.getCode();
@@ -740,9 +959,17 @@ public abstract class GraphPathToTripPlanConverter {
         } else if(vertex instanceof BikeRentalStationVertex) {
             place.bikeShareId = ((BikeRentalStationVertex) vertex).getId();
             LOG.trace("Added bike share Id {} to place", place.bikeShareId);
+            place.networks = ((BikeRentalStationVertex) vertex).getNetworks();
             place.vertexType = VertexType.BIKESHARE;
         } else if (vertex instanceof BikeParkVertex) {
             place.vertexType = VertexType.BIKEPARK;
+        } else if (vertex instanceof CarRentalStationVertex) {
+            place.address = ((CarRentalStationVertex) vertex).getAddress();
+            place.networks = ((CarRentalStationVertex) vertex).getNetworks();
+            place.vertexType = VertexType.CARSHARE;
+        } else if (vertex instanceof VehicleRentalStationVertex) {
+            place.networks = ((VehicleRentalStationVertex) vertex).getNetworks();
+            place.vertexType = VertexType.VEHICLERENTAL;
         } else {
             place.vertexType = VertexType.NORMAL;
         }
@@ -770,9 +997,9 @@ public abstract class GraphPathToTripPlanConverter {
 
     /**
      * Converts a list of street edges to a list of turn-by-turn directions.
-     * 
+     *
      * @param previous a non-transit leg that immediately precedes this one (bike-walking, say), or null
-     * 
+     *
      * @return
      */
     public static List<WalkStep> generateWalkSteps(Graph graph, State[] states, WalkStep previous, Locale requestedLocale) {
@@ -818,6 +1045,10 @@ public abstract class GraphPathToTripPlanConverter {
             if (forwardState.getBackMode() == null || !forwardState.getBackMode().isOnStreetNonTransit()) {
                 continue; // ignore STLs and the like
             }
+            // ignore ElevatorBoardEdges, narratives for elevators only come from ElevatorAlightEdges
+            if (edge instanceof ElevatorBoardEdge)
+                continue;
+
             Geometry geom = edge.getGeometry();
             if (geom == null) {
                 continue;
@@ -870,9 +1101,9 @@ public abstract class GraphPathToTripPlanConverter {
                 // new step, set distance to length of first edge
                 distance = edge.getDistance();
             } else if (((step.streetName != null && !step.streetNameNoParens().equals(streetNameNoParens))
-                    && (!step.bogusName || !edge.hasBogusName())) ||
-                    edge.isRoundabout() != (roundaboutExit > 0) || // went on to or off of a roundabout
-                    isLink(edge) && !isLink(backState.getBackEdge())) {
+                && (!step.bogusName || !edge.hasBogusName())) ||
+                edge.isRoundabout() != (roundaboutExit > 0) || // went on to or off of a roundabout
+                isLink(edge) && !isLink(backState.getBackEdge())) {
                 // Street name has changed, or we've gone on to or off of a roundabout.
                 if (roundaboutExit > 0) {
                     // if we were just on a roundabout,
@@ -905,7 +1136,7 @@ public abstract class GraphPathToTripPlanConverter {
                 /* street name has not changed */
                 double thisAngle = DirectionUtils.getFirstAngle(geom);
                 RelativeDirection direction = WalkStep.getRelativeDirection(lastAngle, thisAngle,
-                        edge.isRoundabout());
+                    edge.isRoundabout());
                 boolean optionsBefore = backState.multipleOptionsBefore();
                 if (edge.isRoundabout()) {
                     // we are on a roundabout, and have already traversed at least one edge of it.
@@ -935,7 +1166,7 @@ public abstract class GraphPathToTripPlanConverter {
                                 continue;
                             }
                             double altAngle = DirectionUtils.getFirstAngle(alternative
-                                    .getGeometry());
+                                .getGeometry());
                             double altAngleDiff = getAbsoluteAngleDiff(altAngle, lastAngle);
                             if (angleDiff > Math.PI / 4 || altAngleDiff - angleDiff < Math.PI / 16) {
                                 shouldGenerateContinue = true;
@@ -949,7 +1180,7 @@ public abstract class GraphPathToTripPlanConverter {
                         Vertex backVertex = twoStatesBack.getVertex();
                         for (Edge alternative : backVertex.getOutgoingStreetEdges()) {
                             List<Edge> alternatives = alternative.getToVertex()
-                                    .getOutgoingStreetEdges();
+                                .getOutgoingStreetEdges();
                             if (alternatives.size() == 0) {
                                 continue; // this is not an alternative
                             }
@@ -960,7 +1191,7 @@ public abstract class GraphPathToTripPlanConverter {
                                 continue;
                             }
                             double altAngle = DirectionUtils.getFirstAngle(alternative
-                                    .getGeometry());
+                                .getGeometry());
                             double altAngleDiff = getAbsoluteAngleDiff(altAngle, lastAngle);
                             if (angleDiff > Math.PI / 4 || altAngleDiff - angleDiff < Math.PI / 16) {
                                 shouldGenerateContinue = true;
@@ -1001,36 +1232,34 @@ public abstract class GraphPathToTripPlanConverter {
                     WalkStep lastStep = steps.get(last);
 
                     if (twoBack.distance < MAX_ZAG_DISTANCE
-                            && lastStep.streetNameNoParens().equals(threeBack.streetNameNoParens())) {
-                        
-                        if (((lastStep.relativeDirection == RelativeDirection.RIGHT || 
-                                lastStep.relativeDirection == RelativeDirection.HARD_RIGHT) &&
-                                (twoBack.relativeDirection == RelativeDirection.RIGHT ||
+                        && lastStep.streetNameNoParens().equals(threeBack.streetNameNoParens())) {
+
+                        if (((lastStep.relativeDirection == RelativeDirection.RIGHT ||
+                            lastStep.relativeDirection == RelativeDirection.HARD_RIGHT) &&
+                            (twoBack.relativeDirection == RelativeDirection.RIGHT ||
                                 twoBack.relativeDirection == RelativeDirection.HARD_RIGHT)) ||
-                                ((lastStep.relativeDirection == RelativeDirection.LEFT || 
+                            ((lastStep.relativeDirection == RelativeDirection.LEFT ||
                                 lastStep.relativeDirection == RelativeDirection.HARD_LEFT) &&
                                 (twoBack.relativeDirection == RelativeDirection.LEFT ||
-                                twoBack.relativeDirection == RelativeDirection.HARD_LEFT))) {
+                                    twoBack.relativeDirection == RelativeDirection.HARD_LEFT))) {
                             // in this case, we have two left turns or two right turns in quick 
                             // succession; this is probably a U-turn.
-                            
+
                             steps.remove(last - 1);
-                            
+
                             lastStep.distance += twoBack.distance;
-                            
+
                             // A U-turn to the left, typical in the US. 
-                            if (lastStep.relativeDirection == RelativeDirection.LEFT || 
-                                    lastStep.relativeDirection == RelativeDirection.HARD_LEFT)
+                            if (lastStep.relativeDirection == RelativeDirection.LEFT ||
+                                lastStep.relativeDirection == RelativeDirection.HARD_LEFT)
                                 lastStep.relativeDirection = RelativeDirection.UTURN_LEFT;
                             else
                                 lastStep.relativeDirection = RelativeDirection.UTURN_RIGHT;
-                            
+
                             // in this case, we're definitely staying on the same street 
                             // (since it's zag removal, the street names are the same)
                             lastStep.stayOn = true;
-                        }
-                                
-                        else {
+                        } else if (!twoBack.relativeDirection.equals(RelativeDirection.ELEVATOR)) {
                             // What is a zag? TODO write meaningful documentation for this.
                             // It appears to mean simplifying out several rapid turns in succession
                             // from the description.
@@ -1055,14 +1284,14 @@ public abstract class GraphPathToTripPlanConverter {
             } else {
                 if (!createdNewStep && step.elevation != null) {
                     List<P2<Double>> s = encodeElevationProfile(edge, distance,
-                            backState.getOptions().geoidElevation ? -graph.ellipsoidToGeoidDifference : 0);
+                        backState.getOptions().geoidElevation ? -graph.ellipsoidToGeoidDifference : 0);
                     if (step.elevation != null && step.elevation.size() > 0) {
                         step.elevation.addAll(s);
                     } else {
                         step.elevation = s;
                     }
                 }
-                distance += edge.getDistance();
+                if (!createdNewStep) distance += edge.getDistance();
 
             }
 
@@ -1076,12 +1305,12 @@ public abstract class GraphPathToTripPlanConverter {
 
         // add bike rental information if applicable
         if(onBikeRentalState != null && !steps.isEmpty()) {
-            steps.get(steps.size()-1).bikeRentalOnStation = 
-                    new BikeRentalStationInfo((BikeRentalStationVertex) onBikeRentalState.getBackEdge().getToVertex());
+            steps.get(steps.size()-1).bikeRentalOnStation =
+                new BikeRentalStationInfo((BikeRentalStationVertex) onBikeRentalState.getBackEdge().getToVertex());
         }
         if(offBikeRentalState != null && !steps.isEmpty()) {
-            steps.get(0).bikeRentalOffStation = 
-                    new BikeRentalStationInfo((BikeRentalStationVertex) offBikeRentalState.getBackEdge().getFromVertex());
+            steps.get(0).bikeRentalOffStation =
+                new BikeRentalStationInfo((BikeRentalStationVertex) offBikeRentalState.getBackEdge().getFromVertex());
         }
 
         return steps;
@@ -1111,7 +1340,7 @@ public abstract class GraphPathToTripPlanConverter {
         step.lon = en.getFromVertex().getX();
         step.lat = en.getFromVertex().getY();
         step.elevation = encodeElevationProfile(s.getBackEdge(), 0,
-                s.getOptions().geoidElevation ? -graph.ellipsoidToGeoidDifference : 0);
+            s.getOptions().geoidElevation ? -graph.ellipsoidToGeoidDifference : 0);
         step.bogusName = en.hasBogusName();
         step.addAlerts(graph.streetNotesService.getNotes(s), wantedLocale);
         step.angle = DirectionUtils.getFirstAngle(s.getBackEdge().getGeometry());

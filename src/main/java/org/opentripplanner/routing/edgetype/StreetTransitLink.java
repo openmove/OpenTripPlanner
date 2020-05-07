@@ -1,24 +1,23 @@
 package org.opentripplanner.routing.edgetype;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LineString;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.common.geometry.GeometryUtils;
+import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.LineString;
-
 import java.util.Locale;
 
-/** 
+/**
  * This represents the connection between a street vertex and a transit vertex
- * where going from the street to the vehicle is immediate -- such as at a 
+ * where going from the street to the vehicle is immediate -- such as at a
  * curbside bus stop.
  */
 public class StreetTransitLink extends Edge {
@@ -31,8 +30,8 @@ public class StreetTransitLink extends Edge {
     private TransitStop transitStop;
 
     public StreetTransitLink(StreetVertex fromv, TransitStop tov, boolean wheelchairAccessible) {
-    	super(fromv, tov);
-    	transitStop = tov;
+        super(fromv, tov);
+        transitStop = tov;
         this.wheelchairAccessible = wheelchairAccessible;
     }
 
@@ -112,13 +111,58 @@ public class StreetTransitLink extends Edge {
         // This allows searching for nearby transit stops using walk-only options.
         StateEditor s1 = s0.edit(this);
 
-        /* Only enter stations in CAR mode if parking is not required (kiss and ride) */
+        /* Determine if transit should be boarded if currently driving a car */
         /* Note that in arriveBy searches this is double-traversing link edges to fork the state into both WALK and CAR mode. This is an insane hack. */
         if (s0.getNonTransitMode() == TraverseMode.CAR && !req.enterStationsWithCar) {
             if (req.kissAndRide && !s0.isCarParked()) {
                 s1.setCarParked(true);
+            } else if (req.useTransportationNetworkCompany && s0.isUsingHailedCar()) {
+                // check to see if transit may be used after using hailed car
+                if (s0.isTNCStopAllowed()) {
+                    s1.alightHailedCar();
+                } else {
+                    // haven't gone far enough to warrant a ride, do not proceed
+                    return null;
+                }
+            } else if (req.allowCarRental && s0.isCarRenting()) {
+                // check to see if transit may be used after transitioning out of a car rental
+                if (req.arriveBy) {
+                    // the search backwards has yet to reach a rental car.  Therefore the search
+                    // must continue so a rental car can be found to pickup.
+                    return null;
+                } else {
+                    if (s0.isCarRentalDropoffAllowed(false)) {
+                        // floating rental car dropoff allowed.  Exit the car and get onto transit.
+                        s1.endCarRenting();
+                        s1.incrementWeight(req.carRentalDropoffCost);
+                        s1.incrementTimeInSeconds(req.carRentalDropoffTime);
+                    } else {
+                        return null;
+                    }
+                }
             } else {
+                // above conditions not satisfied or the request is a Park & Ride or regular driving without transit.
+                // Return null to avoid transition
                 return null;
+            }
+        }
+
+        if (req.allowVehicleRental && s0.isVehicleRenting()) {
+            // check to see if transit may be used after transitioning out of a vehicle rental
+            if (req.arriveBy) {
+                // the search backwards has yet to reach a rental vehicle. This implementation does not allow brining a
+                // rented vehicle on transit. Therefore the search must continue so a rental vehicle can be found to
+                // pickup.
+                return null;
+            } else {
+                if (s0.isVehicleRentalDropoffAllowed(false)) {
+                    // floating rental vehicle dropoff allowed.  Exit the vehicle and get onto transit.
+                    s1.endVehicleRenting();
+                    s1.incrementWeight(req.vehicleRentalDropoffCost);
+                    s1.incrementTimeInSeconds(req.vehicleRentalDropoffTime);
+                } else {
+                    return null;
+                }
             }
         }
         s1.incrementTimeInSeconds(transitStop.getStreetToStopTime() + STL_TRAVERSE_COST);
@@ -133,7 +177,7 @@ public class StreetTransitLink extends Edge {
         s1.setBackMode(TraverseMode.LEG_SWITCH);
         return s1.makeState();
     }
-    
+
     // anecdotally, the lower bound search is about 2x faster when you don't reach stops
     // and therefore don't even consider boarding
     @Override

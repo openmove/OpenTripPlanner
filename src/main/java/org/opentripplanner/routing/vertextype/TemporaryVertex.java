@@ -52,5 +52,4 @@ public interface TemporaryVertex {
     static Collection<Vertex> findSubgraph(Vertex vertex) {
         return TemporaryVertexDispose.search(vertex);
     }
-
 }

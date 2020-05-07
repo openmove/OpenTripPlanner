@@ -7,6 +7,7 @@ import java.util.HashMap;
 import junit.framework.TestCase;
 
 import org.junit.Test;
+import org.opentripplanner.graph_builder.module.GraphBuilderModuleSummary;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.TraverseModeSet;
@@ -75,7 +76,7 @@ public class TestShapefileStreetGraphBuilderImpl extends TestCase {
         
         /* street directions */
         CaseBasedTraversalPermissionConverter perms = new CaseBasedTraversalPermissionConverter(
-                "TrafDir", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE);
+                "TrafDir", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE_AND_MICROMOBILITY);
 
         perms.addPermission("W", StreetTraversalPermission.ALL,
                 StreetTraversalPermission.PEDESTRIAN);
@@ -89,7 +90,7 @@ public class TestShapefileStreetGraphBuilderImpl extends TestCase {
         loader.setFeatureSourceFactory(factory);
         loader.setSchema(schema);
 
-        loader.buildGraph(gg, new HashMap<Class<?>, Object>());
+        loader.buildGraph(gg, new GraphBuilderModuleSummary(loader));
 
         //find start and end vertices
         Vertex start = null;

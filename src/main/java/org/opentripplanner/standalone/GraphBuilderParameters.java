@@ -1,5 +1,7 @@
 package org.opentripplanner.standalone;
 
+import org.opentripplanner.api.common.RoutingResource;
+import org.opentripplanner.graph_builder.module.ned.ElevationModule;
 import org.opentripplanner.graph_builder.module.osm.WayPropertySetSource;
 import org.opentripplanner.graph_builder.services.osm.CustomNamer;
 import org.opentripplanner.profile.StopClusterMode;
@@ -96,11 +98,6 @@ public class GraphBuilderParameters {
     public final boolean platformEntriesLinking;
 
     /**
-     * Based on GTFS shape data, guess which OSM streets each bus runs on to improve stop linking.
-     */
-    public final boolean matchBusRoutesToStreets;
-
-    /**
      * Download US NED elevation data and apply it to the graph.
      */
     public final boolean fetchElevationUS;
@@ -179,10 +176,53 @@ public class GraphBuilderParameters {
      */
     public final double maxTransferDistance;
 
+    public final boolean includeOsmTags;
+
     /**
      * This will add extra edges when linking a stop to a platform, to prevent detours along the platform edge.
      */
     public final Boolean extraEdgesStopPlatformLink;
+
+    /**
+     * An optional url or file with GeoJson polygons that represent areas where micromobility travel is forbidden.
+     */
+    public final String micromobilityTravelRestrictionsUrlOrFile;
+
+    /**
+     * An optional url or file with GeoJson polygons that represent areas where micromobility vehicle rental dropoffs
+     * are forbidden.
+     */
+    public String micromobilityDropoffRestrictionsUrlOrFile;
+
+    /**
+     * When set to true (it is by default), the elevation module will attempt to read this file in order to reuse
+     * calculations of elevation data for various coordinate sequences instead of recalculating them all over again.
+     */
+    public boolean readCachedElevations;
+
+    /**
+     * When set to true (it is false by default), the elevation module will create a file of a lookup map of the
+     * LineStrings and the corresponding calculated elevation data for those coordinates. Subsequent graph builds can
+     * reuse the data in this file to avoid recalculating all the elevation data again.
+     */
+    public boolean writeCachedElevations;
+
+    /**
+     * When set to true (it is false by default), the elevation module will include the Ellipsoid to Geiod difference in
+     * the calculations of every point along every StreetWithElevationEdge in the graph.
+     *
+     * NOTE: if this is set to true for graph building, make sure to not set the value of
+     * {@link RoutingResource#geoidElevation} to true otherwise OTP will add this geoid value again to all of the
+     * elevation values in the street edges.
+     */
+    public boolean includeEllipsoidToGeoidDifference;
+
+    /**
+     * Whether or not to multi-thread the elevation calculations in the elevation module. The default is set to false.
+     * For unknown reasons that seem to depend on data and machine settings, it might be faster to use a single
+     * processor. If multi-threading is activated, parallel streams will be used to calculate the elevations.
+     */
+    public boolean multiThreadElevationCalculations;
 
     /**
      * Set all parameters from the given Jackson JSON tree, applying defaults.
@@ -202,7 +242,6 @@ public class GraphBuilderParameters {
         embedRouterConfig = config.path("embedRouterConfig").asBoolean(true);
         areaVisibility = config.path("areaVisibility").asBoolean(false);
         platformEntriesLinking = config.path("platformEntriesLinking").asBoolean(false);
-        matchBusRoutesToStreets = config.path("matchBusRoutesToStreets").asBoolean(false);
         fetchElevationUS = config.path("fetchElevationUS").asBoolean(false);
         elevationBucket = S3BucketConfig.fromConfig(config.path("elevationBucket"));
         elevationUnitMultiplier = config.path("elevationUnitMultiplier").asDouble(1);
@@ -219,7 +258,14 @@ public class GraphBuilderParameters {
         banDiscouragedWalking = config.path("banDiscouragedWalking").asBoolean(false);
         banDiscouragedBiking = config.path("banDiscouragedBiking").asBoolean(false);
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
+        includeOsmTags = config.path("includeOsmTags").asBoolean(false);
         extraEdgesStopPlatformLink = config.path("extraEdgesStopPlatformLink").asBoolean(false);
+        micromobilityTravelRestrictionsUrlOrFile = config.path("micromobilityTravelRestrictionsUrlOrFile").asText();
+        micromobilityDropoffRestrictionsUrlOrFile = config.path("micromobilityDropoffRestrictionsUrlOrFile").asText();
+        readCachedElevations = config.path("readCachedElevations").asBoolean(true);
+        writeCachedElevations = config.path("writeCachedElevations").asBoolean(false);
+        includeEllipsoidToGeoidDifference = config.path("includeEllipsoidToGeoidDifference").asBoolean(false);
+        multiThreadElevationCalculations = config.path("multiThreadElevationCalculations").asBoolean(false);
     }
 
 

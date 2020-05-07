@@ -1,9 +1,5 @@
 package org.opentripplanner.routing.core;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Set;
-
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
@@ -14,6 +10,10 @@ import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.routing.vertextype.TemporaryVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Set;
 
 /**
  * This class is a wrapper around a new State that provides it with setter and increment methods,
@@ -249,6 +249,21 @@ public class StateEditor {
         setEverBoarded(true);
     }
 
+    public void incrementTransportationNetworkCompanyDistance(double distance) {
+        cloneStateDataAsNeeded();
+        child.transportationNetworkCompanyDriveDistance += distance;
+    }
+
+    public void incrementCarRentalDistance(double distance) {
+        cloneStateDataAsNeeded();
+        child.carRentalDriveDistance += distance;
+    }
+
+    public void incrementVehicleRentalDistance(double distance) {
+        cloneStateDataAsNeeded();
+        child.vehicleRentalDistance += distance;
+    }
+
     /* Basic Setters */
 
     public void setTripTimes(TripTimes tripTimes) {
@@ -422,6 +437,8 @@ public class StateEditor {
         child.stateData.zone = state.stateData.zone;
         child.stateData.extensions = state.stateData.extensions;
         child.stateData.usingRentedBike = state.stateData.usingRentedBike;
+        child.stateData.usingRentedCar = state.stateData.usingRentedCar;
+        child.stateData.usingRentedVehicle = state.stateData.usingRentedVehicle;
         child.stateData.carParked = state.stateData.carParked;
         child.stateData.bikeParked = state.stateData.bikeParked;
     }
@@ -432,6 +449,8 @@ public class StateEditor {
         child.stateData.carParked = state.isCarParked();
         child.stateData.bikeParked = state.isBikeParked();
         child.stateData.usingRentedBike = state.isBikeRenting();
+        child.stateData.usingRentedCar = state.isCarRenting();
+        child.stateData.usingRentedVehicle = state.isVehicleRenting();
     }
 
     /* PUBLIC GETTER METHODS */
@@ -547,4 +566,100 @@ public class StateEditor {
         return child.hasEnteredNoThruTrafficArea();
     }
 
+    public void alightHailedCar() {
+        cloneStateDataAsNeeded();
+        child.stateData.usingHailedCar = false;
+        child.stateData.nonTransitMode = TraverseMode.WALK;
+    }
+
+    /**
+     * Board a hailed car (provided by a transportation network company).
+     *
+     * If boarding a hailed car before boarding transit in "depart at" mode, we assume that the ETA estimate is
+     * applicable and it is added to the duration of the TNC trip.  In all other cases, the assumption is being made
+     * that this is not necessarily trip plan for "right now".  Furthermore, it is assumed that in "right now" trips
+     * once a user has boarded transit they are able to minimize their wait time at their final transit deboarding
+     * location by somehow getting a TNC vehicle to be available to board immediately at the next possible street edge.
+     *
+     * This method is called from the traverse method of the StreetEdge class.  The edge will be traversed in CAR mode,
+     * but since the determination to board a hailed car happens after that, the initial distance traveled in the car
+     * must be added here to the transportationNetworkCompanyDriveDistance variable.
+     */
+    public void boardHailedCar(double initialEdgeDistance) {
+        cloneStateDataAsNeeded();
+        child.boardHailedCar(initialEdgeDistance);
+    }
+
+    public void endCarRenting() {
+        cloneStateDataAsNeeded();
+        child.stateData.usingRentedCar = false;
+        child.stateData.nonTransitMode = TraverseMode.WALK;
+    }
+
+    public void beginCarRenting(
+        double initialEdgeDistance,
+        Set<String> networks,
+        boolean rentedCarAllowsFloatingDropoffs
+    ) {
+        cloneStateDataAsNeeded();
+        child.beginCarRenting(initialEdgeDistance, networks, rentedCarAllowsFloatingDropoffs);
+    }
+
+    /**
+     * Used only in State.optimizeOrReverse
+     */
+    public void setUsingHailedCar(boolean usingHailedCar) {
+        cloneStateDataAsNeeded();
+        child.stateData.usingHailedCar = usingHailedCar;
+        if (usingHailedCar) {
+            child.stateData.nonTransitMode = TraverseMode.CAR;
+        } else {
+            child.stateData.nonTransitMode = TraverseMode.WALK;
+        }
+    }
+
+    public void setCarRenting(boolean carRenting) {
+        cloneStateDataAsNeeded();
+        child.stateData.usingRentedCar = carRenting;
+        if (carRenting) {
+            child.stateData.nonTransitMode = TraverseMode.CAR;
+        } else {
+            child.stateData.nonTransitMode = TraverseMode.WALK;
+        }
+    }
+
+    public void addRentedCar(String carId) {
+        cloneStateDataAsNeeded();
+        child.stateData.rentedCars.add(carId);
+    }
+
+    public void endVehicleRenting() {
+        cloneStateDataAsNeeded();
+        child.stateData.usingRentedVehicle = false;
+        child.stateData.nonTransitMode = TraverseMode.WALK;
+    }
+
+    public void beginVehicleRenting(
+        double initialEdgeDistance,
+        Set<String> networks,
+        boolean rentedVehicleAllowsFloatingDropoffs
+    ) {
+        cloneStateDataAsNeeded();
+        child.beginVehicleRenting(initialEdgeDistance, networks, rentedVehicleAllowsFloatingDropoffs);
+    }
+
+    public void setVehicleRenting(boolean vehicleRenting) {
+        cloneStateDataAsNeeded();
+        child.stateData.usingRentedVehicle = vehicleRenting;
+        if (vehicleRenting) {
+            child.stateData.nonTransitMode = TraverseMode.MICROMOBILITY;
+        } else {
+            child.stateData.nonTransitMode = TraverseMode.WALK;
+        }
+    }
+
+    public void addRentedVehicle(String vehicleId) {
+        cloneStateDataAsNeeded();
+        child.stateData.rentedVehicles.add(vehicleId);
+    }
 }

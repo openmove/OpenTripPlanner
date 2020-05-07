@@ -51,11 +51,29 @@ public class QualifiedMode implements Serializable {
                 req.bikeParkAndRide = this.qualifiers.contains(Qualifier.PARK);
             }
         }
+        if (this.mode == TraverseMode.MICROMOBILITY) {
+            if (this.qualifiers.contains(Qualifier.RENT)) {
+                req.modes.setMode(TraverseMode.WALK, true); // turn on WALK for micromobility rental mode
+                req.allowVehicleRental = true;
+            }
+        }
         if (usingTransit && this.mode == TraverseMode.CAR) {
             if (this.qualifiers.contains(Qualifier.PARK)) {
                 req.parkAndRide = true;
+                // require transit to be used in Park & Ride, otherwise it'd just be a "Park" query
+                req.onlyTransitTrips = true;
+            } else if (this.qualifiers.contains(Qualifier.HAIL)) {
+                req.useTransportationNetworkCompany = true;
+                req.driveTimeReluctance = 1.75;
+                req.driveDistanceReluctance = 0.2;
+            } else if (this.qualifiers.contains(Qualifier.RENT)) {
+                req.allowCarRental = true;
+                req.driveTimeReluctance = 1.75;
+                req.driveDistanceReluctance = 0.2;
             } else {
                 req.kissAndRide = true;
+                // require transit to be used in Kiss & Ride, otherwise it'd just be a "Kiss" query
+                req.onlyTransitTrips = true;
             }
             req.modes.setWalk(true); // need to walk after dropping the car off
         }
@@ -78,5 +96,5 @@ public class QualifiedMode implements Serializable {
 }
 
 enum Qualifier {
-    RENT, HAVE, PARK, KEEP
+    RENT, HAVE, PARK, HAIL, KEEP
 }

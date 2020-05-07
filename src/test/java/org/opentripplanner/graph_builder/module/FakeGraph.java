@@ -1,8 +1,8 @@
 package org.opentripplanner.graph_builder.module;
 
+import org.opentripplanner.graph_builder.linking.StreetSplitter;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.graph_builder.linking.SimpleStreetSplitter;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
 import org.opentripplanner.graph_builder.module.osm.DefaultWayPropertySetSource;
 import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
@@ -32,7 +32,7 @@ public class FakeGraph {
         provider.setPath(file);
         loader.setProvider(provider);
 
-        loader.buildGraph(gg, new HashMap<Class<?>, Object>());
+        loader.buildGraph(gg, new GraphBuilderModuleSummary(loader));
         return gg;
     }
 
@@ -46,7 +46,7 @@ public class FakeGraph {
      */
     public static void addTransitMultipleLines (Graph g) {
         GtfsModule gtfs = new GtfsModule(Arrays.asList(new GtfsBundle(getFileForResource("addTransitMultipleLines.gtfs.zip"))));
-        gtfs.buildGraph(g, new HashMap<>());
+        gtfs.buildGraph(g, new GraphBuilderModuleSummary(gtfs));
     }
 
     /**
@@ -54,7 +54,7 @@ public class FakeGraph {
      */
     public static void addPerpendicularRoutes (Graph graph) {
         GtfsModule gtfs = new GtfsModule(Arrays.asList(new GtfsBundle(getFileForResource("addPerpendicularRoutes.gtfs.zip"))));
-        gtfs.buildGraph(graph, new HashMap<>());
+        gtfs.buildGraph(graph, new GraphBuilderModuleSummary(gtfs));
     }
 
     /** Add a regular grid of stops to the graph */
@@ -130,10 +130,15 @@ public class FakeGraph {
         }
     }
 
-    /** link the stops in the graph */
-    public static void link (Graph g) {
-        SimpleStreetSplitter linker = new SimpleStreetSplitter(g);
-        linker.link();
+    /**
+     * Index the graph and then link all stations in the graph.
+     */
+    public static void indexGraphAndLinkStations (Graph g) {
+        // recreate a new streetIndex even if one exists to ensure all indexes are built. It is assumed that all tests
+        // that use this method do not need any previously street indexes created during building the graph
+        g.index(true);
+        StreetSplitter linker = (StreetSplitter) g.streetIndex.getStreetSplitter();
+        linker.linkAllStationsToGraph();
     }
 
 }

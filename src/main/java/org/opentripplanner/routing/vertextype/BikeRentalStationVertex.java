@@ -6,6 +6,8 @@ import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 
+import java.util.Set;
+
 /**
  * A vertex for a bike rental station.
  * It is connected to the streets by a StreetBikeRentalLink.
@@ -15,7 +17,7 @@ import org.opentripplanner.routing.graph.Vertex;
  *
  * TODO if we continue using this for car rental and flex systems, change name to VehicleRentalStationVertex
  */
-public class BikeRentalStationVertex extends Vertex {
+public class BikeRentalStationVertex extends RentalStationVertex {
 
     private static final long serialVersionUID = MavenVersion.VERSION.getUID();
 
@@ -24,6 +26,8 @@ public class BikeRentalStationVertex extends Vertex {
     private int spacesAvailable;
 
     private String id;
+
+    private Set<String> networks;
 
     /** Some car rental systems and flex transit systems work exactly like bike rental, but with cars. */
     private boolean isCarStation;
@@ -35,6 +39,7 @@ public class BikeRentalStationVertex extends Vertex {
         this.setBikesAvailable(station.bikesAvailable);
         this.setSpacesAvailable(station.spacesAvailable);
         this.isCarStation = station.isCarStation;
+        this.setNetworks(station.networks);
     }
 
     public int getBikesAvailable() {
@@ -52,6 +57,10 @@ public class BikeRentalStationVertex extends Vertex {
     public void setSpacesAvailable(int spaces) {
         this.spacesAvailable = spaces;
     }
+
+    public Set<String> getNetworks() { return networks; }
+
+    public void setNetworks(Set<String> networks) { this.networks = networks; }
 
     public String getId() {
         return id;

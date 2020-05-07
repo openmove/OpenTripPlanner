@@ -18,6 +18,8 @@
 - Allow itineraries in response to be sorted by duration (#2593)
 - Add support for GTFS-flex services: flag stops, deviated-route service, and call-and-ride (#2603)
 - Fix reverse optimization bug (#2653, #2411)
+- Remove CarFreeAtoZ from list of deployments
+- Fix bike rented though no bikes/spaces are available (#2735)
 - increase GTFS-realtime feeds size limit from 64MB to 2G (#2738)
 - Fix XML response serialization (#2685)
 - Refactor InterleavedBidirectionalHeuristic (#2671)

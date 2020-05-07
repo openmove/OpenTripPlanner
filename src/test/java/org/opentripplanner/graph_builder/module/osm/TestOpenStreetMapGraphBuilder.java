@@ -1,21 +1,14 @@
 package org.opentripplanner.graph_builder.module.osm;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.net.URLDecoder;
-
 import junit.framework.TestCase;
-
 import org.junit.Before;
 import org.junit.Test;
-import org.opentripplanner.common.TurnRestriction;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.graph_builder.module.GraphBuilderModuleSummary;
+import org.opentripplanner.openstreetmap.impl.FileBasedOpenStreetMapProviderImpl;
 import org.opentripplanner.openstreetmap.model.OSMWay;
 import org.opentripplanner.openstreetmap.model.OSMWithTags;
-import org.opentripplanner.openstreetmap.impl.FileBasedOpenStreetMapProviderImpl;
 import org.opentripplanner.routing.core.RoutingRequest;
-import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 import org.opentripplanner.routing.graph.Edge;
@@ -23,7 +16,6 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.impl.MemoryGraphSource;
-import org.opentripplanner.routing.impl.StreetVertexIndexServiceImpl;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
@@ -32,14 +24,16 @@ import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.util.LocalizedString;
 
-public class TestOpenStreetMapGraphBuilder extends TestCase {
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
-    private HashMap<Class<?>, Object> extra;
-    
-    @Before
-    public void setUp() {
-        extra = new HashMap<Class<?>, Object>();
-    }
+public class TestOpenStreetMapGraphBuilder extends TestCase {
 
     @Test
     public void testGraphBuilder() throws Exception {
@@ -55,7 +49,7 @@ public class TestOpenStreetMapGraphBuilder extends TestCase {
         provider.setPath(file);
         loader.setProvider(provider);
 
-        loader.buildGraph(gg, extra);
+        loader.buildGraph(gg, new GraphBuilderModuleSummary(loader));
 
         // Kamiennogorska at south end of segment
         Vertex v1 = gg.getVertex("osm:node:280592578");
@@ -113,7 +107,7 @@ public class TestOpenStreetMapGraphBuilder extends TestCase {
         provider.setPath(file);
         loader.setProvider(provider);
 
-        loader.buildGraph(gg, extra);
+        loader.buildGraph(gg, new GraphBuilderModuleSummary(loader));
         
         // These vertices are labeled in the OSM file as having traffic lights.
         IntersectionVertex iv1 = (IntersectionVertex) gg.getVertex("osm:node:1919595918");
@@ -170,8 +164,7 @@ public class TestOpenStreetMapGraphBuilder extends TestCase {
         provider.setPath(file);
         loader.setProvider(provider);
 
-        loader.buildGraph(gg, extra);
-        new StreetVertexIndexServiceImpl(gg);
+        loader.buildGraph(gg, new GraphBuilderModuleSummary(loader));
 
         OTPServer otpServer = new OTPServer(new CommandLineParameters(), new GraphService());
         otpServer.getGraphService().registerGraph("A", new MemoryGraphSource("A", gg));
@@ -326,7 +319,7 @@ public class TestOpenStreetMapGraphBuilder extends TestCase {
     // pr.setPath(new File(getClass().getResource("otp-multipolygon-test.osm").getPath()));
     // loader.setProvider(pr);
     //
-    // loader.buildGraph(gg, extra);
+    // loader.buildGraph(gg, new GraphBuilderModuleSummary(loader));
     //
     // assertNotNull(gg.getVertex("way -3535 from 4"));
     // }

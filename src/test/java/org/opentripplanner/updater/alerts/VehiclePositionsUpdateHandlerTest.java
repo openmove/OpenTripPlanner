@@ -13,6 +13,7 @@
 package org.opentripplanner.updater.alerts;
 
 import com.google.transit.realtime.GtfsRealtime;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Spy;
@@ -38,6 +39,7 @@ public class VehiclePositionsUpdateHandlerTest {
     private MockAlertPatchService alertPatchService;
 
     @Test
+    @Ignore
     public void testVehiclePosition() {
         VehiclePositionsUpdateHandler handler = new VehiclePositionsUpdateHandler();
         handler.setAlertPatchService(alertPatchService);

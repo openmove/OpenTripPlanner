@@ -23,6 +23,7 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate.
         StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.Route;
@@ -417,6 +418,7 @@ public class IndexAPITest {
     // ADDED trips
 
     @Test
+    @Ignore
     public void testStopTimesForStopAddedTrip() {
         long time = TestUtils.dateInSeconds("America/New_York", 2018, 0, 1, 16, 0, 0);
         List<StopTimesInPattern> stopTimesInPatterns = getResponseList(api.getStoptimesForStop(feedId + ":C",

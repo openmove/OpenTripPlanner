@@ -182,6 +182,8 @@ public class TimetableSnapshotSource {
 
             LOG.debug("message contains {} trip updates", updates.size());
             int uIndex = 0;
+            // FIXME: Reset applied block count after each iteration over updates?
+            appliedBlockCount = 0;
             for (TripUpdate tripUpdate : updates) {
                 if (fuzzyTripMatcher != null && tripUpdate.hasTrip()) {
                     final TripDescriptor trip = fuzzyTripMatcher.match(feedId, tripUpdate.getTrip());
@@ -236,16 +238,18 @@ public class TimetableSnapshotSource {
                 }
 
                 if (applied) {
+                    LOG.debug("Applied trip update to trip {} (feed {})", tripUpdate.getTrip().getTripId(), feedId);
                     appliedBlockCount++;
                 } else {
-                    LOG.warn("Failed to apply TripUpdate.");
+                    LOG.warn("Failed to apply TripUpdate to feed {}.", feedId);
                     LOG.trace(" Contents: {}", tripUpdate);
                 }
 
-                if (appliedBlockCount % logFrequency == 0) {
-                    LOG.info("Applied {} trip updates.", appliedBlockCount);
+                if (appliedBlockCount % logFrequency == 0 && appliedBlockCount > 0) {
+                    LOG.info("Applied {} trip updates to feed {}.", appliedBlockCount, feedId);
                 }
             }
+            LOG.info("Successfully applied {}/{} trip updates to feed {}.", appliedBlockCount, updates.size(), feedId);
             LOG.debug("end of update message");
 
             // Make a snapshot after each message in anticipation of incoming requests

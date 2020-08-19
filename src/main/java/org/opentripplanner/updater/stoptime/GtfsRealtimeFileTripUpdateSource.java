@@ -38,7 +38,13 @@ public class GtfsRealtimeFileTripUpdateSource implements TripUpdateSource, JsonC
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         this.feedId = config.path("feedId").asText();
-        this.file = new File(config.path("file").asText(""));
+        String file = config.hasNonNull("file")
+            ? config.path("file").asText()
+            : null;
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Missing mandatory 'file' parameter");
+        }
+        this.file = new File(file);
     }
 
     @Override

@@ -8,8 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.GraphUpdater;
 import org.opentripplanner.updater.GraphUpdaterManager;
-import org.opentripplanner.updater.GraphWriterRunnable;
-import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +82,7 @@ public class WebsocketGtfsRealtimeUpdater implements GraphUpdater {
     public void setup(Graph graph) throws InterruptedException, ExecutionException {
         // Only create a realtime data snapshot source if none exists already
         if (graph.timetableSnapshotSource == null) {
-            TimetableSnapshotSource snapshotSource = new TimetableSnapshotSource(graph);
+            TimetableSnapshotSource snapshotSource = new TimetableSnapshotSource(graph, feedId);
             // Add snapshot source to graph
             graph.timetableSnapshotSource = (snapshotSource);
         }

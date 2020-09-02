@@ -115,7 +115,7 @@ public class TimetableSnapshotSourceTest {
                 CalendarServiceData.class,
                 createCalendarServiceData(context.getOtpTransitService())
         );
-        updater = new TimetableSnapshotSource(graph);
+        updater = new TimetableSnapshotSource(graph, feedId);
     }
 
     @Test

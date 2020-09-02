@@ -92,6 +92,8 @@ public class TimetableSnapshotSource {
 
     protected long lastSnapshotTime = -1;
 
+    private final String feedId;
+
     private final TimeZone timeZone;
 
     private final GraphIndex graphIndex;
@@ -100,7 +102,8 @@ public class TimetableSnapshotSource {
 
     public GtfsRealtimeFuzzyTripMatcher fuzzyTripMatcher;
 
-    public TimetableSnapshotSource(final Graph graph) {
+    public TimetableSnapshotSource(final Graph graph, String feedId) {
+        this.feedId = feedId;
         timeZone = graph.getTimeZone();
         graphIndex = graph.index;
 
@@ -165,7 +168,12 @@ public class TimetableSnapshotSource {
      * @param updates GTFS-RT TripUpdate's that should be applied atomically
      * @param feedId
      */
-    public void applyTripUpdates(final Graph graph, final boolean fullDataset, final List<TripUpdate> updates, final String feedId) {
+    public void applyTripUpdates(
+        final Graph graph,
+        final boolean fullDataset,
+        final List<TripUpdate> updates,
+        final String feedId
+    ) {
         if (updates == null) {
             LOG.warn("updates is null");
             return;
@@ -174,13 +182,14 @@ public class TimetableSnapshotSource {
         // Acquire lock on buffer
         bufferLock.lock();
 
+        int currentAppliedUpdates = 0;
         try {
             if (fullDataset) {
                 // Remove all updates from the buffer
                 buffer.clear(feedId);
             }
 
-            LOG.debug("message contains {} trip updates", updates.size());
+            LOG.info("message contains {} trip updates", updates.size());
             int uIndex = 0;
             for (TripUpdate tripUpdate : updates) {
                 if (fuzzyTripMatcher != null && tripUpdate.hasTrip()) {
@@ -237,6 +246,7 @@ public class TimetableSnapshotSource {
 
                 if (applied) {
                     appliedBlockCount++;
+                    currentAppliedUpdates++;
                 } else {
                     LOG.warn("Failed to apply TripUpdate.");
                     LOG.trace(" Contents: {}", tripUpdate);
@@ -260,6 +270,8 @@ public class TimetableSnapshotSource {
         } finally {
             // Always release lock
             bufferLock.unlock();
+
+            LOG.info("Applied {} / {} updates for {}", currentAppliedUpdates, updates.size(), feedId);
         }
     }
 

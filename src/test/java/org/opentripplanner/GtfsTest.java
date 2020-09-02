@@ -72,7 +72,7 @@ public abstract class GtfsTest extends TestCase {
         agencyId = graph.getAgencies(feedId.getId()).iterator().next().getId();
         System.out.printf("Set the agency ID for this test to %s\n", agencyId);
         graph.index(false);
-        timetableSnapshotSource = new TimetableSnapshotSource(graph);
+        timetableSnapshotSource = new TimetableSnapshotSource(graph, feedId.getId());
         timetableSnapshotSource.purgeExpiredData = (false);
         graph.timetableSnapshotSource = (timetableSnapshotSource);
         alertPatchServiceImpl = new AlertPatchServiceImpl(graph);

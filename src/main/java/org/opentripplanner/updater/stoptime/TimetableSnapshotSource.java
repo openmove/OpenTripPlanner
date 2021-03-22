@@ -328,7 +328,7 @@ public class TimetableSnapshotSource {
         }
 
         if (tripUpdate.getStopTimeUpdateCount() < 1) {
-            LOG.warn("TripUpdate contains no updates, skipping.");
+            LOG.warn("TripUpdate for tripId {} contains no updates, skipping.", tripId);
             return false;
         }
 

@@ -8,6 +8,7 @@ import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.api.model.Place;
 import org.opentripplanner.api.model.RelativeDirection;
+import org.opentripplanner.api.model.RentalInfo;
 import org.opentripplanner.api.model.TransportationNetworkCompanySummary;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.model.VertexType;
@@ -23,6 +24,8 @@ import org.opentripplanner.model.Trip;
 import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
+import org.opentripplanner.routing.car_rental.CarRentalStationService;
 import org.opentripplanner.routing.core.RoutingContext;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.ServiceDay;
@@ -42,6 +45,7 @@ import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
 import org.opentripplanner.routing.edgetype.RentABikeOnEdge;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TimedTransferEdge;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.error.TransportationNetworkCompanyAvailabilityException;
@@ -58,6 +62,7 @@ import org.opentripplanner.routing.transportation_network_company.ArrivalTime;
 import org.opentripplanner.routing.transportation_network_company.RideEstimate;
 import org.opentripplanner.routing.transportation_network_company.TransportationNetworkCompanyService;
 import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.routing.vehicle_rental.VehicleRentalStationService;
 import org.opentripplanner.routing.vertextype.BikeParkVertex;
 import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
 import org.opentripplanner.routing.vertextype.CarRentalStationVertex;
@@ -66,15 +71,19 @@ import org.opentripplanner.routing.vertextype.OnboardDepartVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.routing.vertextype.VehicleRentalStationVertex;
+import org.opentripplanner.updater.RentalUpdaterError;
+import org.opentripplanner.updater.vehicle_rental.GBFSMappings.SystemInformation;
 import org.opentripplanner.util.PolylineEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
@@ -655,8 +664,18 @@ public abstract class GraphPathToTripPlanConverter {
             String alightRule = null;
 
             for (int j = 1; j < legsStates[i].length; j++) {
-                if (legsStates[i][j].getBackEdge() instanceof PatternEdge) {
-                    PatternEdge patternEdge = (PatternEdge) legsStates[i][j].getBackEdge();
+                Edge backEdge = legsStates[i][j].getBackEdge();
+                if (backEdge instanceof TimedTransferEdge) {
+                    // TimedTransferEdges bypass the street network (thus not resulting in the traversal of pathway
+                    // edges) and are going to force a transfer (thus not interlining with a previous leg). Therefore,
+                    // this loop can be exited safely since this information does not need to be collected. If this loop
+                    // isn't exited from in this case, an ArrayIndexOutOfBounds exception might occur resulting from a
+                    // mismatch of transit data in the leg state data info (which might be another bug in itself (at
+                    // least with the data inserted into the Leg instance representing the timed transfer)).
+                    break;
+                }
+                if (backEdge instanceof PatternEdge) {
+                    PatternEdge patternEdge = (PatternEdge) backEdge;
                     TripPattern tripPattern = patternEdge.getPattern();
 
                     Integer fromIndex = legs.get(i).from.stopIndex;
@@ -668,7 +687,7 @@ public abstract class GraphPathToTripPlanConverter {
                     boardRule = getBoardAlightMessage(boardType);
                     alightRule = getBoardAlightMessage(alightType);
                 }
-                if (legsStates[i][j].getBackEdge() instanceof PathwayEdge) {
+                if (backEdge instanceof PathwayEdge) {
                     legs.get(i).pathway = true;
                 }
             }

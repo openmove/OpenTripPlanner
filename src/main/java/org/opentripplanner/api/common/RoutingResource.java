@@ -121,6 +121,33 @@ public abstract class RoutingResource {
     @QueryParam("waitReluctance")
     protected Double waitReluctance;
 
+    /**
+     * An additive weight for how bad each meter of driving is, compared to being in transit for equal distances. It is
+     * recommended to use this sparingly as larger values will incentivize driving paths that cut through neighborhoods.
+     *
+     * Defaults to -1.0 which indicates that driving reluctance should not be used in car routing requests. Empirically,
+     * a value of 0.2 seems work OK.
+     *
+     * Ex: with a factor of 0.2, an edge that is ten meters in length would have 2 units of "weight" added to the
+     * overall weight of traversing the edge while driving. OTP's weight units are roughly equivalent to seconds.
+     */
+    @QueryParam("driveDistanceReluctance")
+    protected Double driveDistanceReluctance;
+
+    /**
+     * An additive weight for how bad each second of driving is, compared to being in transit for equal lengths of time.
+     *
+     * Defaults to -1.0 which indicates that driving reluctance should not be used in car routing requests. Empirically,
+     * a value of 5.0 seems to work well in disincentivizing driving to some park and rides that may seem too close to
+     * the destination.
+     *
+     * Ex: with a factor of 1.75, an edge that takes ten seconds to traverse while driving would have 17.5 units of
+     * "weight" added to the overall weight of traversing the edge. OTP's weight units are roughly equivalent to
+     * seconds.
+     */
+    @QueryParam("driveTimeReluctance")
+    protected Double driveTimeReluctance;
+
     /** How much less bad is waiting at the beginning of the trip (replaces waitReluctance) */
     @QueryParam("waitAtBeginningFactor")
     protected Double waitAtBeginningFactor;
@@ -274,8 +301,13 @@ public abstract class RoutingResource {
     @QueryParam("whiteListedAgencies")
     protected String whiteListedAgencies;
 
-    /** The comma-separated list of banned trips.  The format is agency_trip[:stop*], so:
-     * TriMet_24601 or TriMet_24601:0:1:2:17:18:19
+    /**
+     * The comma-separated list of banned trips.  The format for each comma-separated value is agency:trip[:stop*]. For
+     * example consider the string "TriMet:24601,TriMet:24602:0:1:2:17:18:19". This would result in two trips being
+     * banned. The first value ("TriMet:24601") would result in trip 24601 from the TriMet agency being completely
+     * banned. The second value ("TriMet:24602:0:1:2:17:18:19") would result in a partial ban of trip 24602 from the
+     * TriMet agency if the trip is boarded or alighted at the stop indexes of the stop pattern of the trip (NOT stop
+     * sequences of the trip in the GTFS) of 0, 1, 2, 17, 18 or 19.
      */
     @QueryParam("bannedTrips")
     protected String bannedTrips;
@@ -688,6 +720,13 @@ public abstract class RoutingResource {
             request.setModes(request.modes);
         }
 
+        // Apply a per-request drive distance or time reluctance factor.
+        if (driveDistanceReluctance != null)
+            request.driveDistanceReluctance = driveDistanceReluctance;
+
+        if (driveTimeReluctance != null)
+            request.driveTimeReluctance = driveTimeReluctance;
+
         if (request.allowBikeRental && bikeSpeed == null) {
             //slower bike speed for bike sharing, based on empirical evidence from DC.
             request.bikeSpeed = 4.3;
@@ -874,9 +913,16 @@ public abstract class RoutingResource {
     }
 
     /**
-     * Take a string in the format agency:id or agency:id:1:2:3:4.
-     * TODO Improve Javadoc. What does this even mean? Why are there so many colons and numbers?
-     * Convert to a Map from trip --> set of int.
+     * Create a banned trips map.
+     *
+     * @param banned A string with a multi-part format.
+     *               The first part consists of TRIP_ID,TRIP_ID (multiple trip IDs separated by commas)
+     *               The TRIP_ID has various IDs separated by colons. There must be at least two colon-separated values,
+     *               otherwise the TRIP_ID is skipped. The first value indicates the agency ID string. The second value
+     *               indicates the trip ID string within the context of the agency. Any further values must be integers
+     *               representing stop indexes (NOT stop sequences numbers within a GTFS feed!) within the stop pattern
+     *               of the trip that are banned. If only the agency ID and trip ID are provided, then all stops within
+     *               the trip will be banned.
      */
     private HashMap<FeedScopedId, BannedStopSet> makeBannedTripMap(String banned) {
         if (banned == null) {
@@ -884,11 +930,18 @@ public abstract class RoutingResource {
         }
 
         HashMap<FeedScopedId, BannedStopSet> bannedTripMap = new HashMap<FeedScopedId, BannedStopSet>();
+        // split multiple trip IDs into single trip IDs
         String[] tripStrings = banned.split(",");
         for (String tripString : tripStrings) {
-            // TODO this apparently allows banning stops within a trip with integers. Why?
+            // split tripId into parts as follows:
+            // - position 0: agency ID
+            // - position 1: trip ID
+            // - position 2+: an integer representing the stop index within the trip
             String[] parts = tripString.split(":");
-            if (parts.length < 2) continue; // throw exception?
+            if (parts.length < 2) {
+                LOG.warn("Skipping invalid banned trip value: {}", tripString);
+                continue; // throw exception?
+            }
             String agencyIdString = parts[0];
             String tripIdString = parts[1];
             FeedScopedId tripId = new FeedScopedId(agencyIdString, tripIdString);
@@ -897,8 +950,9 @@ public abstract class RoutingResource {
                 bannedStops = BannedStopSet.ALL;
             } else {
                 bannedStops = new BannedStopSet();
-                for (int i = 2; i < parts.length; ++i) {
-                    bannedStops.add(Integer.parseInt(parts[i]));
+                for (int i = 2; i < parts.length; i++) {
+                    int stopIndex = Integer.parseInt(parts[i]);
+                    bannedStops.add(stopIndex);
                 }
             }
             bannedTripMap.put(tripId, bannedStops);

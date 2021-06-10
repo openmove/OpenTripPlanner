@@ -19,6 +19,7 @@ public class AgencyAdapter extends XmlAdapter<AgencyType, Agency> {
         a.setLang(arg.lang);
         a.setPhone(arg.phone);
         a.setFareUrl(arg.fareUrl);
+        a.setBrandingUrl(arg.brandingUrl);
         return new Agency(a);
     }
 

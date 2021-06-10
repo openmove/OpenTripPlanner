@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class AgencyType {
 
     public AgencyType(String id, String name, String url, String timezone, String lang,
-            String phone, String fareUrl) {
+            String phone, String fareUrl, String brandingUrl) {
         this.id = id;
         this.name = name;
         this.url = url;
@@ -19,6 +19,7 @@ public class AgencyType {
         this.lang = lang;
         this.phone = phone;
         this.fareUrl = fareUrl;
+        this.brandingUrl = brandingUrl;
     }
 
     public AgencyType(Agency arg) {
@@ -29,6 +30,7 @@ public class AgencyType {
         this.lang = arg.getLang();
         this.phone = arg.getPhone();
         this.fareUrl = arg.getFareUrl();
+        this.brandingUrl = arg.getBrandingUrl();
     }
 
     public AgencyType() {
@@ -61,5 +63,9 @@ public class AgencyType {
     @XmlAttribute
     @JsonSerialize
     String fareUrl;
+
+    @XmlAttribute
+    @JsonSerialize
+    String brandingUrl;
 
 }

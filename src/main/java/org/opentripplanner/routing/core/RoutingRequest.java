@@ -1061,6 +1061,11 @@ public class RoutingRequest implements Cloneable, Serializable {
         return new Date(dateTime * 1000);
     }
 
+    public boolean isTripPlannedForNow() {
+        final long NOW_THRESHOLD_MILLIS = 15 * 60 * 60 * 1000;
+        return Math.abs(getDateTime().getTime() - new Date().getTime()) < NOW_THRESHOLD_MILLIS;
+    }
+
     public void setDateTime(Date dateTime) {
         this.dateTime = dateTime.getTime() / 1000;
     }

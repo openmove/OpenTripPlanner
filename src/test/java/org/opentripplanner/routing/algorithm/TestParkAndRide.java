@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.routing.algorithm.strategies.InterleavedBidirectionalHeuristic;
 import org.opentripplanner.routing.bike_park.BikePark;
+import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -72,8 +73,16 @@ public class TestParkAndRide extends TestCase {
         assertNull(path);
 
         // So we Add a P+R at B.
-        ParkAndRideVertex PRB = new ParkAndRideVertex(graph, "P+R", "P+R.B", 0.001, 45.00001,
-                new NonLocalizedString("P+R B"));
+        CarPark carPark = new CarPark();
+        carPark.id = "P+R.B";
+        carPark.name = new NonLocalizedString("P+R B");
+        carPark.realTimeData = false;
+        carPark.x = 0.001;
+        carPark.y = 45.00001;
+        carPark.maxCapacity = carPark.spacesAvailable = 10;
+
+        ParkAndRideVertex PRB = new ParkAndRideVertex(graph, carPark);
+
         new ParkAndRideEdge(PRB);
         new ParkAndRideLinkEdge(PRB, B);
         new ParkAndRideLinkEdge(B, PRB);

@@ -13,6 +13,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.opentripplanner.common.geometry.GeometryDeserializer;
 import org.opentripplanner.common.geometry.GeometrySerializer;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
+import org.opentripplanner.routing.car_park.CarParkService;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.util.TravelOption;
@@ -22,6 +23,7 @@ import org.opentripplanner.util.WorldEnvelope;
 public class RouterInfo {
 
     private final BikeRentalStationService service;
+    private final CarParkService serviceParkRide;
 
     public String routerId;
 
@@ -58,12 +60,13 @@ public class RouterInfo {
         this.envelope = graph.getEnvelope();
         addCenter(graph.getCenter());
         service = graph.getService(BikeRentalStationService.class, false);
+        serviceParkRide = graph.getService(CarParkService.class, false);
         hasParkRide = graph.hasParkRide;
         travelOptions = TravelOptionsMaker.makeOptions(
             graph.getTransitModes(),
             graph.hasBikeSharing || getHasBikeSharing(),
             graph.hasBikeRide || getHasBikePark(),
-            graph.hasParkRide
+            graph.hasParkRide || getHasParkRide()
         );
     }
 
@@ -74,6 +77,15 @@ public class RouterInfo {
 
         //at least 2 bike sharing stations are needed for useful bike sharing
         return service.getBikeRentalStations().size() > 1;
+    }
+
+    public boolean getHasParkRide() {
+        if (serviceParkRide == null) {
+            return false;
+        }
+
+        //at least 1 park slot is needed for useful park and ride
+        return !serviceParkRide.getCarParks().isEmpty();
     }
 
     public boolean getHasBikePark() {

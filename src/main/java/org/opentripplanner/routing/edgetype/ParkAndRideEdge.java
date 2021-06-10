@@ -9,6 +9,10 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.vertextype.ParkAndRideVertex;
 
 import org.locationtech.jts.geom.LineString;
+import org.opentripplanner.updater.car_park.ODHCarParkDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Locale;
 
 /**
@@ -25,7 +29,6 @@ import java.util.Locale;
 public class ParkAndRideEdge extends Edge {
 
     private static final long serialVersionUID = MavenVersion.VERSION.getUID();
-
     public ParkAndRideEdge(ParkAndRideVertex parkAndRide) {
         super(parkAndRide, parkAndRide);
     }
@@ -36,6 +39,14 @@ public class ParkAndRideEdge extends Edge {
         if (!request.parkAndRide) {
             return null;
         }
+        if(
+            request.isTripPlannedForNow()
+            &&
+            ((ParkAndRideVertex) tov).hasFewSpacesAvailable()
+        ){
+            return null;
+        }
+
         if (request.arriveBy) {
             /*
              * To get back a car, we need to walk and have car mode enabled.

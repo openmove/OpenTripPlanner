@@ -215,6 +215,14 @@ public class StreetSplitter {
         return linkToGraph(vertex, TraverseMode.WALK, null, destructiveSplitting, createSemiPermanentEdges);
     }
 
+    public boolean linkToClosestDrivableEdge(
+            Vertex vertex,
+            final boolean destructiveSplitting,
+            boolean createSemiPermanentEdges
+    ) {
+        return linkToGraph(vertex, TraverseMode.CAR, null, destructiveSplitting, createSemiPermanentEdges);
+    }
+
     /**
      * Link a vertex into the graph to the closest edge that allows the traversal of the specified mode.
      */

@@ -180,9 +180,14 @@ public class IndexAPI {
            @QueryParam("radius") Double radius) {
 
        /* When no parameters are supplied, return all stops. */
-       if (uriInfo.getQueryParameters().isEmpty()) {
+       if (uriInfo.getQueryParameters().isEmpty() || uriInfo.getQueryParameters().size() == 1) {
            Collection<Stop> stops = index.stopForId.values();
-           return Response.status(Status.OK).entity(StopShort.list(stops)).build();
+           if (detail){
+            return Response.status(Status.OK).entity(stops).build();
+           }else{
+            return Response.status(Status.OK).entity(StopShort.list(stops)).build();
+           }
+           
        }
        /* If any of the circle parameters are specified, expect a circle not a box. */
        boolean expectCircle = (lat != null || lon != null || radius != null);
@@ -202,7 +207,9 @@ public class IndexAPI {
                    stops.add(new StopShort(stopVertex.getStop(), (int) distance));
                }
            }
+
            return Response.status(Status.OK).entity(stops).build();
+           
        } else {
            /* We're not circle mode, we must be in box mode. */
            if (minLat == null || minLon == null || maxLat == null || maxLon == null) {
@@ -211,12 +218,16 @@ public class IndexAPI {
            if (maxLat <= minLat || maxLon <= minLon) {
                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
            }
-           List<StopShort> stops = Lists.newArrayList();
+           List<Stop> stops = Lists.newArrayList();
            Envelope envelope = new Envelope(new Coordinate(minLon, minLat), new Coordinate(maxLon, maxLat));
            for (TransitStop stopVertex : streetIndex.getTransitStopForEnvelope(envelope)) {
-               stops.add(new StopShort(stopVertex.getStop()));
+               stops.add(new Stop(stopVertex.getStop()));
            }
-           return Response.status(Status.OK).entity(stops).build();           
+           if (detail){
+                return Response.status(Status.OK).entity(stops).build();
+           }else{
+                return Response.status(Status.OK).entity(StopShort.list(stops)).build();
+           }         
        }
    }
 
@@ -574,6 +585,7 @@ public class IndexAPI {
      * Clusters are an unsupported experimental feature that was added to assist in "profile routing".
      * As such the stop clustering method probably only works right with one or two GTFS data sets in the world.
      */
+    /*
     @GET
     @Path("/clusters")
     public Response getAllStopClusters () {
@@ -581,6 +593,92 @@ public class IndexAPI {
         // use 'detail' field common to all API methods in this class
         List<StopClusterDetail> scl = StopClusterDetail.list(index.stopClusterForId.values(), detail);
         return Response.status(Status.OK).entity(scl).build();
+    }
+
+    */
+    /** Return a list of all clusters within a circle around the given coordinate. */
+    @GET
+    @Path("/clusters")
+    public Response getAllStopClustersInRadius (
+            @QueryParam("minLat") Double minLat,
+            @QueryParam("minLon") Double minLon,
+            @QueryParam("maxLat") Double maxLat,
+            @QueryParam("maxLon") Double maxLon,
+            @QueryParam("lat")    Double lat,
+            @QueryParam("lon")    Double lon,
+            @QueryParam("radius") Double radius) {
+
+        /* When no parameters are supplied, return all clusters. */
+        if (uriInfo.getQueryParameters().isEmpty() || uriInfo.getQueryParameters().size() == 1) {
+            index.clusterStopsAsNeeded();
+            // use 'detail' field common to all API methods in this class
+            List<StopClusterDetail> scl = StopClusterDetail.list(index.stopClusterForId.values(), detail);
+            Collection<Stop> stops = index.stopForId.values();
+            for(Stop s : stops){
+                if(s.getParentStation() == null){
+                    StopCluster stopCluster = new StopCluster(s.getId().getId(), s.getName());
+                    stopCluster.setCoordinates(s.getLat(), s.getLon());
+                    stopCluster.children.add(s);
+                    scl.add(new StopClusterDetail(stopCluster, detail));
+                }
+            }
+            return Response.status(Status.OK).entity(scl).build();
+
+        }
+        /* If any of the circle parameters are specified, expect a circle not a box. */
+        boolean expectCircle = (lat != null || lon != null || radius != null);
+        if (expectCircle) {
+            if (lat == null || lon == null || radius == null || radius < 0) {
+                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+            }
+            if (radius > MAX_STOP_SEARCH_RADIUS){
+                radius = MAX_STOP_SEARCH_RADIUS;
+            }
+            List<StopClusterDetail> scl = Lists.newArrayList();
+
+            Coordinate coord = new Coordinate(lon, lat);
+            for (TransitStop stopVertex : streetIndex.getNearbyTransitStops(
+                    new Coordinate(lon, lat), radius)) {
+                double distance = SphericalDistanceLibrary.fastDistance(stopVertex.getCoordinate(), coord);
+
+                if (distance < radius) {
+                    Stop stop = stopVertex.getStop();
+                    StopCluster stopCluster = index.stopClusterForStop.get(stop);
+                    if(stopCluster == null){
+                        stopCluster = new StopCluster(stop.getId().getId(), stop.getName());
+                        stopCluster.setCoordinates(stop.getLat(), stop.getLon());
+                        stopCluster.children.add(stop);
+                    }
+                    scl.add(new StopClusterDetail(stopCluster, detail));
+                }
+            }
+
+            return Response.status(Status.OK).entity(scl).build();
+
+        } else {
+            /* We're not circle mode, we must be in box mode. */
+            if (minLat == null || minLon == null || maxLat == null || maxLon == null) {
+                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+            }
+            if (maxLat <= minLat || maxLon <= minLon) {
+                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+            }
+            List<StopClusterDetail> scl = Lists.newArrayList();
+
+            Envelope envelope = new Envelope(new Coordinate(minLon, minLat), new Coordinate(maxLon, maxLat));
+            for (TransitStop stopVertex : streetIndex.getTransitStopForEnvelope(envelope)) {
+                Stop stop = stopVertex.getStop();
+                StopCluster stopCluster = index.stopClusterForStop.get(stop);
+                if(stopCluster == null){
+                    stopCluster = new StopCluster(stop.getId().getId(), stop.getName());
+                    stopCluster.setCoordinates(stop.getLat(), stop.getLon());
+                    stopCluster.children.add(stop);
+                }
+                scl.add(new StopClusterDetail(stopCluster, detail));
+
+            }
+            return Response.status(Status.OK).entity(scl).build();
+        }
     }
 
     /**

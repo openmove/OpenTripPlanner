@@ -78,5 +78,15 @@ public class TripTimeShort {
         }
         return out;
     }
+
+    public static List<TripTimeShort> fromTripTimes (Timetable table, Trip trip, ServiceDay sd) {
+        TripTimes times = table.getTripTimes(table.getTripIndex(trip.getId()));
+        List<TripTimeShort> out = Lists.newArrayList();
+        // one per stop, not one per hop, thus the <= operator
+        for (int i = 0; i < times.getNumStops(); ++i) {
+            out.add(new TripTimeShort(times, i, table.pattern.getStop(i), sd));
+        }
+        return out;
+    }
     
 }

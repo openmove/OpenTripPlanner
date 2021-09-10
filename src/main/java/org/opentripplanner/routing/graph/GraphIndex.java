@@ -544,6 +544,28 @@ public class GraphIndex {
         return ret;
     }
 
+    public List<TripTimeShort> getStopTimesForTrip(Trip trip, ServiceDate serviceDate) {
+        TripPattern pattern = patternForTrip.get(trip);
+        ServiceDay sd = new ServiceDay(graph, serviceDate, calendarService, pattern.route.getAgency().getId());
+        TimetableSnapshot snapshot = null;
+        Timetable tt;
+        if (graph.timetableSnapshotSource != null) {
+            snapshot = graph.timetableSnapshotSource.getTimetableSnapshot();
+        }
+        if (snapshot != null){
+            tt = snapshot.resolve(pattern, serviceDate);
+        } else {
+            tt = pattern.scheduledTimetable;
+        }
+        for (TripTimes t : tt.tripTimes) {
+            if (sd.serviceRunning(t.serviceCode)) {
+                return TripTimeShort.fromTripTimes(tt, trip, sd);
+            }
+        }
+
+        return null;
+    }
+
     /** Fetch a cache of nearby intersection distances for every transit stop in this graph, lazy-building as needed. */
     public StopTreeCache getStopTreeCache() {
         if (stopTreeCache == null) {

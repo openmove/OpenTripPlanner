@@ -649,7 +649,10 @@ public class IndexAPI {
                         stopCluster.setCoordinates(stop.getLat(), stop.getLon());
                         stopCluster.children.add(stop);
                     }
-                    scl.add(new StopClusterDetail(stopCluster, detail));
+                    StopClusterDetail mCluster = new StopClusterDetail(stopCluster, detail);
+                    if(!scl.contains(mCluster)){
+                        scl.add(mCluster);
+                    }
                 }
             }
 
@@ -674,7 +677,10 @@ public class IndexAPI {
                     stopCluster.setCoordinates(stop.getLat(), stop.getLon());
                     stopCluster.children.add(stop);
                 }
-                scl.add(new StopClusterDetail(stopCluster, detail));
+                StopClusterDetail mCluster = new StopClusterDetail(stopCluster, detail);
+                if(!scl.contains(mCluster)){
+                    scl.add(mCluster);
+                }
 
             }
             return Response.status(Status.OK).entity(scl).build();
@@ -695,6 +701,15 @@ public class IndexAPI {
         if (cluster != null) {
             return Response.status(Status.OK).entity(new StopClusterDetail(cluster, true)).build();
         } else {
+            try {
+                Stop stop = index.stopForId.get(FeedScopedId.convertFromString(clusterIdString));
+                StopCluster stopCluster = new StopCluster(stop.getId().getId(), stop.getName());
+                stopCluster.setCoordinates(stop.getLat(), stop.getLon());
+                stopCluster.children.add(stop);
+                return Response.status(Status.OK).entity(new StopClusterDetail(stopCluster, true)).build();
+            }catch (Exception e){
+
+            }
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
         }
     }

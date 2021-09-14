@@ -635,6 +635,7 @@ public class IndexAPI {
                 radius = MAX_STOP_SEARCH_RADIUS;
             }
             List<StopClusterDetail> scl = Lists.newArrayList();
+            List<String> clusterIds = Lists.newArrayList();
 
             Coordinate coord = new Coordinate(lon, lat);
             for (TransitStop stopVertex : streetIndex.getNearbyTransitStops(
@@ -650,8 +651,9 @@ public class IndexAPI {
                         stopCluster.children.add(stop);
                     }
                     StopClusterDetail mCluster = new StopClusterDetail(stopCluster, detail);
-                    if(!scl.contains(mCluster)){
+                    if(!clusterIds.contains(mCluster.id)){
                         scl.add(mCluster);
+                        clusterIds.add(mCluster.id);
                     }
                 }
             }
@@ -667,7 +669,7 @@ public class IndexAPI {
                 return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
             }
             List<StopClusterDetail> scl = Lists.newArrayList();
-
+            List<String> clusterIds = Lists.newArrayList();
             Envelope envelope = new Envelope(new Coordinate(minLon, minLat), new Coordinate(maxLon, maxLat));
             for (TransitStop stopVertex : streetIndex.getTransitStopForEnvelope(envelope)) {
                 Stop stop = stopVertex.getStop();
@@ -678,8 +680,9 @@ public class IndexAPI {
                     stopCluster.children.add(stop);
                 }
                 StopClusterDetail mCluster = new StopClusterDetail(stopCluster, detail);
-                if(!scl.contains(mCluster)){
+                if(!clusterIds.contains(mCluster.id)){
                     scl.add(mCluster);
+                    clusterIds.add(mCluster.id);
                 }
 
             }

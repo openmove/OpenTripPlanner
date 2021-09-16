@@ -138,13 +138,21 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
             // Get the GBFS feeds for the configured language.
             GbfsResponse.GbfsFeeds feeds = gbfsResponse.data.get(language);
             if (feeds == null) {
-                addError(
-                    RentalUpdaterError.Severity.FEED_WIDE,
-                    "requested language (%s) not available in GBFS: %s",
-                    language,
-                    baseUrl
-                );
-                return;
+                for(String l : gbfsResponse.data.keySet()){
+                    language = l;
+                    feeds = gbfsResponse.data.get(language);
+                    break;
+                }
+
+                if(feeds == null) {
+                    addError(
+                            RentalUpdaterError.Severity.FEED_WIDE,
+                            "requested language (%s) not available in GBFS: %s",
+                            language,
+                            baseUrl
+                    );
+                    return;
+                }
             }
 
             // iterate through all feed endpoints and update as needed

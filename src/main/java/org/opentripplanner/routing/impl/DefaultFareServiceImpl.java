@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.FareAttribute;
+import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.Fare.FareType;
@@ -26,77 +27,9 @@ import org.opentripplanner.routing.edgetype.HopEdge;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.services.FareService;
 import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.routing.vertextype.PatternDepartVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-/** A set of edges on a single route, with associated information for calculating fares */
-class Ride {
-
-    String feedId;
-
-    String agency; // route agency
-
-    FeedScopedId route;
-
-    FeedScopedId trip;
-    
-    Set<String> zones;
-
-    String startZone;
-
-    String endZone;
-
-    long startTime;
-
-    long endTime;
-
-    // in DefaultFareServiceImpl classifier is just the TraverseMode
-    // it can be used differently in custom fare services
-    public Object classifier;
-
-    public Stop firstStop;
-
-    public Stop lastStop;
-
-    public Ride() {
-        zones = new HashSet<String>();
-    }
-
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Ride");
-        if (startZone != null) {
-            builder.append("(from zone ");
-            builder.append(startZone);
-        }
-        if (endZone != null) {
-            builder.append(" to zone ");
-            builder.append(endZone);
-        }
-        builder.append(" on route ");
-        builder.append(route);
-        if (zones.size() > 0) {
-            builder.append(" through zones ");
-            boolean first = true;
-            for (String zone : zones) {
-                if (first) {
-                    first = false;
-                } else {
-                    builder.append(",");
-                }
-                builder.append(zone);
-            }
-        }
-        builder.append(" at ");
-        builder.append(startTime);
-        if (classifier != null) {
-            builder.append(", classified by ");
-            builder.append(classifier.toString());
-        }
-        builder.append(")");
-        return builder.toString();
-    }
-}
 
 /** Holds information for doing the graph search on fares */
 class FareSearch {
@@ -169,13 +102,17 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
             if ( ! (edge instanceof HopEdge))
                 continue;
             HopEdge hEdge = (HopEdge) edge;
-            if (ride == null || ! state.getRoute().equals(ride.route)) {
+            // Determine if a new ride should be created from this HopEdge. Only do so if a Ride hasn't been created,
+            // or if the route has changed or if configured to do so for interlined transfers.
+            if (ride == null || ! state.getRoute().equals(ride.route) || createRideDueToInterlining(state, ride)) {
                 ride = new Ride();
                 rides.add(ride);
                 ride.startZone = hEdge.getBeginStop().getZoneId();
                 ride.zones.add(ride.startZone);
-                ride.agency = state.getBackTrip().getRoute().getAgency().getId();
-                ride.route = state.getRoute();
+                Route route = ((PatternDepartVertex)edge.getFromVertex()).getTripPattern().route;
+                ride.agency = route.getAgency().getId();
+                ride.routeData = route;
+                ride.route = route.getId();
                 ride.startTime = state.getBackState().getTimeSeconds();
                 ride.firstStop = hEdge.getBeginStop();
                 ride.trip = state.getTripId();
@@ -189,6 +126,14 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
             ride.classifier = state.getBackMode();
         }
         return rides;
+    }
+
+    /**
+     * Returns true if a new ride should be created due to interlining. This is expected to be overridden in applicable
+     * extending classes.
+     */
+    protected boolean createRideDueToInterlining(State state, Ride ride) {
+        return false;
     }
 
     @Override

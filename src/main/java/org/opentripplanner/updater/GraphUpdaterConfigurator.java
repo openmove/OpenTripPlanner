@@ -2,6 +2,7 @@ package org.opentripplanner.updater;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.standalone.ErrorUtils;
 import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
 import org.opentripplanner.updater.bike_park.BikeParkUpdater;
 import org.opentripplanner.updater.bike_rental.BikeRentalUpdater;
@@ -9,6 +10,7 @@ import org.opentripplanner.updater.car_park.CarParkUpdater;
 import org.opentripplanner.updater.car_rental.CarRentalUpdater;
 import org.opentripplanner.updater.example.ExampleGraphUpdater;
 import org.opentripplanner.updater.example.ExamplePollingGraphUpdater;
+import org.opentripplanner.updater.vehicle_positions.PollingVehiclePositionUpdater;
 import org.opentripplanner.updater.vehicle_rental.VehicleRentalUpdater;
 import org.opentripplanner.updater.stoptime.PollingStoptimeUpdater;
 import org.opentripplanner.updater.stoptime.WebsocketGtfsRealtimeUpdater;
@@ -107,7 +109,9 @@ public abstract class GraphUpdaterConfigurator {
                 else if (type.equals("car-park")) {
                     updater = new CarParkUpdater();
                 }
-
+                else if (type.equals("vehicle-position-updater")) {
+                    updater = new PollingVehiclePositionUpdater();
+                }
             }
 
             if (updater == null) {
@@ -125,7 +129,10 @@ public abstract class GraphUpdaterConfigurator {
                     updaterManager.addUpdater(updater);
                     LOG.info("Configured GraphUpdater: {}", updater);
                 } catch (Exception e) {
-                    LOG.error("Failed to configure graph updater:" + configItem.asText(), e);
+                    ErrorUtils.reportErrorToBugsnag(
+                        "Failed to configure graph updater:" + configItem.asText(),
+                        e
+                    );
                 }
             }
         }

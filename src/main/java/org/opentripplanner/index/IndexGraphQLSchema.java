@@ -891,9 +891,26 @@ public class IndexGraphQLSchema {
                     .name("ids")
                     .type(new GraphQLList(Scalars.GraphQLString))
                     .build())
+                .argument(GraphQLArgument.newArgument()
+                    .name("skip")
+                    .type(Scalars.GraphQLLong)
+                    .defaultValue((long) 0)
+                    .build())
+                .argument(GraphQLArgument.newArgument()
+                    .name("limit")
+                    .type(Scalars.GraphQLLong)
+                    .defaultValue(Long.MAX_VALUE)
+                    .build())
                 .dataFetcher(environment -> {
                     if (!(environment.getArgument("ids") instanceof List)) {
-                        return new ArrayList<>(index.stopForId.values());
+                        return new ArrayList<>(
+                                index.stopForId
+                                        .values()
+                                        .stream()
+                                        .skip(environment.getArgument("skip"))
+                                        .limit(environment.getArgument("limit"))
+                                        .collect(Collectors.toList())
+                        );
                     } else {
                         return ((List<String>) environment.getArgument("ids"))
                             .stream()
@@ -984,6 +1001,16 @@ public class IndexGraphQLSchema {
                             .name("name")
                             .type(new GraphQLNonNull(Scalars.GraphQLString))
                             .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("skip")
+                            .type(Scalars.GraphQLLong)
+                            .defaultValue((long) 0)
+                            .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("limit")
+                            .type(Scalars.GraphQLLong)
+                            .defaultValue(Long.MAX_VALUE)
+                            .build())
                     .dataFetcher(environment -> {
                         String name = environment.getArgument("name");
                         Pattern p = Pattern.compile(name, Pattern.CASE_INSENSITIVE);
@@ -991,6 +1018,8 @@ public class IndexGraphQLSchema {
                                 .stream()
                                 .filter(stop -> p.matcher(stop.getName()).matches())
                                 .sorted(Comparator.comparing(s -> s.getName()))
+                                .skip(environment.getArgument("skip"))
+                                .limit(environment.getArgument("limit"))
                                 .collect(Collectors.toList());
                     })
                     .build())
@@ -1013,9 +1042,26 @@ public class IndexGraphQLSchema {
                     .name("ids")
                     .type(new GraphQLList(Scalars.GraphQLString))
                     .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("skip")
+                        .type(Scalars.GraphQLLong)
+                        .defaultValue((long) 0)
+                        .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("limit")
+                        .type(Scalars.GraphQLLong)
+                        .defaultValue(Long.MAX_VALUE)
+                        .build())
                 .dataFetcher(environment -> {
                     if (!(environment.getArgument("ids") instanceof List)) {
-                        return new ArrayList<>(index.routeForId.values());
+                        return new ArrayList<>(
+                                index.routeForId
+                                    .values()
+                                    .stream()
+                                    .skip(environment.getArgument("skip"))
+                                    .limit(environment.getArgument("limit"))
+                                    .collect(Collectors.toList())
+                        );
                     } else {
                         return ((List<String>) environment.getArgument("ids"))
                             .stream()
@@ -1039,7 +1085,23 @@ public class IndexGraphQLSchema {
                 .name("trips")
                 .description("Get all trips for the specified graph")
                 .type(new GraphQLList(tripType))
-                .dataFetcher(environment -> new ArrayList<>(index.tripForId.values()))
+                .argument(GraphQLArgument.newArgument()
+                        .name("skip")
+                        .type(Scalars.GraphQLLong)
+                        .defaultValue((long) 0)
+                        .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("limit")
+                        .type(Scalars.GraphQLLong)
+                        .defaultValue(Long.MAX_VALUE)
+                        .build())
+                .dataFetcher(environment -> new ArrayList<>(
+                        index.tripForId.values()
+                                .stream()
+                                .skip(environment.getArgument("skip"))
+                                .limit(environment.getArgument("limit"))
+                                .collect(Collectors.toList())
+                ))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("trip")
@@ -1105,7 +1167,24 @@ public class IndexGraphQLSchema {
                 .name("clusters")
                 .description("Get all clusters for the specified graph")
                 .type(new GraphQLList(clusterType))
-                .dataFetcher(environment -> new ArrayList<>(index.stopClusterForId.values()))
+                .argument(GraphQLArgument.newArgument()
+                        .name("skip")
+                        .type(Scalars.GraphQLLong)
+                        .defaultValue((long) 0)
+                        .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("limit")
+                        .type(Scalars.GraphQLLong)
+                        .defaultValue(Long.MAX_VALUE)
+                        .build())
+                .dataFetcher(environment -> new ArrayList<>(
+                        index.stopClusterForId.values()
+                                .stream()
+                                .skip(environment.getArgument("skip"))
+                                .limit(environment.getArgument("limit"))
+                                .collect(Collectors.toList())
+                        )
+                )
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("cluster")

@@ -1,7 +1,5 @@
 package org.opentripplanner.updater.vehicle_rental.GBFSMappings;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,7 +8,8 @@ import java.util.Optional;
  * Response class for the gbfs.json file.
  * See https://github.com/NABSA/gbfs/blob/master/gbfs.md#gbfsjson
  */
-public class GbfsResponse extends BaseGtfsResponse {
+public class GbfsResponse extends BaseGbfsResponse {
+
     public Optional<String> version;
     public Map<String, GbfsFeeds> data;
 

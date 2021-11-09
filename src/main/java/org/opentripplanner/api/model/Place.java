@@ -86,6 +86,10 @@ public class Place {
      */
     public String bikeShareId;
 
+    public String bikeParkId;
+
+    public String carParkId;
+
     /**
      * Car share station fields
      */

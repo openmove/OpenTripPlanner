@@ -50,6 +50,7 @@ public class Car2GoCarRentalDataSource extends GenericCarRentalDataSource {
         car2go.name = new NonLocalizedString(vehicle.get("plate").asText());
         car2go.networks = new HashSet<>(Arrays.asList(networkName));
         car2go.spacesAvailable = 0;
+        car2go.lastReportedEpochSeconds = System.currentTimeMillis() / 1000;
         car2go.x = vehicle.path("geoCoordinate").path("longitude").asDouble();
         car2go.y = vehicle.path("geoCoordinate").path("latitude").asDouble();
 

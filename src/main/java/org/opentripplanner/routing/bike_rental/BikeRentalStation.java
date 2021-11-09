@@ -30,6 +30,8 @@ public class BikeRentalStation extends RentalStation implements Serializable, Cl
     public boolean isFloatingBike = false;
     @JsonSerialize
     public boolean isCarStation = false;
+    @JsonSerialize
+    public boolean allowOverloading = false;
 
     /**
      * List of compatible network names. Null (default) to be compatible with all.

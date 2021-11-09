@@ -25,6 +25,7 @@ import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
+import org.opentripplanner.routing.car_park.CarParkService;
 import org.opentripplanner.routing.car_rental.CarRentalStationService;
 import org.opentripplanner.routing.core.RoutingContext;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -63,14 +64,7 @@ import org.opentripplanner.routing.transportation_network_company.RideEstimate;
 import org.opentripplanner.routing.transportation_network_company.TransportationNetworkCompanyService;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalStationService;
-import org.opentripplanner.routing.vertextype.BikeParkVertex;
-import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
-import org.opentripplanner.routing.vertextype.CarRentalStationVertex;
-import org.opentripplanner.routing.vertextype.ExitVertex;
-import org.opentripplanner.routing.vertextype.OnboardDepartVertex;
-import org.opentripplanner.routing.vertextype.StreetVertex;
-import org.opentripplanner.routing.vertextype.TransitVertex;
-import org.opentripplanner.routing.vertextype.VehicleRentalStationVertex;
+import org.opentripplanner.routing.vertextype.*;
 import org.opentripplanner.updater.RentalUpdaterError;
 import org.opentripplanner.updater.vehicle_rental.GBFSMappings.SystemInformation;
 import org.opentripplanner.util.PolylineEncoder;
@@ -1011,6 +1005,7 @@ public abstract class GraphPathToTripPlanConverter {
             place.networks = ((BikeRentalStationVertex) vertex).getNetworks();
             place.vertexType = VertexType.BIKESHARE;
         } else if (vertex instanceof BikeParkVertex) {
+            place.bikeParkId = ((BikeParkVertex) vertex).getId();
             place.vertexType = VertexType.BIKEPARK;
         } else if (vertex instanceof CarRentalStationVertex) {
             place.address = ((CarRentalStationVertex) vertex).getAddress();
@@ -1019,6 +1014,9 @@ public abstract class GraphPathToTripPlanConverter {
         } else if (vertex instanceof VehicleRentalStationVertex) {
             place.networks = ((VehicleRentalStationVertex) vertex).getNetworks();
             place.vertexType = VertexType.VEHICLERENTAL;
+        } else if (vertex instanceof ParkAndRideVertex) {
+            place.carParkId = ((ParkAndRideVertex) vertex).getId();
+            place.vertexType = VertexType.CARPARK;
         } else {
             place.vertexType = VertexType.NORMAL;
         }

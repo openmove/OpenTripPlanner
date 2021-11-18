@@ -53,7 +53,9 @@ public class GraphQlPlanner {
     public Map<String, Object> plan(DataFetchingEnvironment environment) {
 
         Router router = (Router) environment.getContext();
-
+        if(router == null){
+            router = new Router(index.graph.routerId, index.graph);
+        }
 
         RoutingRequest request = createRequest(environment);
 
@@ -152,8 +154,16 @@ public class GraphQlPlanner {
 
     private RoutingRequest createRequest(DataFetchingEnvironment environment) {
         Router router = (Router) environment.getContext();
-        RoutingRequest request = router.defaultRoutingRequest.clone();
-        request.routerId = router.id;
+        RoutingRequest tmpRequest;
+        try {
+            tmpRequest = router.defaultRoutingRequest.clone();
+        }catch(Exception e){
+            e.printStackTrace();
+            tmpRequest = new RoutingRequest();
+            router = new Router(index.graph.routerId, index.graph);
+        }
+        RoutingRequest request = tmpRequest.clone();
+        request.routerId =  router.id;
 
         CallerWithEnvironment callWith = new CallerWithEnvironment(environment);
 

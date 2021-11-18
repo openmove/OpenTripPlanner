@@ -1158,6 +1158,82 @@ public class IndexGraphQLSchema {
                     .get((Trip) environment.getSource()).getStops())
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("departureStoptime")
+                    .type(stoptimeType)
+                    .argument(GraphQLArgument.newArgument()
+                            .name("serviceDay")
+                            .type(Scalars.GraphQLString)
+                            .build())
+                    .dataFetcher(environment -> {
+                        try {
+                            if(environment.getArgument("serviceDay") != null){
+                                Trip trip = (Trip) environment.getSource();
+
+                                ServiceDate serviceDate = ServiceDate.parseString(environment.getArgument("serviceDay"));
+                                List<TripTimeShort> res = index.getStopTimesForTrip(trip,serviceDate);
+                                res.sort(new Comparator<TripTimeShort>() {
+                                    @Override
+                                    public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
+                                        return Integer.compare(tripTimeShort.stopIndex, t1.stopIndex);
+                                    }
+                                });
+                                return res.get(0);
+                            }else{
+                                List<TripTimeShort> res = TripTimeShort.fromTripTimes(
+                                        index.patternForTrip.get((Trip) environment.getSource()).scheduledTimetable,
+                                        (Trip) environment.getSource());
+                                res.sort(new Comparator<TripTimeShort>() {
+                                    @Override
+                                    public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
+                                        return Integer.compare(tripTimeShort.stopIndex, t1.stopIndex);
+                                    }
+                                });
+                                return res.get(0);
+                            }
+                        } catch (ParseException e) {
+                            return null; // Invalid date format
+                        }
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("arrivalStoptime")
+                .type(stoptimeType)
+                .argument(GraphQLArgument.newArgument()
+                        .name("serviceDay")
+                        .type(Scalars.GraphQLString)
+                        .build())
+                .dataFetcher(environment -> {
+                    try {
+                        if(environment.getArgument("serviceDay") != null){
+                            Trip trip = (Trip) environment.getSource();
+
+                            ServiceDate serviceDate = ServiceDate.parseString(environment.getArgument("serviceDay"));
+                            List<TripTimeShort> res = index.getStopTimesForTrip(trip,serviceDate);
+                            res.sort(new Comparator<TripTimeShort>() {
+                                @Override
+                                public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
+                                    return Integer.compare(tripTimeShort.stopIndex, t1.stopIndex);
+                                }
+                            });
+                            return res.get(res.size()-1);
+                        }else{
+                            List<TripTimeShort> res = TripTimeShort.fromTripTimes(
+                                    index.patternForTrip.get((Trip) environment.getSource()).scheduledTimetable,
+                                    (Trip) environment.getSource());
+                            res.sort(new Comparator<TripTimeShort>() {
+                                @Override
+                                public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
+                                    return Integer.compare(tripTimeShort.stopIndex, t1.stopIndex);
+                                }
+                            });
+                            return res.get(res.size()-1);
+                        }
+                    } catch (ParseException e) {
+                        return null; // Invalid date format
+                    }
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("semanticHash")
                 .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(stopType))))
                 .dataFetcher(environment -> index.patternForTrip.get((Trip) environment.getSource())

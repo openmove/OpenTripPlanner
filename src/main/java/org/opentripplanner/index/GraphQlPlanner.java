@@ -158,7 +158,6 @@ public class GraphQlPlanner {
         try {
             tmpRequest = router.defaultRoutingRequest.clone();
         }catch(Exception e){
-            e.printStackTrace();
             tmpRequest = new RoutingRequest();
             router = new Router(index.graph.routerId, index.graph);
         }

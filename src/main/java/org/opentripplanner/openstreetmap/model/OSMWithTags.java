@@ -133,11 +133,12 @@ public class OSMWithTags {
      * {@link org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule#processRelations processRelations}
      */
     public I18NString getAssumedName() {
-        if (tags.containsKey("name"))
-            return TranslatedString.getI18NString(TemplateLibrary.generateI18N("{name}", this));
 
         if (tags.containsKey("otp:route_name"))
             return new NonLocalizedString(tags.get("otp:route_name"));
+
+        if (tags.containsKey("name"))
+            return TranslatedString.getI18NString(TemplateLibrary.generateI18N("{name}", this));
 
         if (this.creativeName != null)
             return this.creativeName;

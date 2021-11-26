@@ -1,10 +1,12 @@
 package org.opentripplanner.api.resource;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
@@ -54,6 +56,7 @@ import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
 import org.opentripplanner.routing.edgetype.RentABikeOnEdge;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.StreetWithElevationEdge;
 import org.opentripplanner.routing.edgetype.TimedTransferEdge;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -276,8 +279,8 @@ public abstract class GraphPathToTripPlanConverter {
         RoutingRequest request = states[0][0].getOptions();
         for (int i = 0; i < legs.size(); i++) {
             Leg currentLeg = legs.get(i);
+            State[] legStates = states[i];
             if (currentLeg.isTransitLeg()) {
-                State[] legStates = states[i];
                 Trip trip = legStates[legStates.length - 1].getBackTrip();
                 Leg nextLeg = null;
                 int nextIndex = i + 1;
@@ -288,9 +291,19 @@ public abstract class GraphPathToTripPlanConverter {
                         computeAccessibilityScore(trip, currentLeg, nextLeg, request);
             }
             else if (currentLeg.mode.equals("WALK") && request.wheelchairAccessible) {
-                // at the moment we don't compute the walking score at all and add a dummy value instead
-                // in the future we will take the slope into account
-                currentLeg.accessibilityScore = 0.5f;
+
+                boolean exceedsMaxSlope = Arrays.stream(legStates)
+                        .map(State::getBackEdge)
+                        .filter(Objects::nonNull)
+                        .filter(StreetEdge.class::isInstance)
+                        .map(StreetEdge.class::cast)
+                        .anyMatch(s -> s.getMaxSlope() > 7);
+
+                if(exceedsMaxSlope) {
+                    currentLeg.accessibilityScore = 0f;
+                } else {
+                    currentLeg.accessibilityScore = 1f;
+                }
             }
         }
     }

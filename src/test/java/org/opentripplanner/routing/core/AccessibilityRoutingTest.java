@@ -236,24 +236,28 @@ public class AccessibilityRoutingTest {
 
     @Test
     public void slopeAccessibilityScore() {
+        double length = 650.0;
+        Coordinate[] profile = new Coordinate[] {
+                new Coordinate(0, 0), // slope = 0.1
+                new Coordinate(length / 2, length / 20.0),
+                new Coordinate(length, 0) // slope = -0.1
+        };
+        PackedCoordinateSequence elev = new PackedCoordinateSequence.Double(profile);
+
         Envelope e = new Envelope(new Coordinate(-84.36795, 33.75665));
-
-        PackedCoordinateSequence coordinates53 = new PackedCoordinateSequence.Double(
-                new double[]{90, 90, 180, 90}, 2);
-
         e.expandBy(0.001);
         graph.streetIndex.getEdgesForEnvelope(e).stream()
                 .filter(StreetWithElevationEdge.class::isInstance)
                 .map(StreetWithElevationEdge.class::cast)
                 .filter(s -> s.getName().startsWith("Old Wheat St"))
-                .forEach(s -> s.setElevationProfile(coordinates53, false));
+                .forEach(s -> s.setElevationProfile(elev, false));
 
         GenericLocation start = new GenericLocation(33.75561, -84.36798);
         GenericLocation end = new GenericLocation(33.75573, -84.36701);
         Itinerary i = getTripPlan(start, end, r -> r.setMode(TraverseMode.WALK)).itinerary.get(0);
         Leg leg = i.legs.get(0);
         assertEquals("WALK", leg.mode);
-        assertThatPolylinesAreEqual("sz_mE`v}aO?@?L?|AAzAM?A?G@SA[?I?E?C?E?oDCG?E?A?U?[?I??_@iAA@cAM?@o@?O", leg.legGeometry.getPoints());
+        assertThatPolylinesAreEqual("q{_mE|b}aOS?SACU?AeCmDr@@dBD??", leg.legGeometry.getPoints());
 
     }
 

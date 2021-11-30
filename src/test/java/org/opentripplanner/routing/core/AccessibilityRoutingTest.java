@@ -238,15 +238,15 @@ public class AccessibilityRoutingTest {
     public void slopeAccessibilityScore() {
         Envelope e = new Envelope(new Coordinate(-84.36795, 33.75665));
 
+        PackedCoordinateSequence coordinates53 = new PackedCoordinateSequence.Double(
+                new double[]{90, 90, 180, 90}, 2);
+
         e.expandBy(0.001);
-        List<StreetWithElevationEdge> edges = graph.streetIndex.getEdgesForEnvelope(e).stream()
+        graph.streetIndex.getEdgesForEnvelope(e).stream()
                 .filter(StreetWithElevationEdge.class::isInstance)
                 .map(StreetWithElevationEdge.class::cast)
                 .filter(s -> s.getName().startsWith("Old Wheat St"))
-                .collect(Collectors.toList());
-
-        System.out.println(edges);
-        assertTrue(edges.size() > 1);
+                .forEach(s -> s.setElevationProfile(coordinates53, false));
 
         GenericLocation start = new GenericLocation(33.75561, -84.36798);
         GenericLocation end = new GenericLocation(33.75573, -84.36701);

@@ -10,7 +10,7 @@ import java.util.Optional;
  */
 public class GbfsResponse extends BaseGbfsResponse {
 
-    public Optional<String> version;
+    //public Optional<String> version;
     public Map<String, GbfsFeeds> data;
 
     public static class GbfsFeeds {

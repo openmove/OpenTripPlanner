@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 
 import org.opentripplanner.graph_builder.module.GraphBuilderModuleSummary;
+import org.opentripplanner.graph_builder.services.DefaultStreetEdgeFactory;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.graph_builder.module.DirectTransferGenerator;
 import org.opentripplanner.graph_builder.module.StreetLinkerModule;
@@ -113,6 +114,9 @@ public class ConstantsForTests {
             Graph g = new Graph();
             OpenStreetMapModule loader = new OpenStreetMapModule();
             loader.setDefaultWayPropertySetSource(new DefaultWayPropertySetSource());
+            DefaultStreetEdgeFactory streetEdgeFactory = new DefaultStreetEdgeFactory();
+            streetEdgeFactory.useElevationData = true;
+            loader.edgeFactory = streetEdgeFactory;
             AnyFileBasedOpenStreetMapProviderImpl provider = new AnyFileBasedOpenStreetMapProviderImpl();
 
             File file = new File(

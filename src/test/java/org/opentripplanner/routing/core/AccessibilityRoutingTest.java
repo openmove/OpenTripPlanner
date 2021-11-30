@@ -4,19 +4,28 @@ package org.opentripplanner.routing.core;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opentripplanner.PolylineAssert.assertThatPolylinesAreEqual;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.resource.GraphPathToTripPlanConverter;
+import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.GenericLocation;
+import org.opentripplanner.graph_builder.module.ned.ElevationModule;
+import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.StreetWithElevationEdge;
+import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.spt.GraphPath;
@@ -223,6 +232,29 @@ public class AccessibilityRoutingTest {
         assertEquals("WALK", leg.mode);
         assertEquals(0.5f, leg.accessibilityScore);
         assertThatPolylinesAreEqual("sz_mE`v}aO?@M?cA?}A?uFCM??L?R", leg.legGeometry.getPoints());
+    }
+
+    @Test
+    public void slopeAccessibilityScore() {
+        Envelope e = new Envelope(new Coordinate(-84.36795, 33.75665));
+
+        e.expandBy(0.001);
+        List<StreetWithElevationEdge> edges = graph.streetIndex.getEdgesForEnvelope(e).stream()
+                .filter(StreetWithElevationEdge.class::isInstance)
+                .map(StreetWithElevationEdge.class::cast)
+                .filter(s -> s.getName().startsWith("Old Wheat St"))
+                .collect(Collectors.toList());
+
+        System.out.println(edges);
+        assertTrue(edges.size() > 1);
+
+        GenericLocation start = new GenericLocation(33.75561, -84.36798);
+        GenericLocation end = new GenericLocation(33.75573, -84.36701);
+        Itinerary i = getTripPlan(start, end, r -> r.setMode(TraverseMode.WALK)).itinerary.get(0);
+        Leg leg = i.legs.get(0);
+        assertEquals("WALK", leg.mode);
+        assertThatPolylinesAreEqual("sz_mE`v}aO?@?L?|AAzAM?A?G@SA[?I?E?C?E?oDCG?E?A?U?[?I??_@iAA@cAM?@o@?O", leg.legGeometry.getPoints());
+
     }
 
     @Test

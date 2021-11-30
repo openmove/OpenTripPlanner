@@ -165,6 +165,19 @@ public class RoutingRequest implements Cloneable, Serializable {
      */
     public int noWheelchairAccessOnStreetReluctance = 15;
 
+    /**
+     * Maximum slope in percent that will lead to a 100% accessibility score.
+     *
+     * Anything above will be severely penalised but if it ends up being picked anyway (because
+     * there are no better options) it will lead to a lowered accessibility score for the walk leg.
+     */
+    public float wheelchairSoftMaxSlope = 7;
+
+    /**
+     * If the soft maximum slope is exceeded
+     */
+    public float wheelchairMaxSlopeExceededPenalty = 5;
+
     /** The maximum number of itineraries to return. */
     public int numItineraries = 3;
 

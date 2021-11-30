@@ -56,7 +56,6 @@ import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
 import org.opentripplanner.routing.edgetype.RentABikeOnEdge;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.StreetEdge;
-import org.opentripplanner.routing.edgetype.StreetWithElevationEdge;
 import org.opentripplanner.routing.edgetype.TimedTransferEdge;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -292,14 +291,14 @@ public abstract class GraphPathToTripPlanConverter {
             }
             else if (currentLeg.mode.equals("WALK") && request.wheelchairAccessible) {
 
-                boolean exceedsMaxSlope = Arrays.stream(legStates)
+                boolean maxSlopeExceeded = Arrays.stream(legStates)
                         .map(State::getBackEdge)
                         .filter(Objects::nonNull)
                         .filter(StreetEdge.class::isInstance)
                         .map(StreetEdge.class::cast)
-                        .anyMatch(s -> s.getMaxSlope() > 7);
+                        .anyMatch(s -> s.getMaxSlope() > request.maxSlope);
 
-                if(exceedsMaxSlope) {
+                if(maxSlopeExceeded) {
                     currentLeg.accessibilityScore = 0f;
                 } else {
                     currentLeg.accessibilityScore = 1f;

@@ -223,7 +223,7 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
     private double wheelchairSlopePenaltyMultiplier(RoutingRequest options) {
         if (options.wheelchairAccessible) {
             if (getMaxSlope() > options.maxSlope) {
-                double howMuchExceeded = getMaxSlope() - options.maxSlope;
+                double howMuchExceeded = (getMaxSlope() - options.maxSlope) * 100;
                 double reluctance = howMuchExceeded * options.wheelchairMaxSlopeExceededReluctance;
                 if(reluctance < 1) {
                     return 1;

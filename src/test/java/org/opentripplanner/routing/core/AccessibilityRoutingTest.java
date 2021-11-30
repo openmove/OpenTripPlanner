@@ -29,6 +29,8 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.routing.util.ElevationUtils;
+import org.opentripplanner.routing.util.SlopeCosts;
 import org.opentripplanner.standalone.Router;
 
 public class AccessibilityRoutingTest {
@@ -238,11 +240,14 @@ public class AccessibilityRoutingTest {
     public void slopeAccessibilityScore() {
         double length = 650.0;
         Coordinate[] profile = new Coordinate[] {
-                new Coordinate(0, 0), // slope = 0.1
-                new Coordinate(length / 2, length / 20.0),
-                new Coordinate(length, 0) // slope = -0.1
+                new Coordinate(0, 0), // slope = 0.04
+                new Coordinate(length / 2, length / 50.0),
+                new Coordinate(length, 0) // slope = -0.04
         };
         PackedCoordinateSequence elev = new PackedCoordinateSequence.Double(profile);
+
+        SlopeCosts costs = ElevationUtils.getSlopeCosts(elev, false);
+        assertEquals(0.04, costs.maxSlope);
 
         Envelope e = new Envelope(new Coordinate(-84.36795, 33.75665));
         e.expandBy(0.001);
@@ -254,11 +259,25 @@ public class AccessibilityRoutingTest {
 
         GenericLocation start = new GenericLocation(33.75561, -84.36798);
         GenericLocation end = new GenericLocation(33.75573, -84.36701);
-        Itinerary i = getTripPlan(start, end, r -> r.setMode(TraverseMode.WALK)).itinerary.get(0);
+        Itinerary i = getTripPlan(start, end, r -> {
+            r.setMode(TraverseMode.WALK);
+            r.maxSlope = 0.03;
+            r.wheelchairMaxSlopeExceededReluctance = 5;
+        }).itinerary.get(0);
+
         Leg leg = i.legs.get(0);
         assertEquals("WALK", leg.mode);
+        // avoids Old Wheat St as it's too steep
         assertThatPolylinesAreEqual("q{_mE|b}aOS?SACU?AeCmDr@@dBD??", leg.legGeometry.getPoints());
 
+        Itinerary i2 = getTripPlan(start, end, r -> {
+            r.setMode(TraverseMode.WALK);
+            r.maxSlope = 1;
+        }).itinerary.get(0);
+        Leg leg2 = i2.legs.get(0);
+        assertEquals("WALK", leg2.mode);
+        // we go along Old Wheat St as we set a really high maxSlope
+        assertThatPolylinesAreEqual("q{_mE|b}aOS?SAJU@I@}C??", leg2.legGeometry.getPoints());
     }
 
     @Test

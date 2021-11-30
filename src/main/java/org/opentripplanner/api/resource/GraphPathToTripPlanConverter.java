@@ -13,6 +13,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -291,17 +293,21 @@ public abstract class GraphPathToTripPlanConverter {
             }
             else if (currentLeg.mode.equals("WALK") && request.wheelchairAccessible) {
 
-                boolean maxSlopeExceeded = Arrays.stream(legStates)
+                Supplier<Stream<StreetEdge>> edges = () -> Arrays.stream(legStates)
                         .map(State::getBackEdge)
                         .filter(Objects::nonNull)
                         .filter(StreetEdge.class::isInstance)
-                        .map(StreetEdge.class::cast)
-                        .anyMatch(s -> s.getMaxSlope() > request.maxSlope);
+                        .map(StreetEdge.class::cast);
 
-                if(maxSlopeExceeded) {
+                boolean maxSlopeExceeded = edges.get().anyMatch(s -> s.getMaxSlope() > request.maxSlope);
+                boolean wheelchairInaccessibleEdge = edges.get().anyMatch(s -> !s.isWheelchairAccessible());
+
+                if(maxSlopeExceeded && wheelchairInaccessibleEdge) {
                     currentLeg.accessibilityScore = 0f;
-                } else {
+                } else if(!maxSlopeExceeded && !wheelchairInaccessibleEdge){
                     currentLeg.accessibilityScore = 1f;
+                } else {
+                    currentLeg.accessibilityScore = 0.5f;
                 }
             }
         }

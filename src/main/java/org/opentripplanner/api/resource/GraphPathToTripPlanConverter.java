@@ -311,17 +311,19 @@ public abstract class GraphPathToTripPlanConverter {
                 .filter(s -> s.getMaxSlope() > request.maxSlope)
                 .map(s -> s.getMaxSlope() - request.maxSlope)
                 .mapToDouble(Double::doubleValue)
+                .map(d -> d * 100)
                 .max()
                 .orElse(0);
 
-        // for every percent of being over the max slope we remove 0.1 from the accessibility
-        // score for this leg
-        double slopeMalus = 0.5f - (maxSlopeExceeded * 10);
+        // for every percent of being over the max slope we decrease the score quadratically
+        // so 2 percent over the max slope is 4 times as bad as being 1 percent over.
+        // this quickly degrades to 0: being 3 degrees over the max slope can at best give you
+        // a score 0.1, everything worse will give you a score of 0!
+        double slopeMalus = (maxSlopeExceeded * maxSlopeExceeded) / 10;
 
         score += (0.5 - slopeMalus);
 
-
-        boolean allEdgesAreAccessible = edges.get().anyMatch(StreetEdge::isWheelchairAccessible);
+        boolean allEdgesAreAccessible = edges.get().allMatch(StreetEdge::isWheelchairAccessible);
         if(allEdgesAreAccessible) {
            score += 0.5f;
         }

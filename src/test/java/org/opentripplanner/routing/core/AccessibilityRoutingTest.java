@@ -237,7 +237,7 @@ public class AccessibilityRoutingTest {
     }
 
     @Test
-    public void slopeAccessibilityScore() {
+    public void canConfigureSlopeAvoidanceAndScore() {
         double length = 650.0;
         Coordinate[] profile = new Coordinate[] {
                 new Coordinate(0, 0), // slope = 0.04
@@ -263,6 +263,8 @@ public class AccessibilityRoutingTest {
 
         GenericLocation start = new GenericLocation(33.75561, -84.36798);
         GenericLocation end = new GenericLocation(33.75573, -84.36701);
+
+        // avoids Old Wheat St as it's too steep
         Itinerary i = getTripPlan(start, end, r -> {
             r.setMode(TraverseMode.WALK);
             r.maxSlope = 0.03;
@@ -271,17 +273,30 @@ public class AccessibilityRoutingTest {
 
         Leg leg = i.legs.get(0);
         assertEquals("WALK", leg.mode);
-        // avoids Old Wheat St as it's too steep
         assertThatPolylinesAreEqual("q{_mE|b}aOS?SACU?AeCmDr@@dBD??", leg.legGeometry.getPoints());
+        assertEquals(1, leg.accessibilityScore);
 
+        // we go along Old Wheat St as we set a really high maxSlope
         Itinerary i2 = getTripPlan(start, end, r -> {
             r.setMode(TraverseMode.WALK);
             r.maxSlope = 1;
         }).itinerary.get(0);
         Leg leg2 = i2.legs.get(0);
-        assertEquals("WALK", leg2.mode);
-        // we go along Old Wheat St as we set a really high maxSlope
         assertThatPolylinesAreEqual("q{_mE|b}aOS?SAJU@I@}C??", leg2.legGeometry.getPoints());
+        assertEquals(1, leg2.accessibilityScore);
+        assertEquals("WALK", leg2.mode);
+
+        // we go along Old Wheat St as we set a really low reluctance
+        Itinerary i3 = getTripPlan(start, end, r -> {
+            r.setMode(TraverseMode.WALK);
+            r.maxSlope = 0.03;
+            r.wheelchairMaxSlopeExceededReluctance = 1;
+        }).itinerary.get(0);
+        Leg leg3 = i3.legs.get(0);
+        assertThatPolylinesAreEqual("q{_mE|b}aOS?SAJU@I@}C??", leg3.legGeometry.getPoints());
+        assertEquals(0.9f, leg3.accessibilityScore);
+        assertEquals("WALK", leg3.mode);
+
     }
 
     @Test

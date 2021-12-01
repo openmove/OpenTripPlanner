@@ -223,7 +223,7 @@ public class AccessibilityRoutingTest {
         assertEquals("WALK", leg.mode);
         assertThatPolylinesAreEqual("sz_mE`v}aO?@?L?|AAzAM?A?G@SA[?I?E?C?E?oDCG?E?A?U?[?I??_@iAA@cAM?@o@?O", leg.legGeometry.getPoints());
 
-        // if we reduce the reduce the reluctance for wheelchair-inaccessible streets we get a route that uses
+        // if we reduce the reluctance for wheelchair-inaccessible streets we get a route that uses
         // Hogue Street Northeast
         i = getTripPlan(start, end, r -> {
             r.setMode(TraverseMode.WALK);
@@ -247,8 +247,12 @@ public class AccessibilityRoutingTest {
         PackedCoordinateSequence elev = new PackedCoordinateSequence.Double(profile);
 
         SlopeCosts costs = ElevationUtils.getSlopeCosts(elev, false);
+
+        // we check that we really are going to set a 4 % slope
         assertEquals(0.04, costs.maxSlope);
 
+        // here we get Old Wheat St (https://www.openstreetmap.org/way/9270835)
+        // and set an artificial slope so we can test the feature
         Envelope e = new Envelope(new Coordinate(-84.36795, 33.75665));
         e.expandBy(0.001);
         graph.streetIndex.getEdgesForEnvelope(e).stream()

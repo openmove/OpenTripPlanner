@@ -292,25 +292,41 @@ public abstract class GraphPathToTripPlanConverter {
                         computeAccessibilityScore(trip, currentLeg, nextLeg, request);
             }
             else if (currentLeg.mode.equals("WALK") && request.wheelchairAccessible) {
-
-                Supplier<Stream<StreetEdge>> edges = () -> Arrays.stream(legStates)
-                        .map(State::getBackEdge)
-                        .filter(Objects::nonNull)
-                        .filter(StreetEdge.class::isInstance)
-                        .map(StreetEdge.class::cast);
-
-                boolean maxSlopeExceeded = edges.get().anyMatch(s -> s.getMaxSlope() > request.maxSlope);
-                boolean wheelchairInaccessibleEdge = edges.get().anyMatch(s -> !s.isWheelchairAccessible());
-
-                if(maxSlopeExceeded && wheelchairInaccessibleEdge) {
-                    currentLeg.accessibilityScore = 0f;
-                } else if(!maxSlopeExceeded && !wheelchairInaccessibleEdge){
-                    currentLeg.accessibilityScore = 1f;
-                } else {
-                    currentLeg.accessibilityScore = 0.5f;
-                }
+                currentLeg.accessibilityScore = computeWalkingAccessibilityScore(request, legStates);
             }
         }
+    }
+
+    private static float computeWalkingAccessibilityScore(RoutingRequest request, State[] legStates) {
+        Supplier<Stream<StreetEdge>> edges = () -> Arrays.stream(legStates)
+                .map(State::getBackEdge)
+                .filter(Objects::nonNull)
+                .filter(StreetEdge.class::isInstance)
+                .map(StreetEdge.class::cast);
+
+        float score = 0;
+
+        // calculate the worst percentage we go over the max slope
+        double maxSlopeExceeded = edges.get()
+                .filter(s -> s.getMaxSlope() > request.maxSlope)
+                .map(s -> s.getMaxSlope() - request.maxSlope)
+                .mapToDouble(Double::doubleValue)
+                .max()
+                .orElse(0);
+
+        // for every percent of being over the max slope we remove 0.1 from the accessibility
+        // score for this leg
+        double slopeMalus = 0.5f - (maxSlopeExceeded * 10);
+
+        score += (0.5 - slopeMalus);
+
+
+        boolean allEdgesAreAccessible = edges.get().anyMatch(StreetEdge::isWheelchairAccessible);
+        if(allEdgesAreAccessible) {
+           score += 0.5f;
+        }
+
+        return Math.max(score, 0);
     }
 
     private static Calendar makeCalendar(State state) {

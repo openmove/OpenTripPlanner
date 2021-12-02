@@ -1,5 +1,6 @@
 package org.opentripplanner.graph_builder.services.osm;
 
+import org.opentripplanner.graph_builder.module.osm.PiedmontCustomNamer;
 import org.opentripplanner.graph_builder.module.osm.PortlandCustomNamer;
 import org.opentripplanner.openstreetmap.model.OSMWithTags;
 import org.opentripplanner.routing.edgetype.StreetEdge;
@@ -48,6 +49,9 @@ public interface CustomNamer {
             switch (type) {
             case "portland":
                 retval = new PortlandCustomNamer();
+                break;
+            case "piedmont":
+                retval = new PiedmontCustomNamer();
                 break;
             default:
                 throw new IllegalArgumentException(String.format("Unknown osmNaming type: '%s'",

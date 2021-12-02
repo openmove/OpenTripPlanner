@@ -30,13 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.text.DecimalFormatSymbols;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import static org.opentripplanner.graph_builder.linking.StreetSplitter.NON_DESTRUCTIVE_SPLIT;
 
@@ -50,7 +46,8 @@ public class VehicleRentalUpdater extends PollingGraphUpdater {
 
     private static final String DECIMAL_PRECISION = "##.000000";
 
-    private static DecimalFormat format = new DecimalFormat(DECIMAL_PRECISION);
+    private static DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+    private static DecimalFormat format = new DecimalFormat(DECIMAL_PRECISION, symbols);
 
     private Graph graph;
 

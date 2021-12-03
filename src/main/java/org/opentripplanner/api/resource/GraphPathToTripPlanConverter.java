@@ -297,6 +297,17 @@ public abstract class GraphPathToTripPlanConverter {
         }
     }
 
+    /**
+     * Computes the accessibility score for a walking leg from 0 (bad) to 1 (good).
+     *
+     * It consists of two parts:
+     *
+     * - if all street edges on the leg are wheelchair-accessible 0.5 is added to the score
+     * - if there are no edges steeper than maxSlope another 0.5 is added
+     *      - if there are edges steeper then those 0.5 are decreased by (excess degrees^2)/10
+     *        this of course quickly degrades: everything that is more than 3 degrees
+     *        steeper will have score of 0.
+     */
     private static float computeWalkingAccessibilityScore(RoutingRequest request, State[] legStates) {
         Supplier<Stream<StreetEdge>> edges = () -> Arrays.stream(legStates)
                 .map(State::getBackEdge)
@@ -307,6 +318,8 @@ public abstract class GraphPathToTripPlanConverter {
         float score = 0;
 
         // calculate the worst percentage we go over the max slope
+        // max slope is always above 0
+        // see SlopeCosts.java: https://github.com/ibi-group/OpenTripPlanner/blob/08e034faace255e092211290220af3f60e553fa7/src/main/java/org/opentripplanner/routing/util/SlopeCosts.java#L7
         double maxSlopeExceeded = edges.get()
                 .filter(s -> s.getMaxSlope() > request.maxSlope)
                 .map(s -> s.getMaxSlope() - request.maxSlope)
@@ -324,7 +337,7 @@ public abstract class GraphPathToTripPlanConverter {
         score += (0.5 - slopeMalus);
 
         boolean allEdgesAreAccessible = edges.get().allMatch(StreetEdge::isWheelchairAccessible);
-        if(allEdgesAreAccessible) {
+        if (allEdgesAreAccessible) {
            score += 0.5f;
         }
 

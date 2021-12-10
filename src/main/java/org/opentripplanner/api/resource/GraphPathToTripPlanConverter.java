@@ -1,16 +1,20 @@
 package org.opentripplanner.api.resource;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -276,8 +280,8 @@ public abstract class GraphPathToTripPlanConverter {
         RoutingRequest request = states[0][0].getOptions();
         for (int i = 0; i < legs.size(); i++) {
             Leg currentLeg = legs.get(i);
+            State[] legStates = states[i];
             if (currentLeg.isTransitLeg()) {
-                State[] legStates = states[i];
                 Trip trip = legStates[legStates.length - 1].getBackTrip();
                 Leg nextLeg = null;
                 int nextIndex = i + 1;
@@ -288,11 +292,56 @@ public abstract class GraphPathToTripPlanConverter {
                         computeAccessibilityScore(trip, currentLeg, nextLeg, request);
             }
             else if (currentLeg.mode.equals("WALK") && request.wheelchairAccessible) {
-                // at the moment we don't compute the walking score at all and add a dummy value instead
-                // in the future we will take the slope into account
-                currentLeg.accessibilityScore = 0.5f;
+                currentLeg.accessibilityScore = computeWalkingAccessibilityScore(request, legStates);
             }
         }
+    }
+
+    /**
+     * Computes the accessibility score for a walking leg from 0 (bad) to 1 (good).
+     *
+     * It consists of two parts:
+     *
+     * - if all street edges on the leg are wheelchair-accessible 0.5 is added to the score
+     * - if there are no edges steeper than maxSlope another 0.5 is added
+     *      - if there are edges steeper then those 0.5 are decreased by (excess degrees^2)/10
+     *        this of course quickly degrades: everything that is more than 3 degrees
+     *        steeper will have score of 0.
+     */
+    private static float computeWalkingAccessibilityScore(RoutingRequest request, State[] legStates) {
+        Supplier<Stream<StreetEdge>> edges = () -> Arrays.stream(legStates)
+                .map(State::getBackEdge)
+                .filter(Objects::nonNull)
+                .filter(StreetEdge.class::isInstance)
+                .map(StreetEdge.class::cast);
+
+        float score = 0;
+
+        // calculate the worst percentage we go over the max slope
+        // max slope is always above 0
+        // see SlopeCosts.java: https://github.com/ibi-group/OpenTripPlanner/blob/08e034faace255e092211290220af3f60e553fa7/src/main/java/org/opentripplanner/routing/util/SlopeCosts.java#L7
+        double maxSlopeExceeded = edges.get()
+                .filter(s -> s.getMaxSlope() > request.maxSlope)
+                .map(s -> s.getMaxSlope() - request.maxSlope)
+                .mapToDouble(Double::doubleValue)
+                .map(d -> d * 100)
+                .max()
+                .orElse(0);
+
+        // for every percent of being over the max slope we decrease the score quadratically
+        // so 2 percent over the max slope is 4 times as bad as being 1 percent over.
+        // this quickly degrades to 0: being 3 degrees over the max slope can at best give you
+        // a score 0.1, everything worse will give you a score of 0!
+        double slopeMalus = (maxSlopeExceeded * maxSlopeExceeded) / 10;
+
+        score += (0.5 - slopeMalus);
+
+        boolean allEdgesAreAccessible = edges.get().allMatch(StreetEdge::isWheelchairAccessible);
+        if (allEdgesAreAccessible) {
+           score += 0.5f;
+        }
+
+        return Math.max(score, 0);
     }
 
     private static Calendar makeCalendar(State state) {

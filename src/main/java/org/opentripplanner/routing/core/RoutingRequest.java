@@ -165,6 +165,11 @@ public class RoutingRequest implements Cloneable, Serializable {
      */
     public int noWheelchairAccessOnStreetReluctance = 15;
 
+    /**
+     * Routing cost penalty for exceeding the maximum slope.
+     */
+    public float wheelchairMaxSlopeExceededReluctance = 5;
+
     /** The maximum number of itineraries to return. */
     public int numItineraries = 3;
 

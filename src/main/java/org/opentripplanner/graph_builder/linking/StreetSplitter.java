@@ -688,8 +688,8 @@ public class StreetSplitter {
                 return;
         }
 
-        new StreetTransitLink(tstop, v, tstop.hasWheelchairEntrance());
-        new StreetTransitLink(v, tstop, tstop.hasWheelchairEntrance());
+        new StreetTransitLink(tstop, v);
+        new StreetTransitLink(v, tstop);
     }
 
     /** Make link edges for bike rental */

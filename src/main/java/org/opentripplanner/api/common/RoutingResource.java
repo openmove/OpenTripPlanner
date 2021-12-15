@@ -85,6 +85,15 @@ public abstract class RoutingResource {
     @QueryParam("wheelchair")
     protected Boolean wheelchair;
 
+    /**
+     * The maximum slope that a wheelchair user can traverse before the street will be penalized
+     * and the accessibility score lowered.
+     *
+     * Values go from 0 to 1, so 5 percent is 0.05.
+     */
+    @QueryParam("maxSlope")
+    protected Double maxSlope;
+
     /** The maximum distance (in meters) the user is willing to walk. Defaults to unlimited. */
     @QueryParam("maxWalkDistance")
     protected Double maxWalkDistance;
@@ -594,6 +603,9 @@ public abstract class RoutingResource {
 
         if (wheelchair != null)
             request.setWheelchairAccessible(wheelchair);
+
+        if (maxSlope!= null)
+            request.maxSlope = maxSlope;
 
         if (numItineraries != null)
             request.setNumItineraries(numItineraries);

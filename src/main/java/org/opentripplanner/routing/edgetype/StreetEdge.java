@@ -48,7 +48,7 @@ import java.util.Set;
  * @author novalis
  * 
  */
-public class StreetEdge extends Edge implements Cloneable {
+public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
     private static Logger LOG = LoggerFactory.getLogger(StreetEdge.class);
 
     private static final long serialVersionUID = 2L;
@@ -215,25 +215,24 @@ public class StreetEdge extends Edge implements Cloneable {
     }
 
     /**
-     * Checks if edge is accessible for wheelchair if needed according to tags or if slope is too big.
+     * Computes how much the weight should be increased when the max slope for wheelchair users
+     * is exceeded.
      *
-     * Then it checks if street can be traversed according to street permissions and start/end barriers.
-     * This is done with intersection of street and barrier permissions in {@link #canTraverseIncludingBarrier(TraverseMode)}
-     *
-     * @param options
-     * @param mode
-     * @return
+     * 1 means that the cost should stay the same, 2 that the cost should double and so on.
      */
-    private boolean canTraverse(RoutingRequest options, TraverseMode mode) {
+    private double wheelchairSlopePenaltyMultiplier(RoutingRequest options) {
         if (options.wheelchairAccessible) {
-            if (!isWheelchairAccessible()) {
-                return false;
-            }
             if (getMaxSlope() > options.maxSlope) {
-                return false;
+                double howMuchExceeded = (getMaxSlope() - options.maxSlope) * 100;
+                double reluctance = howMuchExceeded * options.wheelchairMaxSlopeExceededReluctance;
+                if(reluctance < 1) {
+                    return 1;
+                } else {
+                    return reluctance;
+                }
             }
         }
-        return canTraverseIncludingBarrier(mode);
+        return 1;
     }
 
     /**
@@ -247,7 +246,6 @@ public class StreetEdge extends Edge implements Cloneable {
      *
      * If start/end isn't bollard it just checks the street permissions.
      *
-     * It is used in {@link #canTraverse(RoutingRequest, TraverseMode)}
      * @param mode
      * @return
      */
@@ -542,7 +540,7 @@ public class StreetEdge extends Edge implements Cloneable {
                     // occur here. NOTE: if the edge is only traversable by walking, then the backMode should be set to
                     // walk
                     editorWithVehicleRental.setBackMode(
-                        canTraverse(options, TraverseMode.MICROMOBILITY)
+                        canTraverseIncludingBarrier(TraverseMode.MICROMOBILITY)
                             ? TraverseMode.MICROMOBILITY
                             : TraverseMode.WALK
                     );
@@ -587,7 +585,7 @@ public class StreetEdge extends Edge implements Cloneable {
         walkingBike &= TraverseMode.WALK.equals(traverseMode);
 
         /* Check whether this street allows the current mode. If not and we are biking, attempt to walk the bike. */
-        if (!canTraverse(options, traverseMode)) {
+        if (!canTraverseIncludingBarrier(traverseMode)) {
             if (traverseMode == TraverseMode.BICYCLE || traverseMode == TraverseMode.MICROMOBILITY) {
                 return doTraverse(s0, options.bikeWalkingOptions, TraverseMode.WALK);
             }
@@ -602,6 +600,7 @@ public class StreetEdge extends Edge implements Cloneable {
         // TODO(flamholz): factor out this bike, wheelchair and walking specific logic to somewhere central.
         if (options.wheelchairAccessible) {
             weight = getSlopeSpeedEffectiveLength() / speed;
+            weight *= wheelchairSlopePenaltyMultiplier(options);
         } else if (traverseMode.equals(TraverseMode.BICYCLE)) {
             time = getSlopeSpeedEffectiveLength() / speed;
             switch (options.optimize) {
@@ -660,7 +659,21 @@ public class StreetEdge extends Edge implements Cloneable {
             }
         }
 
-        if (isStairs()) {
+        if (options.wheelchairAccessible && isStairs()) {
+            weight *= options.wheelchairStairsReluctance;
+            // Apply a time penalty, in addition to the cost penalty, so that accessible transfers
+            // work. When we compute transfers we only look at the time and hence increasing just
+            // the cost would not work:
+            // https://github.com/ibi-group/OpenTripPlanner/blob/f2b375364985b8dd83f791950d955e3ec5c9cb34/src/main/java/org/opentripplanner/routing/algorithm/EarliestArrivalSearch.java#L76
+            time *= options.wheelchairStairsReluctance;
+        } else if (options.wheelchairAccessible && !isWheelchairAccessible()) {
+            weight *= options.noWheelchairAccessOnStreetReluctance;
+            // Apply a time penalty, in addition to the cost penalty, so that accessible transfers
+            // work. When we compute transfers we only look at the time and hence increasing just
+            // the cost would not work:
+            // https://github.com/ibi-group/OpenTripPlanner/blob/f2b375364985b8dd83f791950d955e3ec5c9cb34/src/main/java/org/opentripplanner/routing/algorithm/EarliestArrivalSearch.java#L76
+            time *= options.noWheelchairAccessOnStreetReluctance;
+        } else if (isStairs()) {
             weight *= options.stairsReluctance;
         } else {
             // TODO: this is being applied even when biking or driving.

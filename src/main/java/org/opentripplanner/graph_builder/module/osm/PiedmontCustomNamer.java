@@ -12,12 +12,7 @@ import org.opentripplanner.util.NonLocalizedString;
 import java.util.HashSet;
 
 /**
- * These rules were developed in consultation with Grant Humphries, PJ Houser, and Mele Sax-Barnett.
- * They describe which sidewalks and paths in the Portland area should be specially designated in
- * the narrative.
- * 
- * @author novalis
- * 
+ * These rules were developed for MIP (Muoversi in Piemonte) project
  */
 public class PiedmontCustomNamer implements CustomNamer {
 

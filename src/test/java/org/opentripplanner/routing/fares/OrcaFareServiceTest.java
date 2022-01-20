@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.FareRuleSet;
 import org.opentripplanner.routing.impl.OrcaFareServiceImpl;
@@ -20,6 +21,7 @@ import java.util.Map;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.COMM_TRANS_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.KITSAP_TRANSIT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SKAGIT_TRANSIT_AGENCY_ID;
+import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SOUND_TRANSIT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.WASHINGTON_STATE_FERRIES_AGENCY_ID;
 
 public class OrcaFareServiceTest {
@@ -225,20 +227,49 @@ public class OrcaFareServiceTest {
         calculateFare(rides, Fare.FareType.electronicYouth, DEFAULT_RIDE_PRICE_IN_CENTS);
     }
 
+    @Test
+    public void calculateFareForLightRailRide() {
+        List<Ride> rides = Collections.singletonList(
+            getRide(SOUND_TRANSIT_AGENCY_ID, "1-Line", 0, "Roosevelt Station", "Int'l Dist/Chinatown")
+        );
+        calculateFare(rides, Fare.FareType.regular, 250f);
+        calculateFare(rides, Fare.FareType.senior, 100f);
+        calculateFare(rides, Fare.FareType.youth, 150f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 150f);
+        calculateFare(rides, Fare.FareType.electronicRegular, 250f);
+        calculateFare(rides, Fare.FareType.electronicSenior, 100f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 150f);
+        // Ensure that it works in reverse
+        rides = Collections.singletonList(
+            getRide(SOUND_TRANSIT_AGENCY_ID, "1-Line", 0, "Int'l Dist/Chinatown", "Roosevelt Station")
+        );
+        calculateFare(rides, Fare.FareType.regular, 250f);
+        calculateFare(rides, Fare.FareType.senior, 100f);
+        calculateFare(rides, Fare.FareType.youth, 150f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 150f);
+        calculateFare(rides, Fare.FareType.electronicRegular, 250f);
+        calculateFare(rides, Fare.FareType.electronicSenior, 100f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 150f);
+    }
+
     private static Ride getRide(String agencyId, long startTimeMins) {
-        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", "");
+        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", "", "", "");
     }
 
     private static Ride getRide(String agencyId, long startTimeMins, String routeLongName) {
-        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", routeLongName);
+        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", routeLongName, "", "");
     }
 
     private static Ride getRide(String agencyId, long startTimeMins, int rideType, String routeId, String tripId) {
-        return createRide(agencyId, "-1", rideType, null, startTimeMins, routeId, tripId, "");
+        return createRide(agencyId, "-1", rideType, null, startTimeMins, routeId, tripId, "", "", "");
     }
 
     private static Ride getRide(String agencyId, String shortName, long startTimeMins) {
-        return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "");
+        return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "", "", "");
+    }
+
+    private static Ride getRide(String agencyId, String shortName, long startTimeMins, String firstStopName, String lastStopName) {
+        return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "", firstStopName, lastStopName);
     }
 
     /**
@@ -252,12 +283,23 @@ public class OrcaFareServiceTest {
                                 long startTimeMins,
                                 String routeId,
                                 String tripId,
-                                String routeLongName
+                                String routeLongName,
+                                String firstStopName,
+                                String lastStopName
     ) {
         Ride ride = new Ride();
         Agency agency = new Agency();
         agency.setId(agencyId);
         Route route = new Route();
+
+        // Set up stops
+        Stop firstStop = new Stop();
+        firstStop.setName(firstStopName);
+        Stop lastStop = new Stop();
+        lastStop.setName(lastStopName);
+        ride.firstStop = firstStop;
+        ride.lastStop = lastStop;
+
         FeedScopedId routeFeedScopeId = new FeedScopedId();
         routeFeedScopeId.setId(routeId);
         route.setId(routeFeedScopeId);

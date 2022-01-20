@@ -158,11 +158,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             "Southworth-VashonIsland",
             ImmutableMap.of(Fare.FareType.regular, 5.95f, Fare.FareType.youth, 2.95f, Fare.FareType.senior, 2.95f)
         );
-        // Section for SoundTransit Link Fares
-        soundTransitLinkFares.put(
-            "int'l dist/chinatown-roosevelt",
-            ImmutableMap.of(Fare.FareType.electronicRegular, 2.50f)
-        );
+
+        SoundTransitLinkFares.populateLinkFares(soundTransitLinkFares);
     }
 
     public OrcaFareServiceImpl(Collection<FareRuleSet> regularFareRules) {
@@ -251,8 +248,14 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
      *  Calculate the correct Link fare from a "ride" including start and end stations.
      */
     private float getSoundTransitLinkFare(Ride ride, Fare.FareType fareType, float defaultFare) {
-        String start = ride.firstStop.getName().replaceAll(" Station", "").toLowerCase();
-        String end = ride.lastStop.getName().replaceAll(" Station", "").toLowerCase();
+        String start = ride.firstStop.getName()
+            .replaceAll(" Station", "")
+            .replaceAll(" ", "")
+            .toLowerCase();
+        String end = ride.lastStop.getName()
+            .replaceAll(" Station", "")
+            .replaceAll(" ", "")
+            .toLowerCase();
         // Fares are the same no matter the order of the stations
         // Therefore, the fares DB only contains each station pair once
         // If no match is found, try the reversed order
@@ -276,6 +279,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case KITSAP_TRANSIT: return 1.00f;
             case KC_METRO:
             case SOUND_TRANSIT:
+            case SOUND_TRANSIT_LINK:
             case EVERETT_TRANSIT:
             case SEATTLE_STREET_CAR:
                 return 1.50f;
@@ -306,6 +310,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case KC_WATER_TAXI_WEST_SEATTLE: return 2.50f;
             case KC_METRO:
             case SOUND_TRANSIT:
+            case SOUND_TRANSIT_LINK:
                 return 1.00f;
             case KITSAP_TRANSIT_FAST_FERRY_WESTBOUND:
                 return fareType.equals(Fare.FareType.electronicSenior) ? 5.00f : 10.00f;
@@ -334,6 +339,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case KC_WATER_TAXI_WEST_SEATTLE: return 3.75f;
             case KC_METRO:
             case SOUND_TRANSIT:
+            case SOUND_TRANSIT_LINK:
             case EVERETT_TRANSIT:
             case SEATTLE_STREET_CAR: return 1.50f;
             case KITSAP_TRANSIT_FAST_FERRY_WESTBOUND:
@@ -371,6 +377,14 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             return DEFAULT_TEST_RIDE_PRICE;
         }
         return calculateCost(fareType, Lists.newArrayList(ride), fareRules);
+    }
+
+    public boolean populateFare(Fare fare,
+                                Currency currency,
+                                Fare.FareType fareType,
+                                List<Ride> rides
+    ) {
+        return populateFare(fare, currency, fareType, rides, this.fareRulesPerType.get(fareType));
     }
 
     /**

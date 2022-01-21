@@ -1,6 +1,5 @@
 package org.opentripplanner.routing.impl;
 
-import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.opentripplanner.model.Route;
@@ -59,6 +58,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     private static final Map<String, Function<Route, RideType>> classificationStrategy = new HashMap<>();
     private static final Map<String, Map<Fare.FareType, Float>> washingtonStateFerriesFares = new HashMap<>();
     private static final Map<String, Map<Fare.FareType, Float>> soundTransitLinkFares = new HashMap<>();
+    private static final Map<String, Map<Fare.FareType, Float>> soundTransitSounderFares = new HashMap<>();
 
     // If set to true, the test ride price is used instead of the actual agency cash fare.
     public boolean IS_TEST;
@@ -160,6 +160,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         );
 
         SoundTransitLinkFares.populateLinkFares(soundTransitLinkFares);
+        SoundTransitSounderFares.populateSounderFares(soundTransitSounderFares);
     }
 
     public OrcaFareServiceImpl(Collection<FareRuleSet> regularFareRules) {
@@ -197,6 +198,12 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             routeData.getShortName().equalsIgnoreCase("1-Line")
         ) {
             rideType = RideType.SOUND_TRANSIT_LINK;
+        } else if (rideType == RideType.SOUND_TRANSIT && (
+                routeData.getShortName().equalsIgnoreCase("S Line") ||
+                routeData.getShortName().equalsIgnoreCase("N Line")
+            )
+        ) {
+            rideType = RideType.SOUND_TRANSIT_SOUNDER;
         }
         return rideType;
     }
@@ -238,8 +245,9 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case WASHINGTON_STATE_FERRIES:
                 return getWashingtonStateFerriesFare(route.getLongName(), fareType, defaultFare);
             case SOUND_TRANSIT_LINK:
-                return getSoundTransitLinkFare(ride, fareType, defaultFare);
-            // TODO: Add case for Sounder
+                return getSoundTransitFare(ride, fareType, defaultFare, RideType.SOUND_TRANSIT_LINK);
+            case SOUND_TRANSIT_SOUNDER:
+                return getSoundTransitFare(ride, fareType, defaultFare, RideType.SOUND_TRANSIT_SOUNDER);
             default: return defaultFare;
         }
     }
@@ -247,22 +255,27 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     /**
      *  Calculate the correct Link fare from a "ride" including start and end stations.
      */
-    private float getSoundTransitLinkFare(Ride ride, Fare.FareType fareType, float defaultFare) {
+    private float getSoundTransitFare(Ride ride, Fare.FareType fareType, float defaultFare, RideType rideType) {
         String start = ride.firstStop.getName()
-            .replaceAll(" Station", "")
             .replaceAll(" ", "")
+            .replaceAll("(Northbound)", "")
+            .replaceAll("(Southbound)", "")
+            .replaceAll("Station", "")
             .toLowerCase();
         String end = ride.lastStop.getName()
-            .replaceAll(" Station", "")
             .replaceAll(" ", "")
+            .replaceAll("(Northbound)", "")
+            .replaceAll("(Southbound)", "")
+            .replaceAll("Station", "")
             .toLowerCase();
         // Fares are the same no matter the order of the stations
         // Therefore, the fares DB only contains each station pair once
         // If no match is found, try the reversed order
         String lookupKey = String.format("%s-%s", start, end);
         String reverseLookupKey = String.format("%s-%s", end, start);
-        Map<Fare.FareType, Float> fare = Optional.ofNullable(soundTransitLinkFares.get(lookupKey))
-            .orElseGet(() -> soundTransitLinkFares.get(reverseLookupKey));
+        Map<String, Map<Fare.FareType, Float>> fareModel = (rideType == RideType.SOUND_TRANSIT_LINK) ? soundTransitLinkFares : soundTransitSounderFares;
+        Map<Fare.FareType, Float> fare = Optional.ofNullable(fareModel.get(lookupKey))
+            .orElseGet(() -> fareModel.get(reverseLookupKey));
 
         return (fare != null) ? fare.get(fareType) : defaultFare;
     }

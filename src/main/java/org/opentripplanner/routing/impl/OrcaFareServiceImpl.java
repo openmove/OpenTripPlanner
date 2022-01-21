@@ -471,7 +471,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
      * A free transfer can be applied if using Orca and the transit agency permits free transfers.
      */
     private boolean hasFreeTransfers(Fare.FareType fareType, RideType rideType) {
-        return permitsFreeTransfers(rideType) && usesOrca(fareType);
+        // King County Metro allows transfers on cash fare
+        return (permitsFreeTransfers(rideType) && usesOrca(fareType)) || (rideType == RideType.KC_METRO && !usesOrca(fareType));
     }
 
     /**

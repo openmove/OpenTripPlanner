@@ -379,14 +379,6 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         return calculateCost(fareType, Lists.newArrayList(ride), fareRules);
     }
 
-    public boolean populateFare(Fare fare,
-                                Currency currency,
-                                Fare.FareType fareType,
-                                List<Ride> rides
-    ) {
-        return populateFare(fare, currency, fareType, rides, this.fareRulesPerType.get(fareType));
-    }
-
     /**
      * Calculate the cost of a journey. Where free transfers are not permitted the cash price is used. If free transfers
      * are applicable, the most expensive discount fare across all legs is added to the final cumulative price.

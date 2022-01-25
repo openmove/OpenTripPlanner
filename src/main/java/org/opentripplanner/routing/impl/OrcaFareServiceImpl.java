@@ -50,6 +50,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         SKAGIT_TRANSIT,
         SEATTLE_STREET_CAR,
         SOUND_TRANSIT,
+        SOUND_TRANSIT_BUS,
         SOUND_TRANSIT_SOUNDER,
         SOUND_TRANSIT_LINK,
         WASHINGTON_STATE_FERRIES
@@ -70,6 +71,9 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             routeData -> {
                 try {
                     int routeId = Integer.parseInt(routeData.getShortName());
+                    if (routeId >= 500 && routeId < 600) {
+                        return RideType.SOUND_TRANSIT_BUS; // CommTrans operates some ST routes.
+                    }
                     if (routeId >= 400 && routeId <= 899) {
                         return RideType.COMM_TRANS_COMMUTER_EXPRESS;
                     }
@@ -83,6 +87,12 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         classificationStrategy.put(
             KC_METRO_AGENCY_ID,
             routeData -> {
+                try {
+                    int routeId = Integer.parseInt(routeData.getShortName());
+                    if(routeId >= 500 && routeId < 600) {
+                        return RideType.SOUND_TRANSIT_BUS;
+                    }
+                } catch(NumberFormatException ignored) {}
                 if (routeData.getType() == ROUTE_TYPE_FERRY &&
                         routeData.getLongName().contains("Water Taxi: West Seattle")) {
                     return RideType.KC_WATER_TAXI_WEST_SEATTLE;
@@ -95,7 +105,21 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         );
         classificationStrategy.put(SOUND_TRANSIT_AGENCY_ID, routeData -> RideType.SOUND_TRANSIT);
         classificationStrategy.put(EVERETT_TRANSIT_AGENCY_ID, routeData -> RideType.EVERETT_TRANSIT);
-        classificationStrategy.put(PIERCE_COUNTY_TRANSIT_AGENCY_ID, routeData -> RideType.PIERCE_COUNTY_TRANSIT);
+        classificationStrategy.put(
+            PIERCE_COUNTY_TRANSIT_AGENCY_ID,
+            routeData -> {
+                try {
+                    int routeId = Integer.parseInt(routeData.getShortName());
+                    if (routeId >= 520 && routeId < 600) {
+                        return RideType.SOUND_TRANSIT_BUS; // PierceTransit operates some ST routes. But 500 and 501 are PT routes.
+                    }
+                    return RideType.PIERCE_COUNTY_TRANSIT;
+                } catch (NumberFormatException e) {
+                    LOG.warn("Unable to determine comm trans route id from {}.", routeData.getShortName(), e);
+                    return RideType.PIERCE_COUNTY_TRANSIT;
+                }
+            }
+        );
         classificationStrategy.put(SKAGIT_TRANSIT_AGENCY_ID, routeData -> RideType.SKAGIT_TRANSIT);
         classificationStrategy.put(SEATTLE_STREET_CAR_AGENCY_ID, routeData -> RideType.SEATTLE_STREET_CAR);
         classificationStrategy.put(WASHINGTON_STATE_FERRIES_AGENCY_ID, routeData -> RideType.WASHINGTON_STATE_FERRIES);
@@ -204,6 +228,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             )
         ) {
             rideType = RideType.SOUND_TRANSIT_SOUNDER;
+        } else if (rideType == RideType.SOUND_TRANSIT) { //if it isn't Link or Sounder, then...
+            rideType = RideType.SOUND_TRANSIT_BUS;
         }
         return rideType;
     }
@@ -245,9 +271,10 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case WASHINGTON_STATE_FERRIES:
                 return getWashingtonStateFerriesFare(route.getLongName(), fareType, defaultFare);
             case SOUND_TRANSIT_LINK:
-                return getSoundTransitFare(ride, fareType, defaultFare, RideType.SOUND_TRANSIT_LINK);
             case SOUND_TRANSIT_SOUNDER:
-                return getSoundTransitFare(ride, fareType, defaultFare, RideType.SOUND_TRANSIT_SOUNDER);
+                return getSoundTransitFare(ride, fareType, defaultFare, rideType);
+            case SOUND_TRANSIT_BUS:
+                return 3.25f;
             default: return defaultFare;
         }
     }
@@ -292,7 +319,9 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case KITSAP_TRANSIT: return 1.00f;
             case KC_METRO:
             case SOUND_TRANSIT:
+            case SOUND_TRANSIT_BUS:
             case SOUND_TRANSIT_LINK:
+            case SOUND_TRANSIT_SOUNDER:
             case EVERETT_TRANSIT:
             case SEATTLE_STREET_CAR:
                 return 1.50f;
@@ -322,8 +351,11 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case KC_WATER_TAXI_VASHON_ISLAND: return 3.00f;
             case KC_WATER_TAXI_WEST_SEATTLE: return 2.50f;
             case KC_METRO:
+
             case SOUND_TRANSIT:
+            case SOUND_TRANSIT_BUS:
             case SOUND_TRANSIT_LINK:
+            case SOUND_TRANSIT_SOUNDER:
                 return 1.00f;
             case KITSAP_TRANSIT_FAST_FERRY_WESTBOUND:
                 return fareType.equals(Fare.FareType.electronicSenior) ? 5.00f : 10.00f;
@@ -352,7 +384,9 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case KC_WATER_TAXI_WEST_SEATTLE: return 3.75f;
             case KC_METRO:
             case SOUND_TRANSIT:
+            case SOUND_TRANSIT_BUS:
             case SOUND_TRANSIT_LINK:
+            case SOUND_TRANSIT_SOUNDER:
             case EVERETT_TRANSIT:
             case SEATTLE_STREET_CAR: return 1.50f;
             case KITSAP_TRANSIT_FAST_FERRY_WESTBOUND:

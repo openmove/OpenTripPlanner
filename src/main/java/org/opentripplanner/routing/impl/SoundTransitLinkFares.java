@@ -5,6 +5,12 @@ import org.opentripplanner.routing.core.Fare;
 
 import java.util.Map;
 
+/**
+ * Class used to store all the fares for Link light rail.
+ * Data comes from a Python script that parses SoundTransit's website.
+ * A matrix or CSV parser would be a better approach to storing this data,
+ * but a refactor is unneeded given the proximity of GTFS Fares V2 which will render this redundant.
+ */
 public class SoundTransitLinkFares {
     public static void populateLinkFares(Map<String, Map<Fare.FareType, Float>> linkLightRailFares) {
 

@@ -92,7 +92,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                     if(routeId >= 500 && routeId < 600) {
                         return RideType.SOUND_TRANSIT_BUS;
                     }
-                } catch(NumberFormatException ignored) {}
+                } catch(NumberFormatException ignored) {} // Lettered routes exist, are not an error.
                 if (routeData.getType() == ROUTE_TYPE_FERRY &&
                         routeData.getLongName().contains("Water Taxi: West Seattle")) {
                     return RideType.KC_WATER_TAXI_WEST_SEATTLE;
@@ -219,12 +219,21 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                 rideType = RideType.KITSAP_TRANSIT_FAST_FERRY_WESTBOUND;
             }
         } else if (rideType == RideType.SOUND_TRANSIT &&
-            routeData.getShortName().equalsIgnoreCase("1-Line")
+            routeData.getShortName()
+                .replaceAll("-", "")
+                .replaceAll(" ", "")
+                .equalsIgnoreCase("1Line")
         ) {
             rideType = RideType.SOUND_TRANSIT_LINK;
         } else if (rideType == RideType.SOUND_TRANSIT && (
-                routeData.getShortName().equalsIgnoreCase("S Line") ||
-                routeData.getShortName().equalsIgnoreCase("N Line")
+                routeData.getShortName()
+                    .replaceAll("-", "")
+                    .replaceAll(" ", "")
+                    .equalsIgnoreCase("SLine") ||
+                routeData.getShortName()
+                    .replaceAll("-", "")
+                    .replaceAll(" ", "")
+                    .equalsIgnoreCase("NLine")
             )
         ) {
             rideType = RideType.SOUND_TRANSIT_SOUNDER;

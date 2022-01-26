@@ -19,7 +19,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.COMM_TRANS_AGENCY_ID;
+import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.DEFAULT_TEST_RIDE_PRICE;
+import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.KC_METRO_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.KITSAP_TRANSIT_AGENCY_ID;
+import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.PIERCE_COUNTY_TRANSIT_AGENCY_ID;
+import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SEATTLE_STREET_CAR_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SKAGIT_TRANSIT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SOUND_TRANSIT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.WASHINGTON_STATE_FERRIES_AGENCY_ID;
@@ -227,6 +231,9 @@ public class OrcaFareServiceTest {
         calculateFare(rides, Fare.FareType.electronicYouth, DEFAULT_RIDE_PRICE_IN_CENTS);
     }
 
+    /**
+     * Single trip with Link Light Rail to  ensure distance fare is calculated correctly.
+     */
     @Test
     public void calculateFareForLightRailRide() {
         List<Ride> rides = Collections.singletonList(
@@ -252,24 +259,135 @@ public class OrcaFareServiceTest {
         calculateFare(rides, Fare.FareType.electronicYouth, 150f);
     }
 
+    @Test
+    public void calculateFareForSounderRide() {
+        List<Ride> rides = Collections.singletonList(
+            getRide(SOUND_TRANSIT_AGENCY_ID, "S Line", 0, "King Street Station", "Auburn Station")
+        );
+        calculateFare(rides, Fare.FareType.regular, 425f);
+        calculateFare(rides, Fare.FareType.senior, 100f);
+        calculateFare(rides, Fare.FareType.youth, 150f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 150f);
+        calculateFare(rides, Fare.FareType.electronicRegular, 425f);
+        calculateFare(rides, Fare.FareType.electronicSenior, 100f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 150f);
+        // Ensure that it works in reverse
+        rides = Collections.singletonList(
+            getRide(SOUND_TRANSIT_AGENCY_ID, "N Line", 0, "King Street Station", "Everett Station")
+        );
+        calculateFare(rides, Fare.FareType.regular, 500f);
+        calculateFare(rides, Fare.FareType.senior, 100f);
+        calculateFare(rides, Fare.FareType.youth, 150f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 150f);
+        calculateFare(rides, Fare.FareType.electronicRegular, 500f);
+        calculateFare(rides, Fare.FareType.electronicSenior, 100f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 150f);
+    }
+
+    /**
+     * Create a few Sound Transit trips but under the contracted agency IDs.
+     * SoundTransit contracts their bus service, so their routes show under the contracted agency's IDs in the GTFS feed.
+     * Make sure that we get ST's bus fare and not the contracted agency's fare.
+     */
+    @Test
+    public void calculateSoundTransitBusFares() {
+        List<Ride> rides = Arrays.asList(
+            getRide(COMM_TRANS_AGENCY_ID, "512", 0),
+            getRide(PIERCE_COUNTY_TRANSIT_AGENCY_ID, "594", 120),
+            getRide(KC_METRO_AGENCY_ID, "550", 240)
+        );
+        calculateFare(rides, Fare.FareType.regular, 975f);
+        calculateFare(rides, Fare.FareType.senior, 300f);
+        calculateFare(rides, Fare.FareType.youth, 450f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 450f);
+        calculateFare(rides, Fare.FareType.electronicRegular, 975f);
+        calculateFare(rides, Fare.FareType.electronicSenior, 300f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 450f);
+
+        // Also make sure that PT's 500 and 501 get regular Pierce fare and not ST's fare
+        rides = Arrays.asList(
+            getRide(PIERCE_COUNTY_TRANSIT_AGENCY_ID, "500", 0),
+            getRide(PIERCE_COUNTY_TRANSIT_AGENCY_ID, "501", 60)
+        );
+        calculateFare(rides, Fare.FareType.regular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
+        calculateFare(rides, Fare.FareType.senior, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
+        calculateFare(rides, Fare.FareType.youth, 200f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, DEFAULT_RIDE_PRICE_IN_CENTS);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
+        calculateFare(rides, Fare.FareType.electronicSenior, 100f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 100f);
+    }
+
+    @Test
+    public void calculateCashFreeTransferKCMetro() {
+        List<Ride> rides = Arrays.asList(
+            getRide(KC_METRO_AGENCY_ID, 0),
+            getRide(KC_METRO_AGENCY_ID, 20),
+            getRide(COMM_TRANS_AGENCY_ID, 45),
+            getRide(KC_METRO_AGENCY_ID, 60),
+            getRide(KC_METRO_AGENCY_ID, 130)
+        );
+        calculateFare(rides, Fare.FareType.regular, DEFAULT_RIDE_PRICE_IN_CENTS * 3);
+        calculateFare(rides, Fare.FareType.senior, 325f);
+        calculateFare(rides, Fare.FareType.youth, 475f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 300f);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
+        calculateFare(rides, Fare.FareType.electronicSenior, 125f); // Transfer extended by CT ride
+        calculateFare(rides, Fare.FareType.electronicYouth, 175f); // Transfer extended by CT ride
+    }
+
+    @Test
+    public void calculateTransferExtension() {
+        List<Ride> rides = Arrays.asList(
+            getRide(SOUND_TRANSIT_AGENCY_ID, "1-Line", 0, "Int'l Dist/Chinatown", "Roosevelt Station"),// 2.50
+            getRide(SOUND_TRANSIT_AGENCY_ID, "1-Line", 60, "Roosevelt Station", "Angle Lake Station"), // 3.25, should extend transfer
+            getRide(SOUND_TRANSIT_AGENCY_ID, "1-Line", 140, "Int'l Dist/Chinatown", "Angle Lake Station") // 3.00, should be free under extended transfer
+        );
+        calculateFare(rides, Fare.FareType.regular, 250f+325f+300f);
+        calculateFare(rides, Fare.FareType.senior, 100f*3);
+        calculateFare(rides, Fare.FareType.youth, 150f*3);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 150f*2);
+        calculateFare(rides, Fare.FareType.electronicRegular, 325f); // transfer extended on second leg
+        calculateFare(rides, Fare.FareType.electronicSenior, 100f*2);
+        calculateFare(rides, Fare.FareType.electronicYouth, 150f*2);
+
+    }
+
+
     private static Ride getRide(String agencyId, long startTimeMins) {
-        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", "", "", "");
+        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", "");
     }
 
     private static Ride getRide(String agencyId, long startTimeMins, String routeLongName) {
-        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", routeLongName, "", "");
+        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", routeLongName);
     }
 
     private static Ride getRide(String agencyId, long startTimeMins, int rideType, String routeId, String tripId) {
-        return createRide(agencyId, "-1", rideType, null, startTimeMins, routeId, tripId, "", "", "");
+        return createRide(agencyId, "-1", rideType, null, startTimeMins, routeId, tripId, "");
     }
 
     private static Ride getRide(String agencyId, String shortName, long startTimeMins) {
-        return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "", "", "");
+        return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "");
     }
 
     private static Ride getRide(String agencyId, String shortName, long startTimeMins, String firstStopName, String lastStopName) {
         return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "", firstStopName, lastStopName);
+    }
+
+    /**
+     * Create a {@link Ride} containing route data that will be used by {@link OrcaFareServiceImpl} to determine the
+     * correct ride type.
+     */
+    private static Ride createRide(String agencyId,
+                                   String shortName,
+                                   int rideType,
+                                   String desc,
+                                   long startTimeMins,
+                                   String routeId,
+                                   String tripId,
+                                   String routeLongName
+    ) {
+        return createRide(agencyId, shortName, rideType, desc, startTimeMins, routeId, tripId, routeLongName, "", "");
     }
 
     /**

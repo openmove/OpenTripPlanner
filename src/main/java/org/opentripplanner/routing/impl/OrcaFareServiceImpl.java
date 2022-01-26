@@ -492,7 +492,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             }
         }
         cost += orcaFareDiscount;
-        if (cost < Float.POSITIVE_INFINITY) {
+        if (cost < Float.POSITIVE_INFINITY && cost > 0) {
             fare.addFare(fareType, getMoney(currency, cost));
         }
         return cost > 0 && cost < Float.POSITIVE_INFINITY;

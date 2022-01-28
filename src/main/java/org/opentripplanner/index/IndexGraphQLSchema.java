@@ -1997,9 +1997,15 @@ public class IndexGraphQLSchema {
                         .type(Scalars.GraphQLLong)
                         .defaultValue(Long.MAX_VALUE)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("blockId")
+                        .type(Scalars.GraphQLString)
+                        .build())
                 .dataFetcher(environment -> new ArrayList<>(
                         index.tripForId.values()
                                 .stream()
+                                .filter(trip -> environment.getArgument("blockId") == null ||
+                                        (trip.getBlockId()!= null && trip.getBlockId().equals(environment.getArgument("blockId"))))
                                 .skip(environment.getArgument("skip"))
                                 .limit(environment.getArgument("limit"))
                                 .collect(Collectors.toList())

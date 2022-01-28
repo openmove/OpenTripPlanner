@@ -19,11 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.COMM_TRANS_AGENCY_ID;
-import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.DEFAULT_TEST_RIDE_PRICE;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.KC_METRO_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.KITSAP_TRANSIT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.PIERCE_COUNTY_TRANSIT_AGENCY_ID;
-import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SEATTLE_STREET_CAR_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SKAGIT_TRANSIT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.SOUND_TRANSIT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.WASHINGTON_STATE_FERRIES_AGENCY_ID;

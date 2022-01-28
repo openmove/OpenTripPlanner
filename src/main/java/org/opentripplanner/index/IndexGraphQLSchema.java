@@ -48,6 +48,7 @@ import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import java.text.ParseException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -878,6 +879,22 @@ public class IndexGraphQLSchema {
                 .type(Scalars.GraphQLInt)
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("vehicleMode")
+                    .description("Transport mode (e.g. `BUS`) used by routes which pass through this stop or `null` if mode cannot be determined, e.g. in case no routes pass through the stop.  \n Note that also other types of vehicles may use the stop, e.g. tram replacement buses might use stops which have `TRAM` as their mode.")
+                    .type(modeEnum)
+                    .dataFetcher(environment -> {
+                        return index.patternsForStop.get((Stop)environment.getSource())
+                                .stream()
+                                .map(pattern -> pattern.mode)
+                                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                .entrySet()
+                                .stream()
+                                .max(Comparator.comparing(Map.Entry::getValue))
+                                .map(e -> e.getKey())
+                                .orElse(null);
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("platformCode")
                 .type(Scalars.GraphQLString)
                 .build())
@@ -1082,6 +1099,11 @@ public class IndexGraphQLSchema {
               	.type(Scalars.GraphQLString)
               	.dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
               	.build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("stopSequence")
+                .type(Scalars.GraphQLInt)
+                .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).stopSequence)
+                .build())
             .build();
 
         tripType = GraphQLObjectType.newObject()

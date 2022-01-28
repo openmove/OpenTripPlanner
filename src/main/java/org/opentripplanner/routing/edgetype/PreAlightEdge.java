@@ -44,6 +44,12 @@ public class PreAlightEdge extends FreeEdge implements StationEdge {
                 return null;
             }
         }
+
+        if (!options.whiteListedStops.isEmpty()) {
+            if (!options.whiteListedStops.matches(((TransitStop) tov).getStop())) {
+                return null;
+            }
+        }
         
         if (options.arriveBy) {
             /* Backward traversal: apply stop(pair)-specific costs */

@@ -41,6 +41,12 @@ public class PreBoardEdge extends FreeEdge implements StationEdge {
                 return null;
             }
         }
+
+        if (!options.whiteListedStops.isEmpty()) {
+            if (!options.whiteListedStops.matches(((TransitStop) fromv).getStop())) {
+                return null;
+            }
+        }
         
         if (options.arriveBy) {
             /* Traverse backward: not much to do */

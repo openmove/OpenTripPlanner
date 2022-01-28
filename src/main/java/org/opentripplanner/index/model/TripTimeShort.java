@@ -18,6 +18,7 @@ public class TripTimeShort {
     public FeedScopedId stopId;
     public int stopIndex;
     public int stopCount;
+    public int stopSequence;
     public int scheduledArrival = UNDEFINED ;
     public int scheduledDeparture = UNDEFINED ;
     public int realtimeArrival = UNDEFINED ;
@@ -58,6 +59,7 @@ public class TripTimeShort {
         continuousDropOff  = tt.getContinuousDropOff(i);
         serviceAreaRadius  = tt.getServiceAreaRadius(i);
         serviceArea        = tt.getServiceArea(i);
+        stopSequence       = tt.getStopSequence(i);
     }
 
     public TripTimeShort(TripTimes tt, int i, Stop stop, ServiceDay sd) {

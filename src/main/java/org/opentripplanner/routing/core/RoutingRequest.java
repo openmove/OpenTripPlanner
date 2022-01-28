@@ -360,6 +360,9 @@ public class RoutingRequest implements Cloneable, Serializable {
     /** Do not use certain stops. See for more information the bannedStopsHard property in the RoutingResource class. */
     public StopMatcher bannedStopsHard = StopMatcher.emptyMatcher();
 
+    /** Only use certain stops */
+    public StopMatcher whiteListedStops = StopMatcher.emptyMatcher();
+
     /** Set of preferred routes by user. */
     public RouteMatcher preferredRoutes = RouteMatcher.emptyMatcher();
 
@@ -1042,6 +1045,15 @@ public class RoutingRequest implements Cloneable, Serializable {
         }
     }
 
+    public void setWhiteListedStops(String s) {
+        if (!s.isEmpty()) {
+            whiteListedStops = StopMatcher.parse(s);
+        }
+        else {
+            whiteListedStops = StopMatcher.emptyMatcher();
+        }
+    }
+
     public void setBannedStops(String s) {
         if (!s.isEmpty()) {
             bannedStops = StopMatcher.parse(s);
@@ -1250,6 +1262,7 @@ public class RoutingRequest implements Cloneable, Serializable {
             clone.bannedStopsHard = bannedStopsHard.clone();
             clone.whiteListedAgencies = (HashSet<String>) whiteListedAgencies.clone();
             clone.whiteListedRoutes = whiteListedRoutes.clone();
+            clone.whiteListedStops = whiteListedStops.clone();
             clone.preferredAgencies = (HashSet<String>) preferredAgencies.clone();
             clone.preferredRoutes = preferredRoutes.clone();
             if (this.bikeWalkingOptions != this)

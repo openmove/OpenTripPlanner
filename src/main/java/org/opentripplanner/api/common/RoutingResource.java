@@ -340,6 +340,12 @@ public abstract class RoutingResource {
     @QueryParam("bannedStopsHard")
     protected String bannedStopsHard;
 
+    /** A comma-separated list of whitelist stops.
+     * The format is agencyId_stopId, so: TriMet_2107
+     */
+    @QueryParam("whiteListedStops")
+    protected String whiteListedStops;
+
     /**
      * An additional penalty added to boardings after the first.  The value is in OTP's
      * internal weight units, which are roughly equivalent to seconds.  Set this to a high
@@ -711,6 +717,9 @@ public abstract class RoutingResource {
 
         if (bannedStopsHard != null)
             request.setBannedStopsHard(bannedStopsHard);
+
+        if(whiteListedStops != null)
+            request.setWhiteListedStops(whiteListedStops);
 
         // The "Least transfers" optimization is accomplished via an increased transfer penalty.
         // See comment on RoutingRequest.transferPentalty.

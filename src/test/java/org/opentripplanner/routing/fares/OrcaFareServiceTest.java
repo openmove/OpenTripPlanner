@@ -230,7 +230,7 @@ public class OrcaFareServiceTest {
     }
 
     /**
-     * Single trip with Link Light Rail to  ensure distance fare is calculated correctly.
+     * Single trip with Link Light Rail to ensure distance fare is calculated correctly.
      */
     @Test
     public void calculateFareForLightRailRide() {

@@ -89,15 +89,22 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             routeData -> {
                 try {
                     int routeId = Integer.parseInt(routeData.getShortName());
-                    if(routeId >= 500 && routeId < 600) {
+                    if (routeId >= 500 && routeId < 600) {
                         return RideType.SOUND_TRANSIT_BUS;
                     }
-                } catch(NumberFormatException ignored) {} // Lettered routes exist, are not an error.
-                if (routeData.getType() == ROUTE_TYPE_FERRY &&
-                        routeData.getLongName().contains("Water Taxi: West Seattle")) {
+                } catch(NumberFormatException ignored) {
+                    // Lettered routes exist, are not an error.
+                }
+
+                if (
+                    routeData.getType() == ROUTE_TYPE_FERRY &&
+                    routeData.getLongName().contains("Water Taxi: West Seattle")
+                ) {
                     return RideType.KC_WATER_TAXI_WEST_SEATTLE;
-                } else if (routeData.getType() == ROUTE_TYPE_FERRY &&
-                        routeData.getDesc().contains("Water Taxi: Vashon Island")) {
+                } else if (
+                    routeData.getType() == ROUTE_TYPE_FERRY &&
+                    routeData.getDesc().contains("Water Taxi: Vashon Island")
+                ) {
                     return RideType.KC_WATER_TAXI_VASHON_ISLAND;
                 }
                 return RideType.KC_METRO;
@@ -111,7 +118,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                 try {
                     int routeId = Integer.parseInt(routeData.getShortName());
                     if (routeId >= 520 && routeId < 600) {
-                        return RideType.SOUND_TRANSIT_BUS; // PierceTransit operates some ST routes. But 500 and 501 are PT routes.
+                        // PierceTransit operates some ST routes. But 500 and 501 are PT routes.
+                        return RideType.SOUND_TRANSIT_BUS;
                     }
                     return RideType.PIERCE_COUNTY_TRANSIT;
                 } catch (NumberFormatException e) {
@@ -198,11 +206,24 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     }
 
     /**
+     * Checks a routeShortName against a given string after removing spaces
+     */
+    private static boolean checkShortName(Route route, String compareString) {
+       String cleanCompareString = compareString
+           .replaceAll("-", "")
+           .replaceAll(" ", "");
+       return route.getShortName()
+           .replaceAll("-", "")
+           .replaceAll(" ", "")
+           .equalsIgnoreCase(cleanCompareString);
+    }
+
+    /**
      * Classify the ride type based on the route information provided. In most cases the agency name is sufficient. In
      * some cases the route description and short name are needed to define inner agency ride types. For Kitsap, the
      * route data is enough to define the agency, but addition trip id checks are needed to define the fast ferry direction.
      */
-    private RideType classify(Route routeData, String tripId) {
+    private static RideType classify(Route routeData, String tripId) {
         Function<Route, RideType> classifier = classificationStrategy.get(routeData.getAgency().getId());
         if (classifier == null) {
             return null;
@@ -219,21 +240,12 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                 rideType = RideType.KITSAP_TRANSIT_FAST_FERRY_WESTBOUND;
             }
         } else if (rideType == RideType.SOUND_TRANSIT &&
-            routeData.getShortName()
-                .replaceAll("-", "")
-                .replaceAll(" ", "")
-                .equalsIgnoreCase("1Line")
+            checkShortName(routeData, "1 Line")
         ) {
             rideType = RideType.SOUND_TRANSIT_LINK;
         } else if (rideType == RideType.SOUND_TRANSIT && (
-                routeData.getShortName()
-                    .replaceAll("-", "")
-                    .replaceAll(" ", "")
-                    .equalsIgnoreCase("SLine") ||
-                routeData.getShortName()
-                    .replaceAll("-", "")
-                    .replaceAll(" ", "")
-                    .equalsIgnoreCase("NLine")
+                checkShortName(routeData, "S Line") ||
+                checkShortName(routeData, "N Line")
             )
         ) {
             rideType = RideType.SOUND_TRANSIT_SOUNDER;
@@ -262,7 +274,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                 return getSeniorFare(fareType, rideType, defaultFare, ride.routeData);
             case regular:
             case electronicRegular:
-                return getRegularFare(fareType, rideType, defaultFare, ride.routeData, ride);
+                return getRegularFare(fareType, rideType, defaultFare, ride);
             default:
                 return defaultFare;
         }
@@ -271,7 +283,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     /**
      * Apply regular discount fares. If the ride type cannot be matched the default fare is used.
      */
-    private float getRegularFare(Fare.FareType fareType, RideType rideType, float defaultFare, Route route, Ride ride) {
+    private float getRegularFare(Fare.FareType fareType, RideType rideType, float defaultFare, Ride ride) {
+        Route route = ride.routeData;
         switch (rideType) {
             case KC_WATER_TAXI_VASHON_ISLAND: return 5.75f;
             case KC_WATER_TAXI_WEST_SEATTLE: return 5.00f;
@@ -289,21 +302,23 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     }
 
     /**
+     * Cleans a station name by removing spaces and special phrases.
+     */
+    private static String cleanStationName(String s) {
+        return s
+            .replaceAll(" ", "")
+            .replaceAll("(Northbound)", "")
+            .replaceAll("(Southbound)", "")
+            .replaceAll("Station", "")
+            .toLowerCase();
+    }
+
+    /**
      *  Calculate the correct Link fare from a "ride" including start and end stations.
      */
     private float getSoundTransitFare(Ride ride, Fare.FareType fareType, float defaultFare, RideType rideType) {
-        String start = ride.firstStop.getName()
-            .replaceAll(" ", "")
-            .replaceAll("(Northbound)", "")
-            .replaceAll("(Southbound)", "")
-            .replaceAll("Station", "")
-            .toLowerCase();
-        String end = ride.lastStop.getName()
-            .replaceAll(" ", "")
-            .replaceAll("(Northbound)", "")
-            .replaceAll("(Southbound)", "")
-            .replaceAll("Station", "")
-            .toLowerCase();
+        String start = cleanStationName(ride.firstStop.getName());
+        String end = cleanStationName(ride.lastStop.getName());
         // Fares are the same no matter the order of the stations
         // Therefore, the fares DB only contains each station pair once
         // If no match is found, try the reversed order
@@ -360,7 +375,6 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case KC_WATER_TAXI_VASHON_ISLAND: return 3.00f;
             case KC_WATER_TAXI_WEST_SEATTLE: return 2.50f;
             case KC_METRO:
-
             case SOUND_TRANSIT:
             case SOUND_TRANSIT_BUS:
             case SOUND_TRANSIT_LINK:

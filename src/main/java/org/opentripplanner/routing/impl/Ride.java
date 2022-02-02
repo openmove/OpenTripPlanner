@@ -34,9 +34,9 @@ public class Ride {
     // it can be used differently in custom fare services
     Object classifier;
 
-    Stop firstStop;
+    public Stop firstStop;
 
-    Stop lastStop;
+    public Stop lastStop;
 
     public Ride() {
         zones = new HashSet<>();

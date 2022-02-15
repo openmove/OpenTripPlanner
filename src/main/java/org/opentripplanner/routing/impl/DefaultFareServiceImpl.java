@@ -12,10 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.FareAttribute;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.*;
 import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.Fare.FareType;
 import org.opentripplanner.routing.core.FareComponent;
@@ -43,6 +40,7 @@ class FareSearch {
     // Cell [i,j] holds the id of the fare that corresponds to the relevant cost
     // we can't just use FareAndId for resultTable because you need to sum them
     FeedScopedId[][] fareIds;
+    FareRule[][] fareRules;
 
     // Cell [i] holds the index of the last ride that ride[i] has a fare to
     // If it's -1, the ride does not have fares to anywhere
@@ -52,6 +50,7 @@ class FareSearch {
         resultTable = new float[size][size];
         next = new int[size][size];
         fareIds = new FeedScopedId[size][size];
+        fareRules = new FareRule[size][size];
         endOfComponent = new int[size];
         Arrays.fill(endOfComponent, -1);
     }
@@ -61,10 +60,17 @@ class FareSearch {
 class FareAndId {
     float fare;
     FeedScopedId fareId;
+    FareRule fareRule;
 
     FareAndId(float fare, FeedScopedId fareId) {
         this.fare = fare;
         this.fareId = fareId;
+    }
+
+    FareAndId(float fare, FeedScopedId fareId, FareRule fareRule) {
+        this.fare = fare;
+        this.fareId = fareId;
+        this.fareRule = fareRule;
     }
 }
 
@@ -191,6 +197,7 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                 }
                 r.resultTable[j][j + i] = cost;
                 r.fareIds[j][j + i] = best.fareId;
+                r.fareRules[j][j + i] = best.fareRule;
                 for (int k = 0; k < i; k++) {
                     float via = addFares(rides.subList(j, j + k + 1), rides.subList(j + k + 1, j + i + 1),
                             r.resultTable[j][j + k], r.resultTable[j + k + 1][j + i]);
@@ -255,11 +262,17 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
             int via = r.next[start][r.endOfComponent[start]];
             float cost = r.resultTable[start][via];
             FeedScopedId fareId = r.fareIds[start][via];
+            FareRule fareRule = r.fareRules[start][via];
             FareComponent detail = new FareComponent(fareId, getMoney(currency, cost));
             for(int i = start; i <= via; ++i) {
                 detail.addRoute(rides.get(i).route);
+                detail.addTypes(rides.get(i).routeData.getType());
+                detail.setAgencyId(rides.get(i).routeData.getAgency().getId());
             }
+
+            detail.fareRule = fareRule;
             details.add(detail);
+
             ++count;
             start = via + 1;
         }
@@ -306,6 +319,7 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
         
         FareAttribute bestAttribute = null;
         float bestFare = Float.POSITIVE_INFINITY;
+        FareRule fareRule = null;
         long tripTime = lastRideStartTime - startTime;
         long journeyTime = lastRideEndTime - startTime;
         	
@@ -336,6 +350,10 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                 if (newFare < bestFare) {
                     bestAttribute = attribute;
                     bestFare = newFare;
+                    fareRule = new FareRule();
+                    fareRule.setDestinationId(endZone);
+                    fareRule.setOriginId(startZone);
+                    fareRule.setFare(attribute);
                 }
             }
         }
@@ -343,7 +361,7 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
         if (bestFare == Float.POSITIVE_INFINITY) {
             LOG.debug("No fare for a ride sequence: {}", rides);
         }
-        return new FareAndId(bestFare, bestAttribute == null ? null : bestAttribute.getId());
+        return new FareAndId(bestFare, bestAttribute == null ? null : bestAttribute.getId(), fareRule);
     }
     
     private float getFarePrice(FareAttribute fare, FareType type) {

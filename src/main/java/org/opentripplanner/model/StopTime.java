@@ -15,7 +15,7 @@ public final class StopTime implements Serializable, Comparable<StopTime> {
 
     private Trip trip;
 
-    private Stop stop;
+    private StopLocation stop;
 
     private int arrivalTime = MISSING_VALUE;
 
@@ -46,6 +46,10 @@ public final class StopTime implements Serializable, Comparable<StopTime> {
     private double startServiceAreaRadius = MISSING_VALUE;
 
     private double endServiceAreaRadius = MISSING_VALUE;
+
+    private int flexWindowStart = MISSING_VALUE;
+
+    private int flexWindowEnd = MISSING_VALUE;
 
     /** This is a Conveyal extension to the GTFS spec to support Seattle on/off peak fares. */
     private String farePeriodId;
@@ -90,11 +94,11 @@ public final class StopTime implements Serializable, Comparable<StopTime> {
         this.stopSequence = stopSequence;
     }
 
-    public Stop getStop() {
+    public StopLocation getStop() {
         return stop;
     }
 
-    public void setStop(Stop stop) {
+    public void setStop(StopLocation stop) {
         this.stop = stop;
     }
 
@@ -258,6 +262,15 @@ public final class StopTime implements Serializable, Comparable<StopTime> {
     public void setEndServiceAreaRadius(double endServiceAreaRadius) {
         this.endServiceAreaRadius = endServiceAreaRadius;
     }
+
+    public void setFlexWindowEnd(int flexWindowEnd) {
+        this.flexWindowEnd = flexWindowEnd;
+    }
+
+    public void setFlexWindowStart(int flexWindowStart) {
+        this.flexWindowStart = flexWindowStart;
+    }
+
 
     public int compareTo(StopTime o) {
         return this.getStopSequence() - o.getStopSequence();

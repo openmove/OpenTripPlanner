@@ -1,7 +1,7 @@
 /* This file is based on code copied from project OneBusAway, see the LICENSE file for further information. */
 package org.opentripplanner.model;
 
-public final class Stop extends IdentityBean<FeedScopedId> {
+public final class Stop extends IdentityBean<FeedScopedId> implements StopLocation {
 
     private static final long serialVersionUID = 1L;
 
@@ -69,6 +69,11 @@ public final class Stop extends IdentityBean<FeedScopedId> {
 
     public String getCode() {
         return code;
+    }
+
+    @Override
+    public WgsCoordinate getCoordinate() {
+        return null;
     }
 
     public void setCode(String code) {

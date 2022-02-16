@@ -30,7 +30,15 @@ public class GTFSToOtpTransitServiceMapper {
 
     private final TripMapper tripMapper = new TripMapper(routeMapper);
 
-    private final StopTimeMapper stopTimeMapper = new StopTimeMapper(stopMapper, tripMapper);
+    private final LocationMapper locationMapper = new LocationMapper();
+
+    private final LocationGroupMapper locationGroupMapper = new LocationGroupMapper(
+            stopMapper,
+            locationMapper
+    );
+
+    //private final StopTimeMapper stopTimeMapper = new StopTimeMapper(stopMapper, tripMapper);
+    private final StopTimeMapper stopTimeMapper = new StopTimeMapper(stopMapper, locationMapper, locationGroupMapper, tripMapper);
 
     private final FrequencyMapper frequencyMapper = new FrequencyMapper(tripMapper);
 
@@ -43,6 +51,9 @@ public class GTFSToOtpTransitServiceMapper {
     );
 
     private final AreaMapper areaMapper = new AreaMapper();
+
+
+
 
     /**
      * Map from GTFS data to the internal OTP model
@@ -69,6 +80,8 @@ public class GTFSToOtpTransitServiceMapper {
         builder.getTransfers().addAll(transferMapper.map(data.getAllTransfers()));
         builder.getTrips().addAll(tripMapper.map(data.getAllTrips()));
         builder.getFlexAreas().addAll(areaMapper.map(data.getAllAreas()));
+        builder.getLocations().addAll(locationMapper.map(data.getAllLocations()));
+        builder.getLocationGroups().addAll(locationGroupMapper.map(data.getAllLocationGroups()));
 
         return builder.build();
     }

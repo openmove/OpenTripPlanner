@@ -1,22 +1,6 @@
 package org.opentripplanner.model.impl;
 
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FlexArea;
-import org.opentripplanner.model.FareAttribute;
-import org.opentripplanner.model.FareRule;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Frequency;
-import org.opentripplanner.model.IdentityBean;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ServiceCalendar;
-import org.opentripplanner.model.ServiceCalendarDate;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitService;
+import org.opentripplanner.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +40,10 @@ public class OtpTransitServiceBuilder {
     private final List<Trip> trips = new ArrayList<>();
 
     private final List<FlexArea> flexAreas = new ArrayList<>();
+
+    private final List<FlexStopLocation> locationsById = new ArrayList<>();
+
+    private final List<FlexLocationGroup> locationGroupsById = new ArrayList<>();
 
     public OtpTransitServiceBuilder() {
     }
@@ -141,6 +129,14 @@ public class OtpTransitServiceBuilder {
 
     public List<FlexArea> getFlexAreas() {
         return flexAreas;
+    }
+
+    public List<FlexStopLocation> getLocations() {
+        return locationsById;
+    }
+
+    public List<FlexLocationGroup> getLocationGroups() {
+        return locationGroupsById;
     }
 
     public OtpTransitService build() {

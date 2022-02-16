@@ -3,6 +3,8 @@ package org.opentripplanner.gtfs.mapping;
 import org.onebusaway.gtfs.model.Stop;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.util.MapUtils;
+import org.onebusaway.gtfs.model.Location;
+import org.onebusaway.gtfs.model.LocationGroup;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,11 +15,21 @@ class StopTimeMapper {
     private final StopMapper stopMapper;
 
     private final TripMapper tripMapper;
+    private final LocationMapper locationMapper;
 
-    private Map<org.onebusaway.gtfs.model.StopTime, StopTime> mappedStopTimes = new HashMap<>();
+    private final LocationGroupMapper locationGroupMapper;
 
-    StopTimeMapper(StopMapper stopMapper, TripMapper tripMapper) {
+    private final Map<org.onebusaway.gtfs.model.StopTime, StopTime> mappedStopTimes = new HashMap<>();
+
+    StopTimeMapper(
+            StopMapper stopMapper,
+            LocationMapper locationMapper,
+            LocationGroupMapper locationGroupMapper,
+            TripMapper tripMapper
+    ) {
         this.stopMapper = stopMapper;
+        this.locationMapper = locationMapper;
+        this.locationGroupMapper = locationGroupMapper;
         this.tripMapper = tripMapper;
     }
 
@@ -34,7 +46,13 @@ class StopTimeMapper {
         StopTime lhs = new StopTime();
 
         lhs.setTrip(tripMapper.map(rhs.getTrip()));
-        lhs.setStop(stopMapper.map((Stop)rhs.getStop()));
+        if (rhs.getStop() instanceof Stop){
+            lhs.setStop(stopMapper.map((Stop) rhs.getStop()));
+        } else if (rhs.getStop() instanceof Location) {
+            lhs.setStop(locationMapper.map((Location) rhs.getStop()));
+        } else if (rhs.getStop() instanceof LocationGroup) {
+            lhs.setStop(locationGroupMapper.map((LocationGroup) rhs.getStop()));
+        }
         lhs.setArrivalTime(rhs.getArrivalTime());
         lhs.setDepartureTime(rhs.getDepartureTime());
         lhs.setTimepoint(rhs.getTimepoint());
@@ -51,6 +69,8 @@ class StopTimeMapper {
         lhs.setEndServiceArea(rhs.getEndServiceArea());
         lhs.setStartServiceAreaRadius(rhs.getStartServiceAreaRadius());
         lhs.setEndServiceAreaRadius(rhs.getEndServiceAreaRadius());
+        lhs.setFlexWindowStart(rhs.getMinArrivalTime());
+        lhs.setFlexWindowEnd(rhs.getMaxDepartureTime());
 
         // Skip mapping of proxy
         // private transient StopTimeProxy proxy;

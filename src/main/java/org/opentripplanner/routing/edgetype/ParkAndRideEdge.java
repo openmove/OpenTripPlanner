@@ -45,6 +45,25 @@ public class ParkAndRideEdge extends Edge {
             ((ParkAndRideVertex) tov).hasFewSpacesAvailable()
         ){
             return null;
+        }else{
+            long currentDiffTime = request.getDateTime().getTime() - System.currentTimeMillis();
+            if( currentDiffTime > (10 * 60 * 1000) && currentDiffTime < (20 * 60 * 1000) ){
+                if(((ParkAndRideVertex) tov).hasFewSpacesAvailable(15)){
+                    return null;
+                }
+            }
+
+            if( currentDiffTime > (20 * 60 * 1000) && currentDiffTime < (35 * 60 * 1000) ){
+                if(((ParkAndRideVertex) tov).hasFewSpacesAvailable(30)){
+                    return null;
+                }
+            }
+
+            if( currentDiffTime > (35 * 60 * 1000) && currentDiffTime < (50 * 60 * 1000) ){
+                if(((ParkAndRideVertex) tov).hasFewSpacesAvailable(45)){
+                    return null;
+                }
+            }
         }
 
         if (request.arriveBy) {

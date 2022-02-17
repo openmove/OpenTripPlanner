@@ -53,4 +53,8 @@ public class ParkAndRideVertex extends Vertex {
     public boolean hasFewSpacesAvailable() {
         return carPark.hasFewSpacesAvailable();
     }
+
+    public boolean hasFewSpacesAvailable(int forecast) {
+        return carPark.hasFewSpacesAvailable(forecast);
+    }
 }

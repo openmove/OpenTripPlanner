@@ -17,7 +17,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.locationtech.jts.geom.Geometry;
 import javax.xml.bind.annotation.XmlAttribute;
 import java.io.Serializable;
-import java.util.Locale;
+import java.util.*;
+
 import org.opentripplanner.util.I18NString;
 
 
@@ -45,6 +46,11 @@ public class CarPark implements Serializable {
     @XmlAttribute
     @JsonSerialize
     public int spacesAvailable = Integer.MAX_VALUE;
+
+    @XmlAttribute
+    @JsonSerialize
+    public HashMap<Integer,Integer> spacesForecast = new HashMap<Integer, Integer>() {};
+
 
     @XmlAttribute
     @JsonSerialize
@@ -76,8 +82,13 @@ public class CarPark implements Serializable {
         return String.format(Locale.US, "Car park %s at %.6f, %.6f", name, y, x);
     }
 
+
     public boolean hasFewSpacesAvailable() {
         return hasFewSpacesAvailable(spacesAvailable, maxCapacity);
+    }
+
+    public boolean hasFewSpacesAvailable(int forecast) {
+        return hasFewSpacesAvailable(Integer.parseInt(spacesForecast.getOrDefault(forecast, Integer.MAX_VALUE).toString()), maxCapacity);
     }
     public boolean hasOnlyDisabledSpaces() {
         return maxCapacity == Integer.MAX_VALUE;

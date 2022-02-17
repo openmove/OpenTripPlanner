@@ -55,9 +55,21 @@ public class ODHCarParkDataSource extends GenericJsonCarParkDataSource{
                 return null;
             } else if (station.realTimeData) {
                 station.spacesAvailable = node.path("free").asInt();
+                station.spacesForecast.put(0, station.spacesAvailable);
             } else {
                 station.spacesAvailable = station.maxCapacity;
+                station.spacesForecast.put(0, station.spacesAvailable);
             }
+
+            if(node.has("forecasts") && node.path("forecasts").isArray()){
+                int number = 15;
+                int counter = 1;
+                for(JsonNode forecast : node.path("forecasts")){
+                    int forecastInt = forecast.asInt();
+                    station.spacesForecast.put((counter * number), forecastInt);
+                }
+            }
+
             return station;
         } catch (Exception e) {
             log.warn("Error parsing car park " + station.id, e);

@@ -73,7 +73,7 @@ public final class Stop extends IdentityBean<FeedScopedId> implements StopLocati
 
     @Override
     public WgsCoordinate getCoordinate() {
-        return null;
+        return new WgsCoordinate(this.lat, this.lon);
     }
 
     public void setCode(String code) {

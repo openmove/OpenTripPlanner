@@ -21,6 +21,8 @@ public class StopPatternFlexFields implements Serializable {
     public final int[] continuousDropOff;
     public final double[] serviceAreaRadius;
     public final Geometry[] serviceAreas; // likely at most one distinct object will be in this array
+    public final int[] flexStartWindow;
+    public final int[] flexEndWindow;
 
     /**
      * Default constructor.
@@ -35,11 +37,17 @@ public class StopPatternFlexFields implements Serializable {
             continuousDropOff = new int[size];
             serviceAreaRadius = new double[size];
             serviceAreas = new Geometry[size];
+            flexEndWindow = new int[size];
+            flexStartWindow = new int[size];
+
             return;
         }
         int[] continuousPickup = new int[size];
         int[] continuousDropOff = new int[size];
         double[] serviceAreaRadius = new double[size];
+        int[] flexEndWindow = new int[size];
+        int[] flexStartWindow = new int[size];
+
         serviceAreas = new Geometry[size];
         double lastServiceAreaRadius = 0;
         Geometry lastServiceArea = null;
@@ -50,6 +58,8 @@ public class StopPatternFlexFields implements Serializable {
             continuousPickup[i] = stopTime.getContinuousPickup() == StopTime.MISSING_VALUE ? 1 : stopTime.getContinuousPickup();
             continuousDropOff[i] = stopTime.getContinuousDropOff() == StopTime.MISSING_VALUE ? 1 : stopTime.getContinuousDropOff();
 
+            flexStartWindow[i] = stopTime.getFlexWindowStart() == StopTime.MISSING_VALUE ? -1 : stopTime.getFlexWindowStart();
+            flexEndWindow[i] = stopTime.getFlexWindowEnd() == StopTime.MISSING_VALUE ? -1 : stopTime.getFlexWindowEnd();
 
             if (stopTime.getStartServiceAreaRadius() != StopTime.MISSING_VALUE) {
                 lastServiceAreaRadius = stopTime.getStartServiceAreaRadius();
@@ -71,6 +81,10 @@ public class StopPatternFlexFields implements Serializable {
         }
         this.continuousPickup = deduplicator.deduplicateIntArray(continuousPickup);
         this.continuousDropOff = deduplicator.deduplicateIntArray(continuousDropOff);
+
+        this.flexStartWindow = deduplicator.deduplicateIntArray(flexStartWindow);
+        this.flexEndWindow = deduplicator.deduplicateIntArray(flexEndWindow);
+
         this.serviceAreaRadius = deduplicator.deduplicateDoubleArray(serviceAreaRadius);
 
     }
@@ -81,6 +95,10 @@ public class StopPatternFlexFields implements Serializable {
         hash += Arrays.hashCode(this.continuousPickup);
         hash *= 31;
         hash += Arrays.hashCode(this.continuousDropOff);
+        hash *= 31;
+        hash += Arrays.hashCode(this.flexStartWindow);
+        hash *= 31;
+        hash += Arrays.hashCode(this.flexEndWindow);
         hash *= 31;
         hash += Arrays.hashCode(this.serviceAreas);
         return hash;
@@ -95,6 +113,8 @@ public class StopPatternFlexFields implements Serializable {
         if (!Arrays.equals(continuousPickup, that.continuousPickup)) return false;
         if (!Arrays.equals(continuousDropOff, that.continuousDropOff)) return false;
         if (!Arrays.equals(serviceAreaRadius, that.serviceAreaRadius)) return false;
+        if (!Arrays.equals(flexEndWindow, that.flexEndWindow)) return false;
+        if (!Arrays.equals(flexStartWindow, that.flexStartWindow)) return false;
         return Arrays.equals(serviceAreas, that.serviceAreas);
     }
 }

@@ -16,12 +16,7 @@ import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.RealtimeVehiclePosition;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopPattern;
-import org.opentripplanner.model.StopPatternFlexFields;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
@@ -187,18 +182,21 @@ public class TripPattern implements Cloneable, Serializable {
         patternHops = new PatternHop[stopPattern.size - 1];
         perStopFlags = new int[stopPattern.size];
         int i = 0;
-        for (Stop stop : stopPattern.stops) {
+        for (StopLocation stop : stopPattern.stops) {
             // Assume that stops can be boarded with wheelchairs by default (defer to per-trip data)
-            if (stop.getWheelchairBoarding() != 2) {
-                perStopFlags[i] |= FLAG_WHEELCHAIR_ACCESSIBLE;
+            if(stop instanceof Stop){
+                if (((Stop)stop).getWheelchairBoarding() != 2) {
+                    perStopFlags[i] |= FLAG_WHEELCHAIR_ACCESSIBLE;
+                }
             }
+
             perStopFlags[i] |= stopPattern.pickups[i] << SHIFT_PICKUP;
             perStopFlags[i] |= stopPattern.dropoffs[i] << SHIFT_DROPOFF;
             ++i;
         }
     }
 
-    public Stop getStop(int stopIndex) {
+    public StopLocation getStop(int stopIndex) {
         if (stopIndex == patternHops.length) {
             return patternHops[stopIndex - 1].getEndStop();
         } else {
@@ -206,7 +204,7 @@ public class TripPattern implements Cloneable, Serializable {
         }
     }
 
-    public List<Stop> getStops() {
+    public List<StopLocation> getStops() {
         return Arrays.asList(stopPattern.stops);
     }
 
@@ -255,12 +253,18 @@ public class TripPattern implements Cloneable, Serializable {
 
     /** Returns whether a given stop is wheelchair-accessible. */
     public WheelchairAccess wheelchairAccessible(int stopIndex) {
-        return WheelchairAccess.fromGtfsValue(stopPattern.stops[stopIndex].getWheelchairBoarding());
+        if(stopPattern.stops[stopIndex] instanceof Stop){
+            return WheelchairAccess.fromGtfsValue(((Stop)stopPattern.stops[stopIndex]).getWheelchairBoarding());
+        }
+        return WheelchairAccess.UNKNOWN;
     }
 
     /** Returns the zone of a given stop */
     public String getZone(int stopIndex) {
-        return getStop(stopIndex).getZoneId();
+        if(stopPattern.stops[stopIndex] instanceof Stop){
+            return ((Stop)getStop(stopIndex)).getZoneId();
+        }
+        return stopPattern.stops[stopIndex].getCode();
     }
 
     public int getAlightType(int stopIndex) {
@@ -340,7 +344,7 @@ public class TripPattern implements Cloneable, Serializable {
         return scheduledTimetable;
     }
 
-    private static String stopNameAndId (Stop stop) {
+    private static String stopNameAndId (StopLocation stop) {
         return stop.getName() + " (" + GtfsLibrary.convertIdToString(stop.getId()) + ")";
     }
 
@@ -419,23 +423,23 @@ public class TripPattern implements Cloneable, Serializable {
 
             /* Do the patterns within this Route have a unique start, end, or via Stop? */
             Multimap<String, TripPattern> signs   = ArrayListMultimap.create(); // prefer headsigns
-            Multimap<Stop, TripPattern> starts  = ArrayListMultimap.create();
-            Multimap<Stop, TripPattern> ends    = ArrayListMultimap.create();
-            Multimap<Stop, TripPattern> vias    = ArrayListMultimap.create();
+            Multimap<StopLocation, TripPattern> starts  = ArrayListMultimap.create();
+            Multimap<StopLocation, TripPattern> ends    = ArrayListMultimap.create();
+            Multimap<StopLocation, TripPattern> vias    = ArrayListMultimap.create();
             for (TripPattern pattern : routeTripPatterns) {
-                List<Stop> stops = pattern.getStops();
-                Stop start = stops.get(0);
-                Stop end   = stops.get(stops.size() - 1);
+                List<StopLocation> stops = pattern.getStops();
+                StopLocation start = stops.get(0);
+                StopLocation end   = stops.get(stops.size() - 1);
                 starts.put(start, pattern);
                 ends.put(end, pattern);
-                for (Stop stop : stops) vias.put(stop, pattern);
+                for (StopLocation stop : stops) vias.put(stop, pattern);
             }
             PATTERN : for (TripPattern pattern : routeTripPatterns) {
-                List<Stop> stops = pattern.getStops();
+                List<StopLocation> stops = pattern.getStops();
                 StringBuilder sb = new StringBuilder(routeName);
 
                 /* First try to name with destination. */
-                Stop end = stops.get(stops.size() - 1);
+                StopLocation end = stops.get(stops.size() - 1);
                 sb.append(" to " + stopNameAndId(end));
                 if (ends.get(end).size() == 1) {
                     pattern.name = sb.toString();
@@ -443,7 +447,7 @@ public class TripPattern implements Cloneable, Serializable {
                 }
 
                 /* Then try to name with origin. */
-                Stop start = stops.get(0);
+                StopLocation start = stops.get(0);
                 sb.append(" from " + stopNameAndId(start));
                 if (starts.get(start).size() == 1) {
                     pattern.name = (sb.toString());
@@ -460,7 +464,7 @@ public class TripPattern implements Cloneable, Serializable {
                 }
 
                 /* Still not unique; try (end, start, via) for each via. */
-                for (Stop via : stops) {
+                for (StopLocation via : stops) {
                     if (via.equals(start) || via.equals(end)) continue;
                     Set<TripPattern> intersection = Sets.newHashSet();
                     intersection.addAll(remainingPatterns);
@@ -515,8 +519,8 @@ public class TripPattern implements Cloneable, Serializable {
         PatternDepartVertex pdv0;
         int nStops = stopPattern.size;
         for (int stop = 0; stop < nStops - 1; stop++) {
-            Stop s0 = stopPattern.stops[stop];
-            Stop s1 = stopPattern.stops[stop + 1];
+            StopLocation s0 = stopPattern.stops[stop];
+            StopLocation s1 = stopPattern.stops[stop + 1];
             pdv0 = new PatternDepartVertex(graph, this, stop);
             departVertices[stop] = pdv0;
             if (stop > 0) {
@@ -535,7 +539,7 @@ public class TripPattern implements Cloneable, Serializable {
                 hop.setServiceArea(flexFields.serviceAreas[stop]);
                 hopEdges[stop] = hop;
             } else {
-                hopEdges[stop] = new PatternHop(pdv0, pav1, s0, s1, stop);
+                hopEdges[stop] = new PatternHop(pdv0, pav1, (Stop)s0, (Stop)s1, stop);
             }
 
             /* Get the arrive and depart vertices for the current stop (not pattern stop). */

@@ -50,7 +50,7 @@ public class StopPattern implements Serializable {
     public static final int PICKDROP_COORDINATE_WITH_DRIVER = 3;
     
     public final int size; // property could be derived from arrays
-    public final Stop[] stops;
+    public final StopLocation[] stops;
     public final int[]  pickups;
     public final int[]  dropoffs;
 
@@ -103,7 +103,7 @@ public class StopPattern implements Serializable {
             this.dropoffs = new int[0];
             return;
         }
-        stops = new Stop[size];
+        stops = new StopLocation[size];
         int[] pickups = new int[size];
         int[] dropoffs = new int[size];
         for (int i = 0; i < size; ++i) {
@@ -147,7 +147,7 @@ public class StopPattern implements Serializable {
      */
     public boolean containsStop (String stopId) {
         if (stopId == null) return false;
-        for (Stop stop : stops) if (stopId.equals(stop.getId().toString())) return true;
+        for (StopLocation stop : stops) if (stopId.equals(stop.getId().toString())) return true;
         return false;
     }
 
@@ -160,10 +160,10 @@ public class StopPattern implements Serializable {
     public HashCode semanticHash(HashFunction hashFunction) {
         Hasher hasher = hashFunction.newHasher();
         for (int s = 0; s < size; s++) {
-            Stop stop = stops[s];
+            StopLocation stop = stops[s];
             // Truncate the lat and lon to 6 decimal places in case they move slightly between feed versions
-            hasher.putLong((long) (stop.getLat() * 1000000));
-            hasher.putLong((long) (stop.getLon() * 1000000));
+            hasher.putLong((long) (stop.getCoordinate().latitude() * 1000000));
+            hasher.putLong((long) (stop.getCoordinate().longitude() * 1000000));
         }
         // Use hops rather than stops because drop-off at stop 0 and pick-up at last stop are not important
         // and have changed between OTP versions.
@@ -177,6 +177,8 @@ public class StopPattern implements Serializable {
                 hasher.putInt(flexFields.continuousDropOff[hop]);
                 hasher.putDouble(flexFields.serviceAreaRadius[hop]);
                 hasher.putInt(flexFields.serviceAreas[hop].hashCode());
+                hasher.putInt(flexFields.flexStartWindow[hop]);
+                hasher.putInt(flexFields.flexEndWindow[hop]);
             }
         }
         return hasher.hash();

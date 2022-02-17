@@ -271,6 +271,14 @@ public final class StopTime implements Serializable, Comparable<StopTime> {
         this.flexWindowStart = flexWindowStart;
     }
 
+    public int getFlexWindowEnd() {
+        return this.flexWindowEnd;
+    }
+
+    public int getFlexWindowStart() {
+       return this.flexWindowStart;
+    }
+
 
     public int compareTo(StopTime o) {
         return this.getStopSequence() - o.getStopSequence();

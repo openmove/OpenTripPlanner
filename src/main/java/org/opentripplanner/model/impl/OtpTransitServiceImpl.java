@@ -1,23 +1,7 @@
 /* This file is based on code copied from project OneBusAway, see the LICENSE file for further information. */
 package org.opentripplanner.model.impl;
 
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FlexArea;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.FareAttribute;
-import org.opentripplanner.model.FareRule;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Frequency;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ServiceCalendar;
-import org.opentripplanner.model.ServiceCalendarDate;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitService;
+import org.opentripplanner.model.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,7 +59,8 @@ class OtpTransitServiceImpl implements OtpTransitService {
 
     private Collection<Trip> trips;
 
-    private Collection<FlexArea> flexAreas;
+    private Collection<FlexLocationGroup> flexLocationGroups;
+    private Collection<FlexStopLocation> flexStopLocations;
 
     // Indexes
     private Map<FeedScopedId, List<String>> tripAgencyIdsByServiceId = null;
@@ -99,7 +84,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
             List<FareRule> fareRules, List<FeedInfo> feedInfos, List<Frequency> frequencies,
             List<Pathway> pathways, List<Route> routes, List<ShapePoint> shapePoints,
             List<Stop> stops, List<StopTime> stopTimes, List<Transfer> transfers,
-            List<Trip> trips, List<FlexArea> flexAreas) {
+            List<Trip> trips, List<FlexStopLocation> flexStopLocations, List<FlexLocationGroup> flexLocationGroups) {
         this.agencies = nullSafeUnmodifiableList(agencies);
         this.calendarDates = nullSafeUnmodifiableList(calendarDates);
         this.calendars = nullSafeUnmodifiableList(calendars);
@@ -114,7 +99,8 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.stopTimes = nullSafeUnmodifiableList(stopTimes);
         this.transfers = nullSafeUnmodifiableList(transfers);
         this.trips = nullSafeUnmodifiableList(trips);
-        this.flexAreas = nullSafeUnmodifiableList(flexAreas);
+        this.flexLocationGroups = nullSafeUnmodifiableList(flexLocationGroups);
+        this.flexStopLocations = nullSafeUnmodifiableList(flexStopLocations);
     }
 
     @Override
@@ -289,9 +275,15 @@ class OtpTransitServiceImpl implements OtpTransitService {
     }
 
     @Override
-    public Collection<FlexArea> getAllAreas() {
-        return flexAreas;
+    public Collection<FlexLocationGroup> getAllFlexLocationGroup() {
+        return flexLocationGroups;
     }
+
+    @Override
+    public Collection<FlexStopLocation> getAllFlexStopLocation() {
+        return flexStopLocations;
+    }
+
 
     /*  Private Methods */
 

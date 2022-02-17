@@ -7,6 +7,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.model.StopLocation;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
@@ -24,13 +25,13 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
 
     private static final long serialVersionUID = 2L;
 
-    private Stop begin, end;
+    private StopLocation begin, end;
 
     public int stopIndex;
 
     private LineString geometry = null;
 
-    protected PatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex, boolean setInPattern) {
+    protected PatternHop(PatternStopVertex from, PatternStopVertex to, StopLocation begin, StopLocation end, int stopIndex, boolean setInPattern) {
         super(from, to);
         this.begin = begin;
         this.end = end;
@@ -40,7 +41,7 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
         }
     }
 
-    public PatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex) {
+    public PatternHop(PatternStopVertex from, PatternStopVertex to, StopLocation begin, StopLocation end, int stopIndex) {
         this(from, to, begin, end, stopIndex, true);
     }
 
@@ -144,8 +145,8 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
     public LineString getGeometry() {
         if (geometry == null) {
 
-            Coordinate c1 = new Coordinate(begin.getLon(), begin.getLat());
-            Coordinate c2 = new Coordinate(end.getLon(), end.getLat());
+            Coordinate c1 = begin.getCoordinate().asJtsCoordinate();
+            Coordinate c2 = end.getCoordinate().asJtsCoordinate();
 
             geometry = GeometryUtils.getGeometryFactory().createLineString(new Coordinate[] { c1, c2 });
         }
@@ -153,12 +154,12 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
     }
 
     @Override
-    public Stop getEndStop() {
+    public StopLocation getEndStop() {
         return end;
     }
 
     @Override
-    public Stop getBeginStop() {
+    public StopLocation getBeginStop() {
         return begin;
     }
 

@@ -79,7 +79,7 @@ public class GTFSToOtpTransitServiceMapper {
         builder.getStopTimes().addAll(stopTimeMapper.map(data.getAllStopTimes()));
         builder.getTransfers().addAll(transferMapper.map(data.getAllTransfers()));
         builder.getTrips().addAll(tripMapper.map(data.getAllTrips()));
-        builder.getFlexAreas().addAll(areaMapper.map(data.getAllAreas()));
+        //builder.getFlexAreas().addAll(areaMapper.map(data.getAllAreas()));
         builder.getLocations().addAll(locationMapper.map(data.getAllLocations()));
         builder.getLocationGroups().addAll(locationGroupMapper.map(data.getAllLocationGroups()));
 

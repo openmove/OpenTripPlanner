@@ -61,6 +61,12 @@ public class FlexStopLocation extends IdentityBean<FeedScopedId> implements Stop
         return null;
     }
 
+
+    @Override
+    public String getZoneId() {
+        return null;
+    }
+
     /**
      * Returns the centroid of this location.
      */

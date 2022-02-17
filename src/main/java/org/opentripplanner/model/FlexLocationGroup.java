@@ -1,5 +1,6 @@
 package org.opentripplanner.model;
 
+import com.esotericsoftware.minlog.Log;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
@@ -48,6 +49,12 @@ public class FlexLocationGroup extends IdentityBean<FeedScopedId> implements Sto
         return null;
     }
 
+
+    @Override
+    public String getZoneId() {
+        return null;
+    }
+
     /**
      * Returns the centroid of all stops and areas belonging to this location group.
      */
@@ -70,7 +77,9 @@ public class FlexLocationGroup extends IdentityBean<FeedScopedId> implements Sto
             newGeometries[i] = geometry.getGeometryN(i);
         }
         if (location instanceof Stop) {
+            System.out.println(location.toString());
             WgsCoordinate coordinate = location.getCoordinate();
+            System.out.println(coordinate.toString());
             Envelope envelope = new Envelope(coordinate.asJtsCoordinate());
             double xscale = Math.cos(coordinate.latitude() * Math.PI / 180);
             envelope.expandBy(100 / xscale, 100);

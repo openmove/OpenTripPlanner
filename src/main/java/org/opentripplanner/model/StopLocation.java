@@ -21,4 +21,6 @@ public interface StopLocation {
      * the centroid of an area or line.
      */
     WgsCoordinate getCoordinate();
+
+    String getZoneId();
 }

@@ -66,7 +66,7 @@ public class StopTimeMapperTest {
     }
 
     private StopTimeMapper subject = new StopTimeMapper(
-            new StopMapper(), new TripMapper(new RouteMapper(new AgencyMapper()))
+            new StopMapper(), new LocationMapper(), new LocationGroupMapper(new StopMapper(), new LocationMapper()), new TripMapper(new RouteMapper(new AgencyMapper()))
     );
 
     @Test

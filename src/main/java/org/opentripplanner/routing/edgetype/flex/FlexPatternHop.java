@@ -2,6 +2,7 @@ package org.opentripplanner.routing.edgetype.flex;
 
 import org.locationtech.jts.geom.Geometry;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.StopLocation;
 import org.opentripplanner.routing.edgetype.PatternHop;
 import org.opentripplanner.routing.vertextype.PatternStopVertex;
 
@@ -18,11 +19,11 @@ public class FlexPatternHop extends PatternHop {
 
     private Geometry serviceArea = null;
 
-    public FlexPatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex) {
+    public FlexPatternHop(PatternStopVertex from, PatternStopVertex to, StopLocation begin, StopLocation end, int stopIndex) {
         super(from, to, begin, end, stopIndex, true);
     }
 
-    protected FlexPatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex, boolean setInPattern) {
+    protected FlexPatternHop(PatternStopVertex from, PatternStopVertex to, StopLocation begin, StopLocation end, int stopIndex, boolean setInPattern) {
         super(from, to, begin, end, stopIndex, setInPattern);
     }
 

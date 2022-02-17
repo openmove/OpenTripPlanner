@@ -67,7 +67,8 @@ public class OtpTransitServiceBuilder {
         stopTimes.addAll(other.getAllStopTimes());
         transfers.addAll(other.getAllTransfers());
         trips.addAll(other.getAllTrips());
-        flexAreas.addAll(other.getAllAreas());
+        locationGroupsById.addAll(other.getAllFlexLocationGroup());
+        locationsById.addAll(other.getAllFlexStopLocation());
         return this;
     }
 
@@ -127,9 +128,11 @@ public class OtpTransitServiceBuilder {
         return trips;
     }
 
+    /*
     public List<FlexArea> getFlexAreas() {
         return flexAreas;
     }
+    */
 
     public List<FlexStopLocation> getLocations() {
         return locationsById;
@@ -145,7 +148,7 @@ public class OtpTransitServiceBuilder {
 
         return new OtpTransitServiceImpl(agencies, calendarDates, calendars, fareAttributes, fareRules,
                 feedInfos, frequencies, pathways, routes, shapePoints, stops, stopTimes, transfers,
-                trips, flexAreas);
+                trips, locationsById, locationGroupsById);
     }
 
     private void createNoneExistentIds() {

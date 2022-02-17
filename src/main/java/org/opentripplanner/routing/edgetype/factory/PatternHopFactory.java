@@ -16,21 +16,7 @@ import org.locationtech.jts.linearref.LocationIndexedLine;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.commons.math3.util.FastMath;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FlexArea;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Frequency;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopPatternFlexFields;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitService;
-import org.opentripplanner.model.CalendarService;
+import org.opentripplanner.model.*;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -50,7 +36,6 @@ import org.opentripplanner.graph_builder.annotation.TripUndefinedService;
 import org.opentripplanner.graph_builder.module.GtfsFeedId;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.core.StopTransfer;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -607,7 +592,7 @@ public class PatternHopFactory {
             for (int i = 0; i < stopTimes.size() - 1; ++i) {
                 st0 = stopTimes.get(i);
                 StopTime st1 = stopTimes.get(i + 1);
-                LineString geometry = createSimpleGeometry(st0.getStop(), st1.getStop());
+                LineString geometry = createSimpleGeometry((Stop)st0.getStop(), (Stop)st1.getStop());
                 geoms[i] = geometry;
             }
             return geoms;
@@ -621,8 +606,8 @@ public class PatternHopFactory {
         List<List<IndexedLineSegment>> possibleSegmentsForStop = new ArrayList<List<IndexedLineSegment>>();
         int minSegmentIndex = 0;
         for (int i = 0; i < stopTimes.size() ; ++i) {
-            Stop stop = stopTimes.get(i).getStop();
-            Coordinate coord = new Coordinate(stop.getLon(), stop.getLat());
+            StopLocation stop = stopTimes.get(i).getStop();
+            Coordinate coord = new Coordinate(stop.getCoordinate().longitude(), stop.getCoordinate().latitude());
             List<IndexedLineSegment> stopSegments = new ArrayList<IndexedLineSegment>();
             double bestDistance = Double.MAX_VALUE;
             IndexedLineSegment bestSegment = null;
@@ -679,7 +664,7 @@ public class PatternHopFactory {
             for (int i = 0; i < stopTimes.size() - 1; ++i) {
                 st0 = stopTimes.get(i);
                 StopTime st1 = stopTimes.get(i + 1);
-                LineString geometry = createSimpleGeometry(st0.getStop(), st1.getStop());
+                LineString geometry = createSimpleGeometry((Stop)st0.getStop(), (Stop)st1.getStop());
                 geoms[i] = geometry;
                 //this warning is not strictly correct, but will do
                 LOG.warn(graph.addBuilderAnnotation(new BogusShapeGeometryCaught(shapeId, st0, st1)));
@@ -750,8 +735,8 @@ public class PatternHopFactory {
         }
 
         StopTime st = stopTimes.get(index);
-        Stop stop = st.getStop();
-        Coordinate stopCoord = new Coordinate(stop.getLon(), stop.getLat());
+        StopLocation stop = st.getStop();
+        Coordinate stopCoord = stop.getCoordinate().asJtsCoordinate();
 
         for (IndexedLineSegment segment : possibleSegmentsForStop.get(index)) {
             if (segment.index < prevSegmentIndex) {
@@ -851,8 +836,8 @@ public class PatternHopFactory {
                 }
             }
             double hopDistance = SphericalDistanceLibrary.fastDistance(
-                   st0.getStop().getLat(), st0.getStop().getLon(),
-                   st1.getStop().getLat(), st1.getStop().getLon());
+                   st0.getStop().getCoordinate().latitude(), st0.getStop().getCoordinate().longitude(),
+                   st1.getStop().getCoordinate().latitude(), st1.getStop().getCoordinate().longitude());
             double hopSpeed = hopDistance/runningTime;
             /* zero-distance hops are probably not harmful, though they could be better 
              * represented as dwell times
@@ -975,48 +960,50 @@ public class PatternHopFactory {
 
             /* Interpolate, if necessary, the times of non-timepoint stops */
             /* genuine interpolation needed */
-            if (!(st0.isDepartureTimeSet() && st0.isArrivalTimeSet())) {
-                // figure out how many such stops there are in a row.
-                int j;
-                StopTime st = null;
-                for (j = i + 1; j < lastStop + 1; ++j) {
-                    st = stopTimes.get(j);
-                    if ((st.isDepartureTimeSet() && st.getDepartureTime() != departureTime)
-                            || (st.isArrivalTimeSet() && st.getArrivalTime() != departureTime)) {
-                        break;
+            if (st0.getStop() instanceof Stop) {
+                if (!(st0.isDepartureTimeSet() && st0.isArrivalTimeSet())) {
+                    // figure out how many such stops there are in a row.
+                    int j;
+                    StopTime st = null;
+                    for (j = i + 1; j < lastStop + 1; ++j) {
+                        st = stopTimes.get(j);
+                        if ((st.isDepartureTimeSet() && st.getDepartureTime() != departureTime)
+                                || (st.isArrivalTimeSet() && st.getArrivalTime() != departureTime)) {
+                            break;
+                        }
                     }
-                }
-                if (j == lastStop + 1) {
-                    throw new RuntimeException(
-                            "Could not interpolate arrival/departure time on stop " + i
-                            + " (missing final stop time) on trip " + st0.getTrip());
-                }
-                numInterpStops = j - i;
-                int arrivalTime;
-                if (st.isArrivalTimeSet()) {
-                    arrivalTime = st.getArrivalTime();
-                } else {
-                    arrivalTime = st.getDepartureTime();
-                }
-                interpStep = (arrivalTime - prevDepartureTime) / (numInterpStops + 1);
-                if (interpStep < 0) {
-                    throw new RuntimeException(
-                            "trip goes backwards for some reason");
-                }
-                for (j = i; j < i + numInterpStops; ++j) {
-                    //System.out.println("interpolating " + j + " between " + prevDepartureTime + " and " + arrivalTime);
-                    departureTime = prevDepartureTime + interpStep * (j - i + 1);
-                    st = stopTimes.get(j);
+                    if (j == lastStop + 1) {
+                        throw new RuntimeException(
+                                "Could not interpolate arrival/departure time on stop " + i
+                                        + " (missing final stop time) on trip " + st0.getTrip());
+                    }
+                    numInterpStops = j - i;
+                    int arrivalTime;
                     if (st.isArrivalTimeSet()) {
-                        departureTime = st.getArrivalTime();
+                        arrivalTime = st.getArrivalTime();
                     } else {
-                        st.setArrivalTime(departureTime);
+                        arrivalTime = st.getDepartureTime();
                     }
-                    if (!st.isDepartureTimeSet()) {
-                        st.setDepartureTime(departureTime);
+                    interpStep = (arrivalTime - prevDepartureTime) / (numInterpStops + 1);
+                    if (interpStep < 0) {
+                        throw new RuntimeException(
+                                "trip goes backwards for some reason");
                     }
+                    for (j = i; j < i + numInterpStops; ++j) {
+                        //System.out.println("interpolating " + j + " between " + prevDepartureTime + " and " + arrivalTime);
+                        departureTime = prevDepartureTime + interpStep * (j - i + 1);
+                        st = stopTimes.get(j);
+                        if (st.isArrivalTimeSet()) {
+                            departureTime = st.getArrivalTime();
+                        } else {
+                            st.setArrivalTime(departureTime);
+                        }
+                        if (!st.isDepartureTimeSet()) {
+                            st.setDepartureTime(departureTime);
+                        }
+                    }
+                    i = j - 1;
                 }
-                i = j - 1;
             }
         }
     }
@@ -1110,7 +1097,7 @@ public class PatternHopFactory {
             if (equals(startIndex, endIndex)) {
                 //bogus shape_dist_traveled 
                 graph.addBuilderAnnotation(new BogusShapeDistanceTraveled(st1));
-                return createSimpleGeometry(st0.getStop(), st1.getStop());
+                return createSimpleGeometry((Stop)st0.getStop(), (Stop)st1.getStop());
             }
             LineString line = getLineStringForShapeId(shapeId);
             LocationIndexedLine lol = new LocationIndexedLine(line);
@@ -1183,10 +1170,10 @@ public class PatternHopFactory {
                     .getCoordinates(), 2);
             geometry = _geometryFactory.createLineString(sequence);
             
-            if (!isValid(geometry, st0.getStop(), st1.getStop())) {
+            if (!isValid(geometry, (Stop)st0.getStop(), (Stop) st1.getStop())) {
                 LOG.warn(graph.addBuilderAnnotation(new BogusShapeGeometryCaught(shapeId, st0, st1)));
                 //fall back to trivial geometry
-                geometry = createSimpleGeometry(st0.getStop(), st1.getStop());
+                geometry = createSimpleGeometry((Stop)st0.getStop(), (Stop)st1.getStop());
             }
             geometriesByShapeSegmentKey.put(key, (LineString) geometry);
         }
@@ -1525,12 +1512,20 @@ public class PatternHopFactory {
             return expandedTransfers;
         }
     }
+
     private void loadFlexAreaMap() {
-        for (FlexArea flexArea : transitService.getAllAreas()) {
-            Geometry geometry = GeometryUtils.parseWkt(flexArea.getWkt());
-            flexAreasById.put(flexArea.getAreaId(), geometry);
+        for (FlexLocationGroup flexArea : transitService.getAllFlexLocationGroup()) {
+            for(StopLocation stopLocation: flexArea.getLocations()){
+                if(stopLocation instanceof  FlexStopLocation){
+                    FlexStopLocation flexStopLocation = (FlexStopLocation) stopLocation;
+                    Geometry geometry = flexStopLocation.getGeometry();
+                    flexAreasById.put(flexStopLocation.getId().toString(), geometry);
+                }
+            }
+
         }
     }
+
 
     private void loadFlexAreasIntoGraph(Graph graph) {
         for (Map.Entry<String, Geometry> entry : flexAreasById.entrySet()) {
@@ -1544,6 +1539,8 @@ public class PatternHopFactory {
                 || (st.getContinuousDropOff() != 1 && st.getContinuousDropOff() != StopTime.MISSING_VALUE)
                 || st.getStartServiceArea() != null || st.getEndServiceArea() != null
                 || st.getStartServiceAreaRadius() != StopTime.MISSING_VALUE
-                || st.getEndServiceAreaRadius() != StopTime.MISSING_VALUE;
+                || st.getEndServiceAreaRadius() != StopTime.MISSING_VALUE
+                || st.getFlexWindowEnd() != StopTime.MISSING_VALUE
+                || st.getFlexWindowStart() != StopTime.MISSING_VALUE;
     }
 }

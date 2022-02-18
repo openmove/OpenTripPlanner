@@ -13,6 +13,7 @@ import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.model.*;
 import org.opentripplanner.api.parameter.QualifiedMode;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.index.model.RealtimeVehiclePosition;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
@@ -2389,6 +2390,11 @@ public class IndexGraphQLSchema {
                         .description("Whether there is real-time data about this Leg")
                         .type(Scalars.GraphQLBoolean)
                         .dataFetcher(environment -> ((Leg) environment.getSource()).realTime)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("realtimeState")
+                        .type(realtimeStateEnum)
+                        .dataFetcher(environment -> ((Leg) environment.getSource()).realtimeState)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("distance")

@@ -1183,6 +1183,7 @@ public abstract class GraphPathToTripPlanConverter {
 
         if (tripTimes != null && !tripTimes.isScheduled()) {
             leg.realTime = true;
+            leg.realtimeState = tripTimes.getRealTimeState();
             if (leg.from.stopIndex != null) {
                 leg.departureDelay = tripTimes.getDepartureDelay(leg.from.stopIndex);
             }

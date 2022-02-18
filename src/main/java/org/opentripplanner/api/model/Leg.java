@@ -6,6 +6,7 @@ import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import java.util.ArrayList;
@@ -45,6 +46,8 @@ public class Leg {
      * Whether there is real-time data about this Leg
      */
     public Boolean realTime = false;
+
+    public RealTimeState realtimeState = RealTimeState.SCHEDULED;
 
     /**
      * Is this a frequency-based trip with non-strict departure times?

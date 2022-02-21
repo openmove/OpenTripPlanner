@@ -2,6 +2,9 @@ package org.opentripplanner.routing.graph;
 
 import com.google.common.collect.ArrayListMultimap;
 
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
@@ -32,6 +35,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.CalendarService;
+import org.opentripplanner.model.ServiceCalendar;
 import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -88,7 +92,7 @@ public class GraphIndex {
     public final Map<FeedScopedId, Stop> stopForId = Maps.newHashMap();
     public final Map<FeedScopedId, Trip> tripForId = Maps.newHashMap();
     public final Map<FeedScopedId, Route> routeForId = Maps.newHashMap();
-    public final Map<FeedScopedId, String> serviceForId = Maps.newHashMap();
+    public final Map<FeedScopedId, ServiceCalendar> serviceForId = Maps.newHashMap();
     public final Map<String, TripPattern> patternForId = Maps.newHashMap();
     public final Map<Stop, TransitStop> stopVertexForStop = Maps.newHashMap();
     public final Map<Trip, TripPattern> patternForTrip = Maps.newHashMap();
@@ -170,6 +174,32 @@ public class GraphIndex {
             for (Trip trip : pattern.getTrips()) {
                 patternForTrip.put(trip, pattern);
                 tripForId.put(trip.getId(), trip);
+                ServiceCalendar sc = new ServiceCalendar();
+                sc.setServiceId(trip.getServiceId());
+                for (ServiceDate sd : graph.getCalendarService().getServiceDatesForServiceId(trip.getServiceId())) {
+
+                    switch(sd.getAsDate().getDay()) {
+                        case 0: sc.setSunday(1); break;
+                        case 1: sc.setMonday(1); break;
+                        case 2: sc.setTuesday(1); break;
+                        case 3: sc.setWednesday(1); break;
+                        case 4: sc.setThursday(1); break;
+                        case 5: sc.setFriday(1); break;
+                        case 6: sc.setSaturday(1); break;
+                    }
+                    if(sc.getEndDate() == null){
+                        sc.setEndDate(sd);
+                    }else if(sc.getEndDate().getAsDate().getTime() - sd.getAsDate().getTime() < 0){
+                        sc.setEndDate(sd);
+                    }
+
+                    if(sc.getStartDate() == null){
+                        sc.setStartDate(sd);
+                    }else if(sc.getStartDate().getAsDate().getTime() - sd.getAsDate().getTime() > 0){
+                        sc.setStartDate(sd);
+                    }
+                }
+                serviceForId.put(trip.getServiceId(), sc);
             }
             for (Stop stop: pattern.getStops()) {
                 patternsForStop.put(stop, pattern);

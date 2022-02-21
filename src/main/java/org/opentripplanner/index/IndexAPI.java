@@ -21,12 +21,7 @@ import org.opentripplanner.index.model.StopShort;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripShort;
 import org.opentripplanner.index.model.TripTimeShort;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
@@ -629,24 +624,23 @@ public class IndexAPI {
 
     /**
      * List basic information about all service IDs.
-     * This is a placeholder endpoint and is not implemented yet.
      */
     @GET
     @Path("/services")
     public Response getServices() {
-        // TODO complete: index.serviceForId.values();
-        return Response.status(Status.OK).entity("NONE").build();
+        Collection<ServiceCalendar> servicesId = index.serviceForId.values();
+        return Response.status(Status.OK).entity(servicesId).build();
     }
 
     /**
      * List details about a specific service ID including which dates it runs on. Replaces the old /calendar.
-     * This is a placeholder endpoint and is not implemented yet.
      */
     @GET
     @Path("/services/{serviceId}")
-    public Response getServices(@PathParam("serviceId") String serviceId) {
-        // TODO complete: index.serviceForId.get(serviceId);
-        return Response.status(Status.OK).entity("NONE").build();
+    public Response getServices(@PathParam("serviceId") String serviceIdString) {
+        FeedScopedId serviceId = GtfsLibrary.convertIdFromString(serviceIdString);
+        ServiceCalendar serviceCalendar = index.serviceForId.get(serviceId);
+        return Response.status(Status.OK).entity(serviceCalendar).build();
     }
 
     /**

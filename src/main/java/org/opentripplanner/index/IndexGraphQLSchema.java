@@ -2510,7 +2510,7 @@ public class IndexGraphQLSchema {
                         .build())
                 .build();
         GraphQLObjectType fareAttributeType = GraphQLObjectType.newObject()
-                .name("fareAttribute")
+                .name("fareAttributes")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("price")
                         .type(Scalars.GraphQLFloat)
@@ -2560,7 +2560,7 @@ public class IndexGraphQLSchema {
                         .dataFetcher(new PropertyDataFetcher("route"))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("attribute")
+                        .name("attributes")
                         .type(fareAttributeType)
                         .dataFetcher(new PropertyDataFetcher("fare"))
                         .build())

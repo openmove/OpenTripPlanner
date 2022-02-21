@@ -7,6 +7,7 @@ import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.graph.Graph;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.opentripplanner.util.I18NString;
 
 /**
  * For when CreativeNamePicker/WayPropertySet is just not powerful enough.
@@ -16,7 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public interface CustomNamer {
 
-    public String name(OSMWithTags way, String defaultName);
+    public I18NString name(OSMWithTags way, I18NString defaultName);
 
     public void nameWithEdge(OSMWithTags way, StreetEdge edge);
 

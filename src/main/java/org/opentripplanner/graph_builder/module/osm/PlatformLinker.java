@@ -148,7 +148,7 @@ public class PlatformLinker {
         I18NString name = way.getAssumedName();
 
         if (customNamer != null && name != null) {
-            name = new NonLocalizedString(customNamer.name(way, name.toString()));
+            name = customNamer.name(way, name);
         }
 
         if (name == null) {

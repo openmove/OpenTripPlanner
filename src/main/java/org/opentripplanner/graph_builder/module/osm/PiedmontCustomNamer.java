@@ -7,6 +7,7 @@ import org.opentripplanner.openstreetmap.model.OSMWithTags;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.util.I18NString;
 import org.opentripplanner.util.NonLocalizedString;
 
 import java.util.HashSet;
@@ -17,15 +18,15 @@ import java.util.HashSet;
 public class PiedmontCustomNamer implements CustomNamer {
 
     @Override
-    public String name(OSMWithTags way, String defaultName) {
+    public I18NString name(OSMWithTags way, I18NString defaultName) {
         if (!way.hasTag("name")) {
             return defaultName;
         }
         if (way.hasTag("ref") && way.isTag("highway", "motorway")) {
             if(way.hasTag("name")){
-                return way.getTag("ref") + " (" + (way.getTag("name")) + ")";
+                return new NonLocalizedString(way.getTag("ref") + " (" + (way.getTag("name")) + ")");
             }
-            return way.getTag("ref");
+            return new NonLocalizedString(way.getTag("ref"));
         }
 
         return defaultName;

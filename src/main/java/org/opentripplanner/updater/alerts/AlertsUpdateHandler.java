@@ -142,7 +142,7 @@ public class AlertsUpdateHandler {
             if (agencyId != null && routeId == null && tripId == null && stopId == null) {
                 patch.setAgencyId(agencyId);
             }
-            if (routeType != MISSING_INT_FIELD_VALUE) {
+            if (routeType != MISSING_INT_FIELD_VALUE && routeId == null) {
                 patch.setRouteType(routeType);
             }
             patch.setTimePeriods(periods);

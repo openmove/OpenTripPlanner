@@ -71,7 +71,7 @@ public class SFBayFareServiceImpl extends DefaultFareServiceImpl {
                     bartBlock = null;
                 }
                 if (agencyId.equals("SFMTA")) {
-                    if (ride.classifier == TraverseMode.CABLE_CAR) {
+                    if (ride.classifier == TraverseMode.CABLECAR) {
                         // no transfers issued or accepted
                         cost += CABLE_CAR_FARE;
                     } else if (sfmtaTransferIssued == null || 

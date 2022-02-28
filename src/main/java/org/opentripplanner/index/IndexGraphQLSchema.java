@@ -14,11 +14,7 @@ import org.opentripplanner.api.model.*;
 import org.opentripplanner.api.parameter.QualifiedMode;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.index.model.RealtimeVehiclePosition;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
@@ -44,6 +40,7 @@ import org.opentripplanner.util.PolylineEncoder;
 import org.opentripplanner.util.ResourceBundleSingleton;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;
 import java.util.function.Function;
@@ -122,7 +119,7 @@ public class IndexGraphQLSchema {
             .value("AIRPLANE", TraverseMode.AIRPLANE, "AIRPLANE")
             .value("BICYCLE", TraverseMode.BICYCLE, "BICYCLE")
             .value("BUS", TraverseMode.BUS, "BUS")
-            .value("CABLE_CAR", TraverseMode.CABLE_CAR, "CABLE_CAR")
+            .value("CABLE_CAR", TraverseMode.CABLECAR, "CABLE_CAR")
             .value("CAR", TraverseMode.CAR, "CAR")
             .value("FERRY", TraverseMode.FERRY, "FERRY")
             .value("FUNICULAR", TraverseMode.FUNICULAR, "FUNICULAR")
@@ -1289,17 +1286,31 @@ public class IndexGraphQLSchema {
                 .type(Scalars.GraphQLString) //TODO: Should be geometry
                 .dataFetcher(environment -> {
                     try {
+                        Trip trip = (Trip) environment.getSource();
                         LineString geometry = index.patternForTrip
-                                .get((Trip) environment.getSource()).geometry;
+                                .get(trip).geometry;
 
-                        Geometry geometry2D = (Geometry) geometry.clone();
-                        for(Coordinate c : geometry2D.getCoordinates()){
-                            c.setCoordinate(new Coordinate(c.x, c.y));
+                        Geometry geometry2D;
+                        if(geometry == null){
+                            GeometryFactory geometryFactory = new GeometryFactory();
+                            List<Stop> stops = index.patternForTrip.get(trip).getStops();
+                            Coordinate[] coordinates = new Coordinate[stops.size()];
+                            for(int i = 0; i < stops.size(); i++){
+                                Stop stop = stops.get(i);
+                                coordinates[i] = new Coordinate(stop.getLon(),stop.getLat());
+                            }
+                            geometry2D = geometryFactory.createLineString(coordinates);
+                        }else{
+                            geometry2D = (Geometry) geometry.clone();
+                            for(Coordinate c : geometry2D.getCoordinates()){
+                                c.setCoordinate(new Coordinate(c.x, c.y));
+                            }
                         }
+
                         PolylineEncoder polylineEncoder = new PolylineEncoder();
                         return polylineEncoder.createEncodings(geometry2D).getPoints();
                     } catch (Exception e) {
-                        e.printStackTrace();
+
                         return null;
                     }
                 })
@@ -1368,16 +1379,32 @@ public class IndexGraphQLSchema {
                 .name("geometry")
                 .type(Scalars.GraphQLString)
                 .dataFetcher(environment -> {
-                    LineString geometry = ((TripPattern) environment.getSource()).geometry;
-                    try {
-                        Geometry geometry2D = (Geometry) geometry.clone();
-                        for(Coordinate c : geometry2D.getCoordinates()){
-                            c.setCoordinate(new Coordinate(c.x, c.y));
+                    try{
+                        TripPattern tripPattern = (TripPattern) environment.getSource();
+                        LineString geometry = index.patternForTrip
+                                .get(tripPattern).geometry;
+
+                        Geometry geometry2D;
+                        if(geometry == null){
+                            GeometryFactory geometryFactory = new GeometryFactory();
+                            List<Stop> stops = tripPattern.getStops();
+                            Coordinate[] coordinates = new Coordinate[stops.size()];
+                            for(int i = 0; i < stops.size(); i++){
+                                Stop stop = stops.get(i);
+                                coordinates[i] = new Coordinate(stop.getLon(),stop.getLat());
+                            }
+                            geometry2D = geometryFactory.createLineString(coordinates);
+                        }else{
+                            geometry2D = (Geometry) geometry.clone();
+                            for(Coordinate c : geometry2D.getCoordinates()){
+                                c.setCoordinate(new Coordinate(c.x, c.y));
+                            }
                         }
+
                         PolylineEncoder polylineEncoder = new PolylineEncoder();
                         return polylineEncoder.createEncodings(geometry2D).getPoints();
                     } catch (Exception e) {
-                        e.printStackTrace();
+
                         return null;
                     }
                 })
@@ -1741,6 +1768,164 @@ public class IndexGraphQLSchema {
                         .build())
                 .build();
 
+        GraphQLObjectType fareAttributeType = GraphQLObjectType.newObject()
+                .name("fareAttributes")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("name")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((FareAttribute)environment.getSource()).getId().getId())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("cents")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(environment -> {
+                            float price = ((FareAttribute)environment.getSource()).getPrice();
+                            WrappedCurrency currency = new WrappedCurrency(((FareAttribute)environment.getSource()).getCurrencyType());
+                            int fractionDigits = 2;
+                            if (currency != null)
+                                fractionDigits = currency.getDefaultFractionDigits();
+                            int cents = (int) Math.round(price * Math.pow(10, fractionDigits));
+                            return cents;
+                        })
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("currency")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("currencyType"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("paymentMethod")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(new PropertyDataFetcher("paymentMethod"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("transfers")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(new PropertyDataFetcher("transfers"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("transferDuration")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(new PropertyDataFetcher("transferDuration"))
+                        .build())
+                .build();
+        GraphQLObjectType fareRuleType = GraphQLObjectType.newObject()
+                .name("fareRule")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("originId")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("originId"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("destinationId")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("destinationId"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("containsId")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("containsId"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("modes")
+                        .type(new GraphQLList(modeEnum))
+                        .dataFetcher(environment -> {
+                            String originId = ((FareRule)environment.getSource()).getOriginId();
+                            String destinationId = ((FareRule)environment.getSource()).getDestinationId();
+                            String containsId = ((FareRule)environment.getSource()).getContainsId();
+                            List<TraverseMode> modes = new ArrayList<>();
+                            for(Stop stop : index.stopForId.values()){
+                                if(stop.getZoneId() != null){
+                                    if((originId != null && stop.getZoneId().equals(originId))
+                                            || (destinationId != null && stop.getZoneId().equals(destinationId))
+                                            || (containsId != null && stop.getZoneId().equals(containsId))){
+                                        TraverseMode traverseMode = index.patternsForStop.get(stop)
+                                                .stream()
+                                                .map(pattern -> pattern.mode)
+                                                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                .entrySet()
+                                                .stream()
+                                                .max(Comparator.comparing(Map.Entry::getValue))
+                                                .map(e -> e.getKey())
+                                                .orElse(null);
+                                        if(traverseMode != null){
+                                            if(!modes.contains(traverseMode)){
+                                                modes.add(traverseMode);
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+
+                            return modes;
+                        })
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("route")
+                        .type(routeType)
+                        .dataFetcher(new PropertyDataFetcher("route"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("attributes")
+                        .type(fareAttributeType)
+                        .dataFetcher(new PropertyDataFetcher("fare"))
+                        .build())
+                .build();
+        GraphQLObjectType zoneType = GraphQLObjectType.newObject()
+                .name("Zone")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("gtfsId")
+                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                        .dataFetcher(environment ->
+                                GtfsLibrary.convertIdToString(((Zone) environment.getSource()).getId()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("name")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("name"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("lat")
+                        .type(Scalars.GraphQLFloat)
+                        .dataFetcher(new PropertyDataFetcher("lat"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("lon")
+                        .type(Scalars.GraphQLFloat)
+                        .dataFetcher(new PropertyDataFetcher("lon"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("stops")
+                        .type(new GraphQLList(stopType))
+                        .dataFetcher(new PropertyDataFetcher("stops"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("modes")
+                        .type(new GraphQLList(modeEnum))
+                        .dataFetcher(environment -> {
+                            List<TraverseMode> modes = new ArrayList<>();
+                            for(Stop stop : ((Zone)environment.getSource()).getStops()){
+                                TraverseMode traverseMode = index.patternsForStop.get(stop)
+                                        .stream()
+                                        .map(pattern -> pattern.mode)
+                                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                        .entrySet()
+                                        .stream()
+                                        .max(Comparator.comparing(Map.Entry::getValue))
+                                        .map(e -> e.getKey())
+                                        .orElse(null);
+                                if(traverseMode != null){
+                                    if(!modes.contains(traverseMode)){
+                                        modes.add(traverseMode);
+                                    }
+                                }
+                            }
+
+                            return modes;
+                        })
+                        .build())
+                .build();
 
         queryType = GraphQLObjectType.newObject()
             .name("QueryType")
@@ -1895,7 +2080,7 @@ public class IndexGraphQLSchema {
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("stopsByName")
-                    .description("Get all stops with given name without autocomplete")
+                    .description("Get all stops with given name")
                     .type(new GraphQLList(stopType))
                     .argument(GraphQLArgument.newArgument()
                             .name("name")
@@ -1913,7 +2098,7 @@ public class IndexGraphQLSchema {
                             .build())
                     .dataFetcher(environment -> {
                         String name = environment.getArgument("name");
-                        Pattern p = Pattern.compile(name, Pattern.CASE_INSENSITIVE);
+                        Pattern p = Pattern.compile(name);
                         return new ArrayList<>(index.stopForId.values())
                                 .stream()
                                 .filter(stop -> p.matcher(stop.getName()).matches())
@@ -1970,6 +2155,87 @@ public class IndexGraphQLSchema {
                     }
                 })
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("faresByName")
+                    .description("Get fares filtered by fare_id")
+                    .type(new GraphQLList(fareRuleType))
+                    .argument(GraphQLArgument.newArgument()
+                            .name("name")
+                            .type(Scalars.GraphQLString)
+                            .build())
+                    .dataFetcher(environment -> {
+                        String name = environment.getArgument("name");
+                        Pattern p = Pattern.compile(name);
+                        List<FareRule> fareRules = new ArrayList<>();
+                        for (FeedScopedId id : index.fareRulesById.keySet()) {
+                            if(p.matcher(id.getId()).matches()){
+                                fareRules.addAll(index.fareRulesById.get(id));
+                            }
+                        }
+                        return fareRules;
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("zones")
+                    .description("Get all zones")
+                    .type(new GraphQLList(zoneType))
+                    .argument(GraphQLArgument.newArgument()
+                            .name("skip")
+                            .type(Scalars.GraphQLLong)
+                            .defaultValue((long) 0)
+                            .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("limit")
+                            .type(Scalars.GraphQLLong)
+                            .defaultValue(Long.MAX_VALUE)
+                            .build())
+                    .dataFetcher(environment -> new ArrayList<>(
+                            index.zonesById.values()
+                                    .stream()
+                                    .skip(environment.getArgument("skip"))
+                                    .limit(environment.getArgument("limit"))
+                                    .collect(Collectors.toList())
+                    ))
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("zone")
+                    .description("Get a zone by gtfs id")
+                    .type(zoneType)
+                    .argument(GraphQLArgument.newArgument()
+                            .name("id")
+                            .type(new GraphQLNonNull(Scalars.GraphQLString))
+                            .build())
+                    .dataFetcher(environment -> index.zonesById
+                            .get(GtfsLibrary.convertIdFromString(environment.getArgument("id"))))
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("zonesByName")
+                    .description("Get zones filtered by zone name")
+                    .type(new GraphQLList(zoneType))
+                    .argument(GraphQLArgument.newArgument()
+                            .name("name")
+                            .type(Scalars.GraphQLString)
+                            .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("skip")
+                            .type(Scalars.GraphQLLong)
+                            .defaultValue((long) 0)
+                            .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("limit")
+                            .type(Scalars.GraphQLLong)
+                            .defaultValue(Long.MAX_VALUE)
+                            .build())
+                    .dataFetcher(environment -> {
+                        String name = environment.getArgument("name");
+                        Pattern p = Pattern.compile(name);
+                        return index.zonesById.values().stream()
+                                .filter(zone -> p.matcher(zone.getName()).matches())
+                                .skip(environment.getArgument("skip"))
+                                .limit(environment.getArgument("limit"))
+                                .collect(Collectors.toList());
+                    })
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("route")
                 .description("Get a single route based on its id (format is Agency:RouteId)")
@@ -2512,9 +2778,17 @@ public class IndexGraphQLSchema {
         GraphQLObjectType fareAttributeType = GraphQLObjectType.newObject()
                 .name("fareAttributes")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("price")
-                        .type(Scalars.GraphQLFloat)
-                        .dataFetcher(new PropertyDataFetcher("price"))
+                        .name("cents")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(environment -> {
+                            float price = ((FareAttribute)environment.getSource()).getPrice();
+                            WrappedCurrency currency = new WrappedCurrency(((FareAttribute)environment.getSource()).getCurrencyType());
+                            int fractionDigits = 2;
+                            if (currency != null)
+                                fractionDigits = currency.getDefaultFractionDigits();
+                            int cents = (int) Math.round(price * Math.pow(10, fractionDigits));
+                            return cents;
+                        })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("currency")

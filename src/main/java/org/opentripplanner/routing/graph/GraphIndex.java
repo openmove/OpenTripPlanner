@@ -27,15 +27,8 @@ import graphql.GraphQL;
 import graphql.execution.ExecutorServiceExecutionStrategy;
 import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.CalendarService;
-import org.opentripplanner.model.ServiceCalendar;
 import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -104,6 +97,8 @@ public class GraphIndex {
     public final Map<Stop, StopCluster> stopClusterForStop = Maps.newHashMap();
     public final Map<String, StopCluster> stopClusterForId = Maps.newHashMap();
     public final Map<FeedScopedId, Geometry> flexAreasById = Maps.newHashMap();
+    public final Map<FeedScopedId, Collection<FareRule>> fareRulesById = Maps.newHashMap();
+    public final Map<FeedScopedId, Zone> zonesById = Maps.newHashMap();
 
     /* Should eventually be replaced with new serviceId indexes. */
     private final CalendarService calendarService;
@@ -207,6 +202,18 @@ public class GraphIndex {
         }
         for (Route route : patternsForRoute.asMap().keySet()) {
             routeForId.put(route.getId(), route);
+        }
+
+        if (graph.fareRulesById != null) {
+            for (FeedScopedId id : graph.fareRulesById.keySet()) {
+                fareRulesById.put(id, graph.fareRulesById.get(id));
+            }
+        }
+
+        if (graph.zonesById != null) {
+            for (FeedScopedId id : graph.zonesById.keySet()) {
+                zonesById.put(id, graph.zonesById.get(id));
+            }
         }
 
         // Copy these two service indexes from the graph until we have better ones.

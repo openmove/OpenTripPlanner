@@ -30,3 +30,5 @@ _site/
 /otp-batch-analyst
 *.DS_Store
 otp-ui
+openmove-settings.xml
+junkyard/

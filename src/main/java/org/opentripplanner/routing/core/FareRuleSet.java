@@ -96,7 +96,7 @@ public class FareRuleSet implements Serializable {
 
         //check for matching contains, if this ruleset has any containment restrictions
         if (contains.size() > 0) {
-            if (!zonesVisited.equals(contains)) {
+            if (!contains.containsAll(zonesVisited)) {
                 return false;
             }
         }

@@ -159,6 +159,9 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
         case "dutch":
             retval = new DutchFareServiceFactory();
             break;
+        case "trentino":
+            retval = new TrentinoFareServiceFactory();
+            break;
         case "orca":
             retval = new OrcaFareServiceFactory();
             break;

@@ -16,21 +16,7 @@ import org.locationtech.jts.linearref.LocationIndexedLine;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.commons.math3.util.FastMath;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FlexArea;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Frequency;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopPatternFlexFields;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitService;
-import org.opentripplanner.model.CalendarService;
+import org.opentripplanner.model.*;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -50,7 +36,6 @@ import org.opentripplanner.graph_builder.annotation.TripUndefinedService;
 import org.opentripplanner.graph_builder.module.GtfsFeedId;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.core.StopTransfer;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -258,6 +243,10 @@ public class PatternHopFactory {
 
     private Map<String, Geometry> flexAreasById = new HashMap<>();
 
+    private Map<FeedScopedId, Zone> zonesById = new HashMap<>();
+
+    private Map<FeedScopedId, Collection<FareRule>> fareRulesById = new HashMap<>();
+
     private FareServiceFactory fareServiceFactory;
 
     private Multimap<StopPattern, TripPattern> tripPatterns = HashMultimap.create();
@@ -303,7 +292,11 @@ public class PatternHopFactory {
         clearCachedData(); 
 
         loadFlexAreaMap();
+        loadFareRuleMap();
+        loadZoneMap();
         loadFlexAreasIntoGraph(graph);
+        loadFareRulesIntoGraph(graph);
+        loadZonesIntoGraph(graph);
 
         /* Assign 0-based numeric codes to all GTFS service IDs. */
         for (FeedScopedId serviceId : transitService.getAllServiceIds()) {
@@ -1028,6 +1021,8 @@ public class PatternHopFactory {
         distancesByShapeId.clear();
         geometriesByShapeSegmentKey.clear();
         flexAreasById.clear();
+        fareRulesById.clear();
+        zonesById.clear();
     }
 
     private void loadTransfers(Graph graph) {
@@ -1532,10 +1527,42 @@ public class PatternHopFactory {
         }
     }
 
+    private void loadZoneMap() {
+        for (Zone zone : transitService.getAllZones()) {
+            System.out.println(zone.getId());
+            zonesById.put(zone.getId(), zone);
+        }
+    }
+
+    private void loadFareRuleMap(){
+        for(FareRule fareRule : transitService.getAllFareRules()){
+            if(fareRulesById.get(fareRule.getFare().getId()) != null){
+                fareRulesById.get(fareRule.getFare().getId()).add(fareRule);
+            }else{
+                List<FareRule> list = new ArrayList<>();
+                list.add(fareRule);
+                fareRulesById.put(fareRule.getFare().getId(), list);
+            }
+
+        }
+    }
+
     private void loadFlexAreasIntoGraph(Graph graph) {
         for (Map.Entry<String, Geometry> entry : flexAreasById.entrySet()) {
             FeedScopedId id = new FeedScopedId(feedId.getId(), entry.getKey());
             graph.flexAreasById.put(id, entry.getValue());
+        }
+    }
+
+    private void loadZonesIntoGraph(Graph graph) {
+        for (Map.Entry<FeedScopedId, Zone> entry : zonesById.entrySet()) {
+            graph.zonesById.put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private void loadFareRulesIntoGraph(Graph graph){
+        for (Map.Entry<FeedScopedId, Collection<FareRule>> entry : fareRulesById.entrySet()) {
+            graph.fareRulesById.put(entry.getKey(), entry.getValue());
         }
     }
 

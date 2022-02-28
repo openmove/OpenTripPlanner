@@ -1,7 +1,11 @@
 package org.opentripplanner.gtfs.mapping;
 
+import org.onebusaway.gtfs.model.Zone;
+import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
 import org.opentripplanner.model.OtpTransitService;
+
+import java.util.Collection;
 
 
 /**
@@ -43,6 +47,7 @@ public class GTFSToOtpTransitServiceMapper {
     );
 
     private final AreaMapper areaMapper = new AreaMapper();
+    private final ZoneMapper zoneMapper = new ZoneMapper();
 
     /**
      * Map from GTFS data to the internal OTP model
@@ -64,11 +69,13 @@ public class GTFSToOtpTransitServiceMapper {
         builder.getPathways().addAll(pathwayMapper.map(data.getAllPathways()));
         builder.getRoutes().addAll(routeMapper.map(data.getAllRoutes()));
         builder.getShapePoints().addAll(shapePointMapper.map(data.getAllShapePoints()));
-        builder.getStops().addAll(stopMapper.map(data.getAllStops()));
+        Collection<Stop> stopsMapped = stopMapper.map(data.getAllStops());
+        builder.getStops().addAll(stopsMapped);
         builder.getStopTimes().addAll(stopTimeMapper.map(data.getAllStopTimes()));
         builder.getTransfers().addAll(transferMapper.map(data.getAllTransfers()));
         builder.getTrips().addAll(tripMapper.map(data.getAllTrips()));
         builder.getFlexAreas().addAll(areaMapper.map(data.getAllAreas()));
+        builder.getZones().addAll(zoneMapper.map(data.getAllEntitiesForType(Zone.class), stopsMapped));
 
         return builder.build();
     }

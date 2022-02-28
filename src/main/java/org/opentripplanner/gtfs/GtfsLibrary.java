@@ -105,7 +105,7 @@ public class GtfsLibrary {
         case 4:
             return TraverseMode.FERRY;
         case 5:
-            return TraverseMode.CABLE_CAR;
+            return TraverseMode.CABLECAR;
         case 6:
             return TraverseMode.GONDOLA;
         case 7:

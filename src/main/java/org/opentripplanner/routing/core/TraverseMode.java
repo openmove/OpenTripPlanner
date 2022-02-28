@@ -11,7 +11,7 @@ import java.util.Set;
 public enum TraverseMode {
     WALK, BICYCLE, CAR,
     TRAM, SUBWAY, RAIL, BUS, FERRY,
-    CABLE_CAR, GONDOLA, FUNICULAR,
+    CABLECAR, GONDOLA, FUNICULAR,
     TRANSIT, LEG_SWITCH,
     AIRPLANE, MICROMOBILITY;
 
@@ -34,7 +34,7 @@ public enum TraverseMode {
 
     public boolean isTransit() {
         return this == TRAM || this == SUBWAY || this == RAIL || this == BUS || this == FERRY
-                || this == CABLE_CAR || this == GONDOLA || this == FUNICULAR || this == TRANSIT
+                || this == CABLECAR || this == GONDOLA || this == FUNICULAR || this == TRANSIT
                 || this == AIRPLANE;
     }
 

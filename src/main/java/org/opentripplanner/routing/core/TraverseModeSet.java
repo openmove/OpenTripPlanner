@@ -32,7 +32,7 @@ public class TraverseModeSet implements Cloneable, Serializable {
 
     private static final int MODE_FERRY = 256;
 
-    private static final int MODE_CABLE_CAR = 512;
+    private static final int MODE_CABLECAR = 512;
 
     private static final int MODE_GONDOLA = 1024;
 
@@ -43,7 +43,7 @@ public class TraverseModeSet implements Cloneable, Serializable {
     private static final int MODE_MICROMOBILITY = 8192;
 
     private static final int MODE_TRANSIT = MODE_TRAM | MODE_RAIL | MODE_SUBWAY | MODE_FUNICULAR
-            | MODE_GONDOLA | MODE_CABLE_CAR | MODE_BUS | MODE_FERRY | MODE_AIRPLANE;
+            | MODE_GONDOLA | MODE_CABLECAR | MODE_BUS | MODE_FERRY | MODE_AIRPLANE;
  
     private static final int MODE_ALL = MODE_TRANSIT | MODE_WALK | MODE_BICYCLE | MODE_MICROMOBILITY;
 
@@ -89,8 +89,8 @@ public class TraverseModeSet implements Cloneable, Serializable {
             return MODE_BUS;
         case TRAM:
             return MODE_TRAM;
-        case CABLE_CAR:
-            return MODE_CABLE_CAR;
+        case CABLECAR:
+            return MODE_CABLECAR;
         case GONDOLA:
             return MODE_GONDOLA;
         case FERRY:
@@ -157,7 +157,7 @@ public class TraverseModeSet implements Cloneable, Serializable {
     }
     
     public boolean getCableCar() {
-        return (modes & MODE_CABLE_CAR) != 0;
+        return (modes & MODE_CABLECAR) != 0;
     }
 
     public boolean getFunicular() {
@@ -229,9 +229,9 @@ public class TraverseModeSet implements Cloneable, Serializable {
 
     public void setCableCar(boolean cableCar) {
         if (cableCar) {
-            modes |= MODE_CABLE_CAR;
+            modes |= MODE_CABLECAR;
         } else {
-            modes &= ~MODE_CABLE_CAR;
+            modes &= ~MODE_CABLECAR;
         }
     }
 

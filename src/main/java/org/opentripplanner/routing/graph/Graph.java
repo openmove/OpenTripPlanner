@@ -24,13 +24,9 @@ import org.joda.time.DateTime;
 import org.objenesis.strategy.SerializingInstantiatorStrategy;
 import org.opentripplanner.calendar.impl.CalendarServiceImpl;
 import org.opentripplanner.graph_builder.module.GraphBuilderModuleSummary;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.FeedInfo;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.analyst.core.GeometryIndex;
 import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.common.MavenVersion;
@@ -39,9 +35,9 @@ import org.opentripplanner.common.geometry.GraphUtils;
 import org.opentripplanner.graph_builder.annotation.GraphBuilderAnnotation;
 import org.opentripplanner.graph_builder.annotation.NoFutureDates;
 import org.opentripplanner.kryo.HashBiMapSerializer;
-import org.opentripplanner.model.GraphBundle;
 import org.opentripplanner.profile.StopClusterMode;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.core.FareRuleSet;
 import org.opentripplanner.routing.core.MortonVertexComparatorFactory;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -226,6 +222,12 @@ public class Graph implements Serializable {
 
     /** Areas for flex service */
     public Map<FeedScopedId, Geometry> flexAreasById = new HashMap<>();
+
+    /** Fare rules*/
+    public Map<FeedScopedId, Collection<FareRule>> fareRulesById = new HashMap<>();
+
+    /** Zones*/
+    public Map<FeedScopedId, Zone> zonesById = new HashMap<>();
 
     public Graph(Graph basedOn) {
         this();

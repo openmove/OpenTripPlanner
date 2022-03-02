@@ -1529,7 +1529,6 @@ public class PatternHopFactory {
 
     private void loadZoneMap() {
         for (Zone zone : transitService.getAllZones()) {
-            System.out.println(zone.getId());
             zonesById.put(zone.getId(), zone);
         }
     }

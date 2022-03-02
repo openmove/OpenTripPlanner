@@ -638,6 +638,8 @@ public class GraphIndex {
     private void clusterStops() {
     	if (graph.stopClusterMode == StopClusterMode.parentStation) {
             clusterByParentStation();
+        } else if(graph.stopClusterMode == StopClusterMode.proximityOnly){
+            clusterByProximityOnly(50);
         } else {
             clusterByProximityAndName();
         }
@@ -686,6 +688,33 @@ public class GraphIndex {
 	        cluster.computeCenter();
 	        stopClusterForId.put(cluster.id, cluster);
 	    }
+    }
+
+    private void clusterByProximityOnly(int clusterRadius) {
+        int psIdx = 0; // unique index for next parent stop
+        LOG.info("Clustering stops by geographic proximity ...");
+        // Each stop without a cluster will greedily claim other stops without clusters.
+        for (Stop s0 : stopForId.values()) {
+            if (stopClusterForStop.containsKey(s0)) continue; // skip stops that have already been claimed by a cluster
+            String s0normalizedName = StopNameNormalizer.normalize(s0.getName());
+            StopCluster cluster = new StopCluster(String.format("C%03d", psIdx++), s0normalizedName);
+            // LOG.info("stop {}", s0normalizedName);
+            // No need to explicitly add s0 to the cluster. It will be found in the spatial index query below.
+            Envelope env = new Envelope(new Coordinate(s0.getLon(), s0.getLat()));
+            env.expandBy(SphericalDistanceLibrary.metersToLonDegrees(clusterRadius, s0.getLat()),
+                    SphericalDistanceLibrary.metersToDegrees(clusterRadius));
+            for (TransitStop ts1 : stopSpatialIndex.query(env)) {
+                Stop s1 = ts1.getStop();
+                double geoDistance = SphericalDistanceLibrary.fastDistance(
+                        s0.getLat(), s0.getLon(), s1.getLat(), s1.getLon());
+                if (geoDistance < clusterRadius) {
+                    cluster.children.add(s1);
+                    stopClusterForStop.put(s1, cluster);
+                }
+            }
+            cluster.computeCenter();
+            stopClusterForId.put(cluster.id, cluster);
+        }
     }
 
     /**

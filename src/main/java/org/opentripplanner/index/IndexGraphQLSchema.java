@@ -1872,6 +1872,21 @@ public class IndexGraphQLSchema {
                         .dataFetcher(new PropertyDataFetcher("fare"))
                         .build())
                 .build();
+        GraphQLObjectType simpleZoneType = GraphQLObjectType.newObject()
+                .name("Zone")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("gtfsId")
+                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                        .dataFetcher(environment ->
+                                GtfsLibrary.convertIdToString(((Zone) environment.getSource()).getId()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("name")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("name"))
+                        .build())
+                .build();
+
         GraphQLObjectType zoneType = GraphQLObjectType.newObject()
                 .name("Zone")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1899,6 +1914,65 @@ public class IndexGraphQLSchema {
                         .name("stops")
                         .type(new GraphQLList(stopType))
                         .dataFetcher(new PropertyDataFetcher("stops"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("destinations")
+                        .type(new GraphQLList(simpleZoneType))
+                        .argument(GraphQLArgument.newArgument()
+                                .name("mode")
+                                .type(Scalars.GraphQLString)
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("limit")
+                                .type(Scalars.GraphQLLong)
+                                .defaultValue(Long.MAX_VALUE)
+                                .build())
+                        .dataFetcher(environment -> {
+                            FeedScopedId originId = ((Zone) environment.getSource()).getId();
+                            List<Zone> destinationZones = new ArrayList<>();
+                            for (Collection<FareRule> rules : index.fareRulesById.values()) {
+                                for (FareRule rule : rules) {
+                                    if(rule.getOriginId() != null
+                                            && rule.getOriginId().equals(originId.getId())
+                                            && rule.getFare().getId().getAgencyId().equals(originId.getAgencyId())){
+                                        FeedScopedId destinationId = new FeedScopedId(rule.getFare().getId().getAgencyId(),rule.getDestinationId());
+                                        Zone destinationZone = index.zonesById.get(destinationId);
+                                        if(destinationZone != null){
+                                            List<TraverseMode> modes = new ArrayList<>();
+
+                                            for(Stop stop : destinationZone.getStops()){
+                                                TraverseMode traverseMode = index.patternsForStop.get(stop)
+                                                        .stream()
+                                                        .map(pattern -> pattern.mode)
+                                                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                        .entrySet()
+                                                        .stream()
+                                                        .max(Comparator.comparing(Map.Entry::getValue))
+                                                        .map(e -> e.getKey())
+                                                        .orElse(null);
+                                                if(traverseMode != null){
+                                                    if(!modes.contains(traverseMode)){
+                                                        modes.add(traverseMode);
+                                                    }
+                                                }
+                                            }
+                                            for(TraverseMode mode : modes){
+                                                if(mode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                    if(!destinationZones.contains(destinationZone)){
+                                                        destinationZones.add(destinationZone);
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            return destinationZones
+                                    .stream()
+                                    .limit(environment.getArgument("limit"))
+                                    .collect(Collectors.toList());
+                        })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("modes")
@@ -2232,6 +2306,36 @@ public class IndexGraphQLSchema {
                         return index.zonesById.values().stream()
                                 .filter(zone -> p.matcher(zone.getName()).matches())
                                 .skip(environment.getArgument("skip"))
+                                .limit(environment.getArgument("limit"))
+                                .collect(Collectors.toList());
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("nearestZones")
+                    .description("Get zones order by distance from a point")
+                    .type(new GraphQLList(zoneType))
+                    .argument(GraphQLArgument.newArgument()
+                            .name("lat")
+                            .type(Scalars.GraphQLFloat)
+                            .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("lon")
+                            .type(Scalars.GraphQLFloat)
+                            .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("limit")
+                            .type(Scalars.GraphQLLong)
+                            .defaultValue(Long.MAX_VALUE)
+                            .build())
+                    .dataFetcher(environment -> {
+                        double lon = environment.getArgument("lon");
+                        double lat = environment.getArgument("lat");
+                        Coordinate pointCoordinate = new Coordinate(lon, lat);
+                        return index.zonesById.values().stream()
+                                .sorted(Comparator.comparing(z -> {
+                                    Coordinate zoneCoordinate = new Coordinate(z.getLon(), z.getLat());
+                                    return zoneCoordinate.distance(pointCoordinate);
+                                }))
                                 .limit(environment.getArgument("limit"))
                                 .collect(Collectors.toList());
                     })

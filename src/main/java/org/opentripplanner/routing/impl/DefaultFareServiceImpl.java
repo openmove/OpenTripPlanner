@@ -11,7 +11,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.FareAttribute;
 import org.opentripplanner.model.Route;
@@ -137,8 +140,13 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
     }
 
     @Override
-    public Fare getCost(GraphPath path) {
+    public Fare getCost(GraphPath graph) {
+        return getCost(graph, null);
+    }
 
+    @Override
+    public Fare getCost(GraphPath path, List<Leg> legs) {
+        List<Leg> transitLegs = legs.stream().filter(Leg::isTransitLeg).collect(Collectors.toList());
         List<Ride> rides = createRides(path);
         // If there are no rides, there's no fare.
         if (rides.size() == 0) {
@@ -156,6 +164,15 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                 currency = Currency.getInstance(fareRules.iterator().next().getFareAttribute().getCurrencyType());
             }
             hasFare = populateFare(fare, currency, fareType, rides, fareRules);
+        }
+
+        int rideIndex = 0;
+        // Copy fares over from Rides to Legs if they're populated.
+        for (Ride ride : rides) {
+            if(ride.fare != null) {
+                transitLegs.get(rideIndex).fare = ride.fare;
+            }
+            rideIndex++;
         }
         return hasFare ? fare : null;
     }

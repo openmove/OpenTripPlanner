@@ -3,6 +3,7 @@ package org.opentripplanner.routing.impl;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.routing.core.Fare;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,6 +38,8 @@ public class Ride {
     public Stop firstStop;
 
     public Stop lastStop;
+
+    public Fare fare;
 
     public Ride() {
         zones = new HashSet<>();

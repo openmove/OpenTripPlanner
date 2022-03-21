@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.routing.alertpatch.Alert;
+import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
@@ -67,6 +68,11 @@ public class Leg {
      * Is this leg a traversing pathways?
      */
     public Boolean pathway = false;
+
+    /**
+     * Contains the fare for this leg.
+     */
+    public Fare fare = null;
 
     /**
      * The mode (e.g., <code>Walk</code>) used when traversing this leg.

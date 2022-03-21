@@ -240,12 +240,12 @@ public abstract class GraphPathToTripPlanConverter {
 
         State[][] legsStates = sliceStates(states);
 
-        if (fareService != null) {
-            itinerary.fare = fareService.getCost(path);
-        }
-
         for (State[] legStates : legsStates) {
             itinerary.addLeg(generateLeg(graph, legStates, showIntermediateStops, disableAlertFiltering, requestedLocale));
+        }
+
+        if (fareService != null) {
+            addFareData(path, itinerary, fareService);
         }
 
         addWalkSteps(graph, itinerary.legs, legsStates, requestedLocale);
@@ -709,6 +709,10 @@ public abstract class GraphPathToTripPlanConverter {
                 previousStep = null;
             }
         }
+    }
+
+    private  static void addFareData(GraphPath graph, Itinerary itinerary, FareService fareService) {
+        itinerary.fare = fareService.getCost(graph, itinerary.legs);
     }
 
     /**

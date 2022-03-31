@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -84,6 +85,16 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
             if (route != null) {
                 FeedScopedId routeId = route.getId();
                 fareRule.addRoute(routeId);
+            }
+
+            String routingId = rule.getRoutingId();
+            if(routingId != null){
+                fareRule.setRoutingId(routingId);
+            }
+
+            List<String> traversedNodes = rule.getTraversedNodes();
+            for(String node : traversedNodes){
+                fareRule.addTraversedNode(node);
             }
         }
     }

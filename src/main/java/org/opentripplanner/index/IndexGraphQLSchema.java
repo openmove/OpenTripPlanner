@@ -119,7 +119,7 @@ public class IndexGraphQLSchema {
             .value("AIRPLANE", TraverseMode.AIRPLANE, "AIRPLANE")
             .value("BICYCLE", TraverseMode.BICYCLE, "BICYCLE")
             .value("BUS", TraverseMode.BUS, "BUS")
-            .value("CABLE_CAR", TraverseMode.CABLECAR, "CABLE_CAR")
+            .value("CABLECAR", TraverseMode.CABLECAR, "CABLECAR")
             .value("CAR", TraverseMode.CAR, "CAR")
             .value("FERRY", TraverseMode.FERRY, "FERRY")
             .value("FUNICULAR", TraverseMode.FUNICULAR, "FUNICULAR")
@@ -1930,8 +1930,14 @@ public class IndexGraphQLSchema {
                         .dataFetcher(environment -> {
                             FeedScopedId originId = ((Zone) environment.getSource()).getId();
                             List<Zone> destinationZones = new ArrayList<>();
-                            for (Collection<FareRule> rules : index.fareRulesById.values()) {
+                            List<FeedScopedId> rulesContains = new ArrayList<>();
+                            for (FeedScopedId key : index.fareRulesById.keySet()) {
+                                Collection<FareRule> rules = index.fareRulesById.get(key);
                                 for (FareRule rule : rules) {
+                                    if(rule.getContainsId() != null && rule.getContainsId().equals(originId.getId())){
+                                        rulesContains.add(key);
+                                    }
+
                                     if(rule.getOriginId() != null
                                             && rule.getOriginId().equals(originId.getId())
                                             && rule.getFare().getId().getAgencyId().equals(originId.getAgencyId())){
@@ -1957,9 +1963,59 @@ public class IndexGraphQLSchema {
                                                 }
                                             }
                                             for(TraverseMode mode : modes){
-                                                if(mode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                if(environment.getArgument("mode") == null){
+                                                    //no filter
                                                     if(!destinationZones.contains(destinationZone)){
                                                         destinationZones.add(destinationZone);
+                                                    }
+                                                    break;
+                                                } else if(mode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                    if(!destinationZones.contains(destinationZone)){
+                                                        destinationZones.add(destinationZone);
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            for(FeedScopedId key : rulesContains){
+                                Collection<FareRule> rules = index.fareRulesById.get(key);
+                                for (FareRule rule : rules) {
+                                    if(rule.getContainsId() != null){
+                                        FeedScopedId zoneId = new FeedScopedId(rule.getFare().getId().getAgencyId(),rule.getContainsId());
+                                        Zone zone = index.zonesById.get(zoneId);
+                                        if(zone != null){
+                                            List<TraverseMode> modes = new ArrayList<>();
+
+                                            for(Stop stop : zone.getStops()){
+                                                TraverseMode traverseMode = index.patternsForStop.get(stop)
+                                                        .stream()
+                                                        .map(pattern -> pattern.mode)
+                                                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                        .entrySet()
+                                                        .stream()
+                                                        .max(Comparator.comparing(Map.Entry::getValue))
+                                                        .map(e -> e.getKey())
+                                                        .orElse(null);
+                                                if(traverseMode != null){
+                                                    if(!modes.contains(traverseMode)){
+                                                        modes.add(traverseMode);
+                                                    }
+                                                }
+                                            }
+                                            for(TraverseMode mode : modes){
+                                                if(environment.getArgument("mode") == null){
+                                                    //no filter
+                                                    if(!destinationZones.contains(zone)){
+                                                        destinationZones.add(zone);
+                                                    }
+                                                    break;
+                                                } else if(mode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                    if(!destinationZones.contains(zone)){
+                                                        destinationZones.add(zone);
                                                     }
                                                     break;
                                                 }
@@ -2327,11 +2383,39 @@ public class IndexGraphQLSchema {
                             .type(Scalars.GraphQLLong)
                             .defaultValue(Long.MAX_VALUE)
                             .build())
+                    .argument(GraphQLArgument.newArgument()
+                            .name("mode")
+                            .type(Scalars.GraphQLString)
+                            .build())
                     .dataFetcher(environment -> {
                         double lon = environment.getArgument("lon");
                         double lat = environment.getArgument("lat");
                         Coordinate pointCoordinate = new Coordinate(lon, lat);
                         return index.zonesById.values().stream()
+                                .filter(zone -> {
+                                            if (environment.getArgument("mode") == null) {
+                                                return true;
+                                            } else {
+                                                for(Stop stop : zone.getStops()){
+                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
+                                                            .stream()
+                                                            .map(pattern -> pattern.mode)
+                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                            .entrySet()
+                                                            .stream()
+                                                            .max(Comparator.comparing(Map.Entry::getValue))
+                                                            .map(e -> e.getKey())
+                                                            .orElse(null);
+                                                    if(traverseMode != null){
+                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                            return true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            return false;
+                                        }
+                                )
                                 .sorted(Comparator.comparing(z -> {
                                     Coordinate zoneCoordinate = new Coordinate(z.getLon(), z.getLat());
                                     return zoneCoordinate.distance(pointCoordinate);

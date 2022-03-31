@@ -92,7 +92,7 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
             if (!ruleSet.hasAgencyDefined() && !attribute.getId().getAgencyId().equals(feedId))
                 continue;
 
-            if (ruleSet.matches(agencies, startZone, endZone, zones, routes, trips)) {
+            if (ruleSet.matchesTT(agencies, startZone, endZone, zones, routes, trips)) {
                 // TODO Maybe move the code below in FareRuleSet::matches() ?
                 if (attribute.isTransfersSet() && attribute.getTransfers() < transfersUsed) {
                     continue;

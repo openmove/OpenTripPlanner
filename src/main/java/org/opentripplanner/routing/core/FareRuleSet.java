@@ -18,6 +18,8 @@ public class FareRuleSet implements Serializable {
     private Set<String> contains;
     private FareAttribute fareAttribute;
     private Set<FeedScopedId> trips;
+    private String routingId;
+    private Set<String> traversedNodes;
     
     public FareRuleSet(FareAttribute fareAttribute) {
         this.fareAttribute = fareAttribute;
@@ -25,6 +27,7 @@ public class FareRuleSet implements Serializable {
         originDestinations= new HashSet<P2<String>>();
         contains = new HashSet<String>();
         trips = new HashSet<FeedScopedId>();
+        traversedNodes = new HashSet<String>();
     }
 
     public void setAgency(String agency) {
@@ -71,8 +74,71 @@ public class FareRuleSet implements Serializable {
     public Set<FeedScopedId> getTrips() {
     	return trips;
     }
+
+    public void setRoutingId(String routingId) {
+        this.routingId = routingId;
+    }
+
+    public String getRoutingId() {
+        return this.routingId;
+    }
+
+    public void addTraversedNode(String node) {
+        this.traversedNodes.add(node);
+    }
+
+    public Set<String> getTraversedNodes() {
+        return this.traversedNodes;
+    }
     
     public boolean matches(Set<String> agencies, String startZone, String endZone, Set<String> zonesVisited,
+                           Set<FeedScopedId> routesVisited, Set<FeedScopedId> tripsVisited) {
+        //check for matching agency
+        if (agency != null) {
+            if (agencies.size() != 1 || !agencies.contains(agency))
+                return false;
+        }
+
+        //check for matching origin/destination, if this ruleset has any origin/destination restrictions
+        if (originDestinations.size() > 0) {
+            P2<String> od = new P2<String>(startZone, endZone);
+            if (!originDestinations.contains(od)) {
+                P2<String> od2 = new P2<String>(od.first, null);
+                if (!originDestinations.contains(od2)) {
+                    od2 = new P2<String>(null, od.first);
+                    if (!originDestinations.contains(od2)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        //check for matching contains, if this ruleset has any containment restrictions
+        if (contains.size() > 0) {
+            if (!contains.equals(zonesVisited)) {
+                return false;
+            }
+        }
+
+        //check for matching routes
+        if (routes.size() != 0) {
+            if (!routes.containsAll(routesVisited)) {
+                return false;
+            }
+        }
+        
+        //check for matching trips
+        if (trips.size() != 0) {
+        	if (!trips.containsAll(tripsVisited)) {
+        		return false;
+        	}
+        }
+
+        return true;
+    }
+
+    //customization for Trentino Trasporti rules
+    public boolean matchesTT(Set<String> agencies, String startZone, String endZone, Set<String> zonesVisited,
                            Set<FeedScopedId> routesVisited, Set<FeedScopedId> tripsVisited) {
         //check for matching agency
         if (agency != null) {
@@ -107,12 +173,18 @@ public class FareRuleSet implements Serializable {
                 return false;
             }
         }
-        
+
         //check for matching trips
         if (trips.size() != 0) {
-        	if (!trips.containsAll(tripsVisited)) {
-        		return false;
-        	}
+            if (!trips.containsAll(tripsVisited)) {
+                return false;
+            }
+        }
+
+        if(traversedNodes.size() != 0){
+            if(!traversedNodes.containsAll(zonesVisited)){
+                return false;
+            }
         }
 
         return true;

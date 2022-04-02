@@ -154,6 +154,7 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
             retval = new MultipleFareServiceFactory.AddingMultipleFareServiceFactory();
             break;
         case "atl":
+            LOG.warn("The ATL fare service is not completed.");
             retval = new ATLFareServiceFactory();
             break;
         case "bike-rental-time-based":

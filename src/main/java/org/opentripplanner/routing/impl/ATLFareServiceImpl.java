@@ -8,10 +8,7 @@ import org.opentripplanner.routing.core.FareRuleSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Currency;
-import java.util.List;
+import java.util.*;
 
 public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     private enum TransferType {
@@ -63,7 +60,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
 
             // Consider the conditions under which this transfer will no longer be valid.
             if(transferClassification.type.equals(TransferType.END_TRANSFER)) return false;
-            else if(ride.startTime >= transferStartTime + transferClassification.window) return false;
+            else if(ride.startTime >= transferStartTime + transferClassification.window * 60) return false;
             else if(rides.size() >= transferClassification.maxTransfers) return false;
 
             // The transfer is valid for this ride, so create a fare object.
@@ -94,7 +91,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 fare.addFare(fareType, getMoney(currency, newCost));
                 return true;
             } else if(transferClassification.type.equals(TransferType.TRANSFER_WITH_UPCHARGE)) {
-                fare.addFare(fareType, getMoney(currency, transferClassification.upcharge));
+                fare.addFare(fareType, getMoney(currency, (float) transferClassification.upcharge / 100));
                 return true;
             }
             return true;
@@ -159,29 +156,58 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     private static RideType classify(Ride ride) {
         Route routeData = ride.routeData;
 
+        // CobbLinc
+        if (ride.feedId.equals("2")) return RideType.COBB_LOCAL;
+
+        // Xpress
+        else if (ride.feedId.equals("6")) {
+            // TODO: derive zone from GTFS-based fare info?
+            if (Arrays.asList("463").contains(routeData.getShortName())) return RideType.XPRESS_GREEN;
+        }
+
+        // Default to MARTA
         return RideType.MARTA;
         // TODO: Finish
     }
 
     private static TransferMeta classifyTransfer(RideType toRideType, RideType fromRideType, Fare.FareType fareType) {
-       switch (toRideType) {
-           case MARTA:
-               if(isElectronicPayment(fareType)) {
-                   switch(fromRideType) {
-                       case MARTA:
-                       case XPRESS_BLUE:
-                       case XPRESS_GREEN:
-                           return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
-                       case STREETCAR:
-                           return new TransferMeta(TransferType.NO_TRANSFER);
-                       default:
-                           return new TransferMeta(TransferType.END_TRANSFER);
-                   }
-               } else {
-                   return new TransferMeta(TransferType.END_TRANSFER);
+        switch (toRideType) {
+            case COBB_LOCAL:
+                if(!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
+                switch(fromRideType) {
+                    case COBB_LOCAL:
+                    case COBB_EXPRESS:
+                    case MARTA:
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                    default:
+                        return new TransferMeta(TransferType.END_TRANSFER);
+                }
+            case MARTA:
+               if(!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
+               switch(fromRideType) {
+                   case MARTA:
+                   case XPRESS_BLUE:
+                   case XPRESS_GREEN:
+                   case COBB_LOCAL:
+                   case COBB_EXPRESS:
+                   case GCT_EXPRESS_Z1:
+                   case GCT_EXPRESS_Z2:
+                       return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                   case STREETCAR:
+                       return new TransferMeta(TransferType.NO_TRANSFER);
+                   default:
+                       return new TransferMeta(TransferType.END_TRANSFER);
                }
-           case STREETCAR:
-               return new TransferMeta(TransferType.NO_TRANSFER);
+            case XPRESS_GREEN:
+                if(!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
+                switch(fromRideType) {
+                    case MARTA:
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                    case COBB_LOCAL:
+                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 4, 150);
+                    default:
+                        return new TransferMeta(TransferType.NO_TRANSFER);
+                }
            default:
               return new TransferMeta(TransferType.END_TRANSFER);
        }
@@ -234,6 +260,8 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         for(ATLTransfer transfer : transfers) {
             cost += transfer.getTotal();
         }
+
+        fare.addFare(fareType, getMoney(currency, cost));
 
         return true;
     }

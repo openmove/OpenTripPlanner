@@ -15,11 +15,19 @@ public class FareComponent {
     public FeedScopedId fareId;
     public Money price;
     public List<FeedScopedId> routes;
+    public int legIndex;
+    public boolean isTransfer;
 
     public FareComponent(FeedScopedId fareId, Money amount) {
         this.fareId = fareId;
         price = amount;
         routes = new ArrayList<FeedScopedId>();
+    }
+
+    public FareComponent(Money amount, boolean isTransfer) {
+        price = amount;
+        this.legIndex = legIndex;
+        this.isTransfer = isTransfer;
     }
 
     public void addRoute(FeedScopedId routeId) {

@@ -146,7 +146,6 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
 
     @Override
     public Fare getCost(GraphPath path, List<Leg> legs) {
-        List<Leg> transitLegs = legs.stream().filter(Leg::isTransitLeg).collect(Collectors.toList());
         List<Ride> rides = createRides(path);
         // If there are no rides, there's no fare.
         if (rides.size() == 0) {
@@ -164,16 +163,26 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                 currency = Currency.getInstance(fareRules.iterator().next().getFareAttribute().getCurrencyType());
             }
             hasFare = populateFare(fare, currency, fareType, rides, fareRules);
+
+            // Add the ride's fare component objects to the itinerary's fare details
+            int rideIndex = 0;
+            int legIndex = 0;
+            List<FareComponent> fareComponents = new ArrayList<FareComponent>(); // List of components for this fareType
+            for (Leg leg : legs) {
+                if (leg.isTransitLeg()) { // Match transit legs to the rides this way. Is there a better way?
+                    Ride ride = rides.get(rideIndex);
+                    if(ride.fareComponents.containsKey(fareType)) {
+                        FareComponent fareComponent = ride.fareComponents.get(fareType);
+                        fareComponent.legIndex = legIndex; // Assign the leg index
+                        fareComponents.add(fareComponent); // Add ride's fare component to list
+                    }
+                    rideIndex++;
+                }
+                legIndex++;
+            }
+            fare.addFareDetails(fareType, fareComponents);
         }
 
-        int rideIndex = 0;
-        // Copy fares over from Rides to Legs if they're populated.
-        for (Ride ride : rides) {
-            if(ride.fare != null) {
-                transitLegs.get(rideIndex).fare = ride.fare;
-            }
-            rideIndex++;
-        }
         return hasFare ? fare : null;
     }
 

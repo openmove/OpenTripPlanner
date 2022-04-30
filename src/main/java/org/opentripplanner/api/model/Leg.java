@@ -70,11 +70,6 @@ public class Leg {
     public Boolean pathway = false;
 
     /**
-     * Contains the fare for this leg.
-     */
-    public Fare fare = null;
-
-    /**
      * The mode (e.g., <code>Walk</code>) used when traversing this leg.
      */
     @JsonSerialize

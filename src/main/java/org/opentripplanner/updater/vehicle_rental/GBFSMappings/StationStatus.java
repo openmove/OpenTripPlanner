@@ -19,9 +19,9 @@ public class StationStatus extends BaseGbfsResponse {
         public Integer num_bikes_disabled;
         public Integer num_docks_available;
         public Integer num_docks_disabled;
-        public Integer is_installed;
-        public Integer is_renting;
-        public Integer is_returning;
+        public Boolean is_installed;
+        public Boolean is_renting;
+        public Boolean is_returning;
         public Long last_reported;
     }
 }

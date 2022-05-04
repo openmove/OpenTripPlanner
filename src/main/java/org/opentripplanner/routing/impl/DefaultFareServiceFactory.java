@@ -15,10 +15,7 @@ import org.opentripplanner.routing.services.FareServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Implements the default GTFS fare rules as described in
@@ -89,12 +86,12 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
 
             String routingId = rule.getRoutingId();
             if(routingId != null){
-                fareRule.setRoutingId(routingId);
-            }
-
-            List<String> traversedNodes = rule.getTraversedNodes();
-            for(String node : traversedNodes){
-                fareRule.addTraversedNode(node);
+                fareRule.addRoutingId(origin, destination, routingId);
+                Set<String> traversedNodes = new HashSet<>();
+                for(String s : rule.getTraversedNodes()){
+                    traversedNodes.add(s);
+                }
+                fareRule.addTraversedNodes(origin,destination,routingId,traversedNodes);
             }
         }
     }

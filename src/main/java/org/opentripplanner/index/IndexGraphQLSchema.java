@@ -1556,11 +1556,24 @@ public class IndexGraphQLSchema {
                 .type(Scalars.GraphQLString)
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("feedIds")
+                .type(new GraphQLList(Scalars.GraphQLString))
+                .dataFetcher(environment -> {
+                    List<String> feeds = new ArrayList<>();
+                    for(String feedId : index.agenciesForFeedId.keySet()){
+                        if(index.agenciesForFeedId.get(feedId).get(((Agency) environment.getSource()).getId()) != null){
+                            feeds.add(feedId);
+                        }
+                    }
+                    return feeds;
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("routes")
                 .type(new GraphQLList(routeType))
                 .dataFetcher(environment -> index.routeForId.values()
                     .stream()
-                    .filter(route -> route.getAgency() == environment.getSource())
+                    .filter(route -> route.getAgency().equals((Agency)environment.getSource()))
                     .collect(Collectors.toList()))
                 .build())
             .build();
@@ -1825,6 +1838,11 @@ public class IndexGraphQLSchema {
                         .name("containsId")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(new PropertyDataFetcher("containsId"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("instrId")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("routingId"))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("modes")
@@ -2267,12 +2285,25 @@ public class IndexGraphQLSchema {
                         .type(Scalars.GraphQLLong)
                         .defaultValue(Long.MAX_VALUE)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("feedId")
+                        .type(Scalars.GraphQLString)
+                        .build())
                 .dataFetcher(environment -> {
                     if (!(environment.getArgument("ids") instanceof List)) {
                         return new ArrayList<>(
                                 index.routeForId
                                     .values()
                                     .stream()
+                                    .filter(route -> {
+                                        if(environment.getArgument("feedId") != null ){
+                                            if(route.getId().getAgencyId().equals((String)environment.getArgument("feedId"))){
+                                                return true;
+                                            }
+                                            return false;
+                                        }
+                                        return true;
+                                    })
                                     .skip(environment.getArgument("skip"))
                                     .limit(environment.getArgument("limit"))
                                     .collect(Collectors.toList())
@@ -3020,6 +3051,11 @@ public class IndexGraphQLSchema {
                         .name("route")
                         .type(routeType)
                         .dataFetcher(new PropertyDataFetcher("route"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("instrId")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("routingId"))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("attributes")

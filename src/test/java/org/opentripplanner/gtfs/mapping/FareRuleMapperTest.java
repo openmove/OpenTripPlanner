@@ -1,13 +1,12 @@
 package org.opentripplanner.gtfs.mapping;
 
 import org.junit.Test;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.FareAttribute;
-import org.onebusaway.gtfs.model.FareRule;
-import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -31,6 +30,8 @@ public class FareRuleMapperTest {
 
     private static final Route ROUTE = new Route();
 
+    private static final String ROUTING_ID = "Routing Id";
+
     static {
         FARE_ATTRIBUTE.setId(AGENCY_AND_ID);
         ROUTE.setId(AGENCY_AND_ID);
@@ -41,6 +42,7 @@ public class FareRuleMapperTest {
         FARE_RULE.setFare(FARE_ATTRIBUTE);
         FARE_RULE.setOriginId(ORIGIN_ID);
         FARE_RULE.setRoute(ROUTE);
+        FARE_RULE.setRoutingId(ROUTING_ID);
     }
 
     private FareRuleMapper subject = new FareRuleMapper(new RouteMapper(new AgencyMapper()),
@@ -48,9 +50,10 @@ public class FareRuleMapperTest {
 
     @Test
     public void testMapCollection() throws Exception {
-        assertNull(subject.map((Collection<FareRule>) null));
-        assertTrue(subject.map(Collections.emptyList()).isEmpty());
-        assertEquals(1, subject.map(Collections.singleton(FARE_RULE)).size());
+        assertNull(subject.map((Collection<FareRule>) null, null));
+        assertTrue(subject.map(Collections.emptyList(), null).isEmpty());
+        List<org.opentripplanner.model.FareRule> mTest = (List<org.opentripplanner.model.FareRule>) subject.map(Collections.singleton(FARE_RULE), null);
+        assertEquals(1, mTest.size());
     }
 
     @Test
@@ -60,6 +63,7 @@ public class FareRuleMapperTest {
         assertEquals(CONTAINS_ID, result.getContainsId());
         assertEquals(DESTINATION_ID, result.getDestinationId());
         assertEquals(ORIGIN_ID, result.getOriginId());
+        assertEquals(ROUTING_ID, result.getRoutingId());
         assertNotNull(result.getFare());
         assertNotNull(result.getRoute());
     }
@@ -73,6 +77,7 @@ public class FareRuleMapperTest {
         assertNull(result.getOriginId());
         assertNull(result.getFare());
         assertNull(result.getRoute());
+        assertNull(result.getRoutingId());
     }
 
     /** Mapping the same object twice, should return the the same instance. */

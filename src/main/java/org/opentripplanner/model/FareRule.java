@@ -86,6 +86,7 @@ public final class FareRule implements Serializable {
                 + toStrOpt(" contains=", containsId)
                 + toStrOpt(" destination=", destinationId)
                 + toStrOpt(" instr=", routingId)
+                + toStrOpt(" traversedNode[0]=", traversedNodes.get(0))
                 + ">";
     }
 

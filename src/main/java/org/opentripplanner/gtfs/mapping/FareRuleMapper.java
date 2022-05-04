@@ -1,6 +1,8 @@
 package org.opentripplanner.gtfs.mapping;
 
 import org.opentripplanner.model.FareRule;
+import org.onebusaway.gtfs.model.Node;
+import org.opentripplanner.model.NodeRules;
 import org.opentripplanner.util.MapUtils;
 
 import java.util.Collection;
@@ -13,6 +15,7 @@ class FareRuleMapper {
     private final RouteMapper routeMapper;
 
     private final FareAttributeMapper fareAttributeMapper;
+    private Map<String,NodeRules> allNodes = null;
 
     private Map<org.onebusaway.gtfs.model.FareRule, FareRule> mappedFareRules = new HashMap<>();
 
@@ -21,7 +24,8 @@ class FareRuleMapper {
         this.fareAttributeMapper = fareAttributeMapper;
     }
 
-    Collection<FareRule> map(Collection<org.onebusaway.gtfs.model.FareRule> allFareRules) {
+    Collection<FareRule> map(Collection<org.onebusaway.gtfs.model.FareRule> allFareRules, Map<String,NodeRules> allNodes) {
+        this.allNodes = allNodes;
         return MapUtils.mapToList(allFareRules, this::map);
     }
 
@@ -38,6 +42,20 @@ class FareRuleMapper {
         lhs.setOriginId(rhs.getOriginId());
         lhs.setDestinationId(rhs.getDestinationId());
         lhs.setContainsId(rhs.getContainsId());
+        lhs.setRoutingId(rhs.getRoutingId());
+
+        if(lhs.getOriginId() != null && lhs.getDestinationId() != null
+                && lhs.getRoutingId() != null
+                && allNodes != null){
+            String key = lhs.getOriginId()+"$"+lhs.getDestinationId()+"$"+lhs.getRoutingId();
+            if(allNodes.get(key) != null) {
+                for (String traverseNode : allNodes.get(key).getTraversedNodes()) {
+                    lhs.addTraversedNode(traverseNode);
+                }
+            }
+
+        }
+
 
         return lhs;
     }

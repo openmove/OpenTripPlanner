@@ -1,6 +1,7 @@
 package org.opentripplanner.gtfs.mapping;
 
 import org.onebusaway.gtfs.model.Zone;
+import org.onebusaway.gtfs.model.Node;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
 import org.opentripplanner.model.OtpTransitService;
@@ -48,6 +49,7 @@ public class GTFSToOtpTransitServiceMapper {
 
     private final AreaMapper areaMapper = new AreaMapper();
     private final ZoneMapper zoneMapper = new ZoneMapper();
+    private final NodeRulesMapper nodeRulesMapper = new NodeRulesMapper();
 
     /**
      * Map from GTFS data to the internal OTP model
@@ -63,7 +65,7 @@ public class GTFSToOtpTransitServiceMapper {
         builder.getCalendarDates().addAll(serviceCalendarDateMapper.map(data.getAllCalendarDates()));
         builder.getCalendars().addAll(serviceCalendarMapper.map(data.getAllCalendars()));
         builder.getFareAttributes().addAll(fareAttributeMapper.map(data.getAllFareAttributes()));
-        builder.getFareRules().addAll(fareRuleMapper.map(data.getAllFareRules()));
+        builder.getFareRules().addAll(fareRuleMapper.map(data.getAllFareRules(), nodeRulesMapper.map(data.getAllEntitiesForType(Node.class))));
         builder.getFeedInfos().addAll(feedInfoMapper.map(data.getAllFeedInfos()));
         builder.getFrequencies().addAll(frequencyMapper.map(data.getAllFrequencies()));
         builder.getPathways().addAll(pathwayMapper.map(data.getAllPathways()));

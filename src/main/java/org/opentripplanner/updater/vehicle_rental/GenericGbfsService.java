@@ -453,10 +453,10 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
             vehicleRentalStation.vehiclesAvailable = station.num_bikes_available;
 
             // assume pickups and dropoffs are allowed if installed if optional data is not provided
-            vehicleRentalStation.allowPickup = (station.is_installed == null || station.is_installed == 1) &&
-                (station.is_renting == null || station.is_renting == 1);
-            vehicleRentalStation.allowDropoff = (station.is_installed == null || station.is_installed == 1) &&
-                (station.is_returning == null || station.is_returning == 1);
+            vehicleRentalStation.allowPickup = (station.is_installed == null || station.is_installed == true) &&
+                (station.is_renting == null || station.is_renting == true);
+            vehicleRentalStation.allowDropoff = (station.is_installed == null || station.is_installed == true) &&
+                (station.is_returning == null || station.is_returning == true);
 
             // set the last reported time
             vehicleRentalStation.lastReportedEpochSeconds = RentalStation.getLastReportedTimeUsingFallbacks(

@@ -1,8 +1,7 @@
 package org.opentripplanner.routing.core;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.FareAttribute;
@@ -18,8 +17,8 @@ public class FareRuleSet implements Serializable {
     private Set<String> contains;
     private FareAttribute fareAttribute;
     private Set<FeedScopedId> trips;
-    private String routingId;
-    private Set<String> traversedNodes;
+    private HashMap<P2<String>, Set<String>> routingIds;
+    private HashMap<String, Set<String>> traversedNodes;
     
     public FareRuleSet(FareAttribute fareAttribute) {
         this.fareAttribute = fareAttribute;
@@ -27,7 +26,8 @@ public class FareRuleSet implements Serializable {
         originDestinations= new HashSet<P2<String>>();
         contains = new HashSet<String>();
         trips = new HashSet<FeedScopedId>();
-        traversedNodes = new HashSet<String>();
+        traversedNodes = new HashMap<String, Set<String>>();
+        routingIds = new HashMap<P2<String>, Set<String>>();
     }
 
     public void setAgency(String agency) {
@@ -75,20 +75,24 @@ public class FareRuleSet implements Serializable {
     	return trips;
     }
 
-    public void setRoutingId(String routingId) {
-        this.routingId = routingId;
+    public void addRoutingId(String origin, String destination, String routingId) {
+        P2<String> key = new P2<String>(origin, destination);
+        if(this.routingIds.containsKey(key)){
+            this.routingIds.get(key).add(routingId);
+        }else{
+            Set<String> list = new HashSet<>();
+            list.add(routingId);
+            this.routingIds.put(key, list);
+        }
     }
 
-    public String getRoutingId() {
-        return this.routingId;
-    }
-
-    public void addTraversedNode(String node) {
-        this.traversedNodes.add(node);
-    }
-
-    public Set<String> getTraversedNodes() {
-        return this.traversedNodes;
+    public void addTraversedNodes(String origin, String destination, String routingId, Set<String> traversed) {
+        String key = origin+"$"+destination+"$"+routingId;
+        if(this.traversedNodes.containsKey(key)){
+            this.traversedNodes.get(key).addAll(traversed);
+        }else{
+            this.traversedNodes.put(key, traversed);
+        }
     }
     
     public boolean matches(Set<String> agencies, String startZone, String endZone, Set<String> zonesVisited,
@@ -181,13 +185,24 @@ public class FareRuleSet implements Serializable {
             }
         }
 
-        if(traversedNodes.size() != 0){
-            if(!traversedNodes.containsAll(zonesVisited)){
-                return false;
-            }
-        }
-
         return true;
+    }
+
+    public Set<String> getRoutingIds(P2<String> key) {
+        if(this.routingIds.containsKey(key)){
+            return this.routingIds.get(key);
+        }else{
+            return null;
+        }
+    }
+
+    public Set<String> getTraversedNodes(String origin, String destination, String routingId) {
+        String key = origin+"$"+destination+"$"+routingId;
+        if(this.traversedNodes.containsKey(key)){
+            return this.traversedNodes.get(key);
+        }else{
+            return null;
+        }
     }
 }
 

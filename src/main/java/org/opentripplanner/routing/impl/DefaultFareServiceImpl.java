@@ -168,19 +168,21 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
             int rideIndex = 0;
             int legIndex = 0;
             List<FareComponent> fareComponents = new ArrayList<FareComponent>(); // List of components for this fareType
-            for (Leg leg : legs) {
-                if (leg.isTransitLeg()) { // Match transit legs to the rides this way. Is there a better way?
-                    Ride ride = rides.get(rideIndex);
-                    if(ride.fareComponents.containsKey(fareType)) {
-                        FareComponent fareComponent = ride.fareComponents.get(fareType);
-                        fareComponent.legIndex = legIndex; // Assign the leg index
-                        fareComponents.add(fareComponent); // Add ride's fare component to list
+            if(legs != null) {
+                for (Leg leg : legs) {
+                    if (leg.isTransitLeg()) { // Match transit legs to the rides this way. Is there a better way?
+                        Ride ride = rides.get(rideIndex);
+                        if(ride.fareComponents.containsKey(fareType)) {
+                            FareComponent fareComponent = ride.fareComponents.get(fareType);
+                            fareComponent.legIndex = legIndex; // Assign the leg index
+                            fareComponents.add(fareComponent); // Add ride's fare component to list
+                        }
+                        rideIndex++;
                     }
-                    rideIndex++;
+                    legIndex++;
                 }
-                legIndex++;
+                fare.addFareDetails(fareType, fareComponents);
             }
-            fare.addFareDetails(fareType, fareComponents);
         }
 
         return hasFare ? fare : null;

@@ -177,7 +177,8 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                             fareComponent.legIndex = legIndex; // Assign the leg index
                             fareComponents.add(fareComponent); // Add ride's fare component to list
                         }
-                        rideIndex++;
+                        // Sometimes rides are split into multiple legs, so ensure the start times match
+                        if(leg.startTime.getTimeInMillis()/1000 == ride.startTime) rideIndex++;
                     }
                     legIndex++;
                 }

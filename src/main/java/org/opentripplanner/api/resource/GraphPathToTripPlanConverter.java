@@ -244,8 +244,9 @@ public abstract class GraphPathToTripPlanConverter {
             itinerary.addLeg(generateLeg(graph, legStates, showIntermediateStops, disableAlertFiltering, requestedLocale));
         }
 
+        // getCost() needs legs to be generated first, for fare-by-leg support
         if (fareService != null) {
-            addFareData(path, itinerary, fareService);
+            itinerary.fare = fareService.getCost(path, itinerary.legs);
         }
 
         addWalkSteps(graph, itinerary.legs, legsStates, requestedLocale);
@@ -709,10 +710,6 @@ public abstract class GraphPathToTripPlanConverter {
                 previousStep = null;
             }
         }
-    }
-
-    private  static void addFareData(GraphPath graph, Itinerary itinerary, FareService fareService) {
-        itinerary.fare = fareService.getCost(graph, itinerary.legs);
     }
 
     /**

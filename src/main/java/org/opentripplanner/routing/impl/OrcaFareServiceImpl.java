@@ -484,17 +484,11 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                 // If the new fare is more than the current ORCA amount, the transfer is extended.
                 if (legFare > orcaFareDiscount) {
                     freeTransferStartTime = ride.startTime;
-                    ride.fareComponents.put(
-                        fareType,
-                        new FareComponent(getMoney(currency, legFare - orcaFareDiscount), true)
-                    );
+                    addFareComponent(ride, fareType, currency, legFare - orcaFareDiscount, true);
                     orcaFareDiscount = legFare;
                 } else {
                     // Ride is free
-                    ride.fareComponents.put(
-                        fareType,
-                        new FareComponent(getMoney(currency, 0), true)
-                    );
+                    addFareComponent(ride, fareType, currency, 0, true);
                 }
            } else if (usesOrca(fareType) && !inFreeTransferWindow) {
                 // If using Orca and outside of the free transfer window, add the cumulative Orca fare (the maximum leg 
@@ -508,10 +502,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                     freeTransferStartTime = ride.startTime;
                     // Reset the Orca fare to be the fare of this leg.
                     orcaFareDiscount = legFare;
-                    ride.fareComponents.put(
-                        fareType,
-                        new FareComponent(getMoney(currency, legFare), false)
-                    );
+                    addFareComponent(ride, fareType, currency, legFare, false);
                 } else {
                     // The leg is not using a ride type that permits free transfers.
                     // Since there are no free transfers for this leg, increase the total cost by the fare for this leg.
@@ -523,17 +514,11 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                     // also been applied to the total cost. Therefore, the next Orca cost for the next free-transfer 
                     // window needs to be reset to 0 so that it is not applied after looping through all rides.
                     orcaFareDiscount = 0;
-                    ride.fareComponents.put(
-                        fareType,
-                        new FareComponent(getMoney(currency, legFare), false)
-                    );
+                    addFareComponent(ride, fareType, currency, legFare, false);
                 }
             } else {
-                // If not using Orca, add the agencies default price for this leg.
-                ride.fareComponents.put(
-                    fareType,
-                    new FareComponent(getMoney(currency, legFare), false)
-                );
+                // If not using Orca, add the agency's default price for this leg.
+                addFareComponent(ride, fareType, currency, legFare, false);
                 cost += legFare;
             }
         }
@@ -542,6 +527,13 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             fare.addFare(fareType, getMoney(currency, cost));
         }
         return cost > 0 && cost < Float.POSITIVE_INFINITY;
+    }
+
+    private static void addFareComponent(Ride ride, Fare.FareType fareType, Currency currency, float cost, boolean isTransfer) {
+        ride.fareComponents.put(
+            fareType,
+            new FareComponent(getMoney(currency, cost), isTransfer)
+        );
     }
 
     /**

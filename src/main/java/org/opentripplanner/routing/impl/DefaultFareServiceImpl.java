@@ -164,29 +164,37 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
             }
             hasFare = populateFare(fare, currency, fareType, rides, fareRules);
 
-            // Add the ride's fare component objects to the itinerary's fare details
-            int rideIndex = 0;
-            int legIndex = 0;
-            List<FareComponent> fareComponents = new ArrayList<FareComponent>(); // List of components for this fareType
-            if(legs != null) {
-                for (Leg leg : legs) {
-                    if (leg.isTransitLeg()) { // Match transit legs to the rides this way. Is there a better way?
-                        Ride ride = rides.get(rideIndex);
-                        if(ride.fareComponents.containsKey(fareType)) {
-                            FareComponent fareComponent = ride.fareComponents.get(fareType);
-                            fareComponent.legIndex = legIndex; // Assign the leg index
-                            fareComponents.add(fareComponent); // Add ride's fare component to list
-                        }
-                        // Sometimes rides are split into multiple legs, so ensure the end times match
-                        if(leg.endTime.getTimeInMillis()/1000 == ride.endTime) rideIndex++;
-                    }
-                    legIndex++;
-                }
-                fare.addFareDetails(fareType, fareComponents);
+            if(hasFare && legs != null) {
+                populateFareDetails(fare, legs, rides, fareType);
             }
         }
 
         return hasFare ? fare : null;
+    }
+
+    private void populateFareDetails(Fare fare, List<Leg> legs, List<Ride> rides, FareType fareType) {
+        // Add the ride's fare component objects to the itinerary's fare details.
+        int rideIndex = 0;
+        int legIndex = 0;
+        // List of components for this fareType.
+        List<FareComponent> fareComponents = new ArrayList<>();
+        if (legs != null) {
+            for (Leg leg : legs) {
+                // Match transit legs to the rides this way. Is there a better way?
+                if (leg.isTransitLeg()) {
+                    Ride ride = rides.get(rideIndex);
+                    if (ride.fareComponents.containsKey(fareType)) {
+                        FareComponent fareComponent = ride.fareComponents.get(fareType);
+                        fareComponent.legIndex = legIndex;
+                        fareComponents.add(fareComponent);
+                    }
+                    // Sometimes rides are split into multiple legs, so ensure the end times match.
+                    if (leg.endTime.getTimeInMillis()/1000 == ride.endTime) rideIndex++;
+                }
+                legIndex++;
+            }
+            fare.addFareDetails(fareType, fareComponents);
+        }
     }
 
     protected static Money getMoney(Currency currency, float cost) {

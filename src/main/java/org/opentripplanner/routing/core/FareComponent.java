@@ -26,7 +26,6 @@ public class FareComponent {
 
     public FareComponent(Money amount, boolean isTransfer) {
         price = amount;
-        this.legIndex = legIndex;
         this.isTransfer = isTransfer;
     }
 

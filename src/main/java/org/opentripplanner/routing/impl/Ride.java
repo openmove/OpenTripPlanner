@@ -8,6 +8,7 @@ import org.opentripplanner.routing.core.FareComponent;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /** A set of edges on a single route, with associated information for calculating fares */
@@ -41,7 +42,7 @@ public class Ride {
 
     public Stop lastStop;
 
-    public HashMap<Fare.FareType, FareComponent> fareComponents;
+    public Map<Fare.FareType, FareComponent> fareComponents;
 
     public Ride() {
         zones = new HashSet<>();

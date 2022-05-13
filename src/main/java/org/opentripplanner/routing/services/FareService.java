@@ -12,8 +12,8 @@ import java.util.List;
  *
  */
 public interface FareService {
-	public Fare getCost(GraphPath path);
-    public default Fare getCost(GraphPath path, List<Leg> legs) {
+	Fare getCost(GraphPath path);
+    default Fare getCost(GraphPath path, List<Leg> legs) {
         return getCost(path);
-    };
+    }
 }

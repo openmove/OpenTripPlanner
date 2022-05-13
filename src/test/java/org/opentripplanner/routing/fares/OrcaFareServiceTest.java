@@ -91,6 +91,17 @@ public class OrcaFareServiceTest {
         calculateFare(rides, Fare.FareType.electronicYouth, 0f + DEFAULT_RIDE_PRICE_IN_CENTS + 175f);
     }
 
+    @Test void calculateFareByLeg() {
+        List<Ride> rides = Arrays.asList(
+            getRide(KITSAP_TRANSIT_AGENCY_ID, 0),
+            getRide(COMM_TRANS_AGENCY_ID, 2)
+        );
+        Fare fare = new Fare();
+        orcaFareService.populateFare(fare, null, Fare.FareType.electronicRegular, rides, null);
+        Assertions.assertEquals(349, rides.get(0).fareComponents.get(Fare.FareType.electronicRegular).price.getCents());
+        Assertions.assertEquals(0, rides.get(1).fareComponents.get(Fare.FareType.electronicRegular).price.getCents());
+    }
+
     /**
      * Total trip time is 2h 30m. The first four transfers are within the permitted two hour window. A single (highest)
      * Orca fare will be charged for these transfers. The fifth transfer is outside of the original two hour window so

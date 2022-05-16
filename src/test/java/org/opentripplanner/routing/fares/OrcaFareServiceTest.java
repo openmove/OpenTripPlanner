@@ -91,7 +91,11 @@ public class OrcaFareServiceTest {
         calculateFare(rides, Fare.FareType.electronicYouth, 0f + DEFAULT_RIDE_PRICE_IN_CENTS + 175f);
     }
 
-    @Test void calculateFareByLeg() {
+    /**
+     * Check to make sure the fare by leg is calculated properly for a trip with two rides.
+     */
+    @Test
+    public void calculateFareByLeg() {
         List<Ride> rides = Arrays.asList(
             getRide(KITSAP_TRANSIT_AGENCY_ID, 0),
             getRide(COMM_TRANS_AGENCY_ID, 2)

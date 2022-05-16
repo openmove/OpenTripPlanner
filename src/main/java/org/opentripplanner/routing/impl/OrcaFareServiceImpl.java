@@ -502,7 +502,6 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                     freeTransferStartTime = ride.startTime;
                     // Reset the Orca fare to be the fare of this leg.
                     orcaFareDiscount = legFare;
-                    addFareComponent(ride, fareType, currency, legFare, false);
                 } else {
                     // The leg is not using a ride type that permits free transfers.
                     // Since there are no free transfers for this leg, increase the total cost by the fare for this leg.
@@ -514,8 +513,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                     // also been applied to the total cost. Therefore, the next Orca cost for the next free-transfer 
                     // window needs to be reset to 0 so that it is not applied after looping through all rides.
                     orcaFareDiscount = 0;
-                    addFareComponent(ride, fareType, currency, legFare, false);
                 }
+                addFareComponent(ride, fareType, currency, legFare, false);
             } else {
                 // If not using Orca, add the agency's default price for this leg.
                 addFareComponent(ride, fareType, currency, legFare, false);
@@ -529,6 +528,14 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         return cost > 0 && cost < Float.POSITIVE_INFINITY;
     }
 
+    /**
+     * Adds a fare component to a given ride
+     * @param ride Ride receiving fare component
+     * @param fareType Fare type for fare component
+     * @param currency Currency for fare
+     * @param cost Cost of leg fare
+     * @param isTransfer Is this component representing a transfer?
+     */
     private static void addFareComponent(Ride ride, Fare.FareType fareType, Currency currency, float cost, boolean isTransfer) {
         ride.fareComponents.put(
             fareType,

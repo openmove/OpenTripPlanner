@@ -244,7 +244,7 @@ public abstract class GraphPathToTripPlanConverter {
             itinerary.addLeg(generateLeg(graph, legStates, showIntermediateStops, disableAlertFiltering, requestedLocale));
         }
 
-        // getCost() needs legs to be generated first, for fare-by-leg support
+        // getCost() needs legs to be generated first, for fare-by-leg support.
         if (fareService != null) {
             itinerary.fare = fareService.getCost(path, itinerary.legs);
         }

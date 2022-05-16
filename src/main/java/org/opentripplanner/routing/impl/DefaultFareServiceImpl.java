@@ -164,16 +164,22 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
             }
             hasFare = populateFare(fare, currency, fareType, rides, fareRules);
 
-            if(hasFare && legs != null) {
+            if (hasFare && legs != null) {
                 populateFareDetails(fare, legs, rides, fareType);
             }
         }
-
         return hasFare ? fare : null;
     }
 
+    /**
+     * Add fare components from each Ride to the Fare object for a given fare type.
+     * This approach is temporary and will be improved in OTP2
+     * @param fare Fare object receiving components
+     * @param legs Legs of trip
+     * @param rides Rides of trip (with fare components)
+     * @param fareType Fare type to process
+     */
     private void populateFareDetails(Fare fare, List<Leg> legs, List<Ride> rides, FareType fareType) {
-        // Add the ride's fare component objects to the itinerary's fare details.
         int rideIndex = 0;
         int legIndex = 0;
         // List of components for this fareType.
@@ -189,7 +195,7 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                         fareComponents.add(fareComponent);
                     }
                     // Sometimes rides are split into multiple legs, so ensure the end times match.
-                    if (leg.endTime.getTimeInMillis()/1000 == ride.endTime) rideIndex++;
+                    if (leg.endTime.getTimeInMillis() / 1000 == ride.endTime) rideIndex++;
                 }
                 legIndex++;
             }

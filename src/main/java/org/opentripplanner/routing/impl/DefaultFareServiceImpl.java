@@ -173,7 +173,7 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
 
     /**
      * Add fare components from each Ride to the Fare object for a given fare type.
-     * This approach is temporary and will be improved in OTP2
+     * This approach is temporary and will be improved in OTP2.
      * @param fare Fare object receiving components
      * @param legs Legs of trip
      * @param rides Rides of trip (with fare components)

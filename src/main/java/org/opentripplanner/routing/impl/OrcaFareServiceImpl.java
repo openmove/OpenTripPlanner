@@ -529,7 +529,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     }
 
     /**
-     * Adds a fare component to a given ride
+     * Adds a fare component to a given ride.
      * @param ride Ride receiving fare component
      * @param fareType Fare type for fare component
      * @param currency Currency for fare

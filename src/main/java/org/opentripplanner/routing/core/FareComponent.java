@@ -15,7 +15,13 @@ public class FareComponent {
     public FeedScopedId fareId;
     public Money price;
     public List<FeedScopedId> routes;
+    /**
+     * Index of leg in itinerary associated with this fare component.
+     */
     public int legIndex;
+    /**
+     * True if this fare component's price was reduced by a transfer.
+     */
     public boolean isTransfer;
 
     public FareComponent(FeedScopedId fareId, Money amount) {
@@ -27,6 +33,7 @@ public class FareComponent {
     public FareComponent(Money amount, boolean isTransfer) {
         price = amount;
         this.isTransfer = isTransfer;
+        routes = new ArrayList<FeedScopedId>();
     }
 
     public void addRoute(FeedScopedId routeId) {

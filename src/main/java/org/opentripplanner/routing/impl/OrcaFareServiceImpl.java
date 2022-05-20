@@ -484,7 +484,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                 // If the new fare is more than the current ORCA amount, the transfer is extended.
                 if (legFare > orcaFareDiscount) {
                     freeTransferStartTime = ride.startTime;
-                    addFareComponent(ride, fareType, currency, legFare - orcaFareDiscount, true);
+                    // Note: on first leg, discount will be 0 meaning no transfer was applied.
+                    addFareComponent(ride, fareType, currency, legFare - orcaFareDiscount, orcaFareDiscount != 0);
                     orcaFareDiscount = legFare;
                 } else {
                     // Ride is free

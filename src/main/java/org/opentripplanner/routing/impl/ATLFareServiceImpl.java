@@ -11,6 +11,14 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public class ATLFareServiceImpl extends DefaultFareServiceImpl {
+    public static final float DEFAULT_TEST_RIDE_PRICE = 3.49f;
+    public boolean IS_TEST;
+
+    public static final String COBB_AGENCY_ID = "2";
+    public static final String XPRESS_AGENCY_ID = "6";
+    public static final String MARTA_AGENCY_ID = "5";
+    public static final String GCT_AGENCY_ID = "4";
+
     private enum TransferType {
         END_TRANSFER, // Ends this transfer entirely.
         NO_TRANSFER, // Effectively no transfer, but don't invalidate this transfer
@@ -68,6 +76,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
 
             // The transfer is valid for this ride, so create a fare object.
             // TODO: Change this fare object out for the one on the Ride object when Fare-by-leg is added
+            Fare previousFare = fares.get(fares.size() - 1);
             fares.add(fare);
 
             if(transferClassification.type.equals(TransferType.NO_TRANSFER)) {
@@ -85,11 +94,11 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 return true;
             } else if(transferClassification.type.equals(TransferType.TRANSFER_PAY_DIFFERENCE)) {
                 float newCost;
-                if(defaultFare > currentDiscount) {
-                    newCost = defaultFare - currentDiscount;
-                    currentDiscount = defaultFare;
+                float previousCost = previousFare.getFare(fareType).getCents() / 100f;
+                if(defaultFare > previousCost) {
+                    newCost = defaultFare - previousCost;
                 } else {
-                    newCost = defaultFare;
+                    newCost = 0;
                 }
                 fare.addFare(fareType, getMoney(currency, newCost));
                 return true;
@@ -114,10 +123,10 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
      * values are not available therefore the default test price is used instead.
      */
     private float getRidePrice(Ride ride, Fare.FareType fareType, Collection<FareRuleSet> fareRules) {
-//        if (IS_TEST) {
-//            // Testing, return default test ride price.
-//            return DEFAULT_TEST_RIDE_PRICE;
-//        }
+        if (IS_TEST) {
+            // Testing, return default test ride price.
+            return DEFAULT_TEST_RIDE_PRICE;
+        }
         return calculateCost(fareType, Lists.newArrayList(ride), fareRules);
     }
 
@@ -164,7 +173,31 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
 
     private static RideType classify(Ride ride) {
         Route routeData = ride.routeData;
+        String shortName = routeData.getShortName();
 
+        switch(routeData.getId().getAgencyId()) {
+            case COBB_AGENCY_ID:
+                if(shortName.equalsIgnoreCase("100") ||
+                    shortName.equalsIgnoreCase("101") ||
+                    shortName.equalsIgnoreCase("102")) {
+                    return RideType.COBB_EXPRESS;
+                }
+                return RideType.COBB_LOCAL;
+            case XPRESS_AGENCY_ID:
+                return RideType.XPRESS;
+            case MARTA_AGENCY_ID:
+                return RideType.MARTA;
+            case GCT_AGENCY_ID:
+                if(shortName.equalsIgnoreCase("102") ||
+                    shortName.equalsIgnoreCase("103A") ||
+                    shortName.equalsIgnoreCase("110")) {
+                    return RideType.GCT_EXPRESS_Z1;
+                } else if(shortName.equalsIgnoreCase("101") ||
+                    shortName.equalsIgnoreCase("103")) {
+                    return RideType.GCT_EXPRESS_Z2;
+                }
+                return RideType.GCT_LOCAL;
+        }
         // CobbLinc
         if (ride.feedId.equals("2")) return RideType.COBB_LOCAL;
 
@@ -249,7 +282,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
             case GCT_EXPRESS_Z2:
                 switch(fromRideType) {
                     case MARTA:
-                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 3);
                     case GCT_LOCAL:
                     case GCT_EXPRESS_Z1:
                     case GCT_EXPRESS_Z2:

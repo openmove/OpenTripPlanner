@@ -104,6 +104,8 @@ public class OrcaFareServiceTest {
         orcaFareService.populateFare(fare, null, Fare.FareType.electronicRegular, rides, null);
         Assertions.assertEquals(349, rides.get(0).fareComponents.get(Fare.FareType.electronicRegular).price.getCents());
         Assertions.assertEquals(0, rides.get(1).fareComponents.get(Fare.FareType.electronicRegular).price.getCents());
+        Assertions.assertFalse(rides.get(0).fareComponents.get(Fare.FareType.electronicRegular).isTransfer);
+        Assertions.assertTrue(rides.get(1).fareComponents.get(Fare.FareType.electronicRegular).isTransfer);
     }
 
     /**

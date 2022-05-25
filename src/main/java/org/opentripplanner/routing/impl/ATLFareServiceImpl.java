@@ -18,6 +18,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     public static final String XPRESS_AGENCY_ID = "6";
     public static final String MARTA_AGENCY_ID = "5";
     public static final String GCT_AGENCY_ID = "4";
+    public static final String STREETCAR_AGENCY_ID = "xxx";
 
     private enum TransferType {
         END_TRANSFER, // Ends this transfer entirely.
@@ -69,13 +70,18 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
 
             long transferUseTime = transferClassification.payOnExit ? ride.endTime : ride.startTime;
 
-            // Consider the conditions under which this transfer will no longer be valid.
-            if(transferClassification.type.equals(TransferType.END_TRANSFER)) return false;
-            else if(transferUseTime >= transferStartTime + transferClassification.window * 60L) return false;
-            else if(rides.size() >= transferClassification.maxTransfers) return false;
+            // If transfer is NO_TRANSFER, it will not have a window or maxTransfers set,
+            // so we only check if it's valid if the transfer is going to be used.
+            if(!transferClassification.type.equals(TransferType.NO_TRANSFER)) {
+                // Consider the conditions under which this transfer will no longer be valid.
+                if (transferClassification.type.equals(TransferType.END_TRANSFER)) return false;
+                else if (transferUseTime >= transferStartTime + transferClassification.window * 60L) return false;
+                else if (rides.size() >= transferClassification.maxTransfers) return false;
+            }
 
             // The transfer is valid for this ride, so create a fare object.
             // TODO: Change this fare object out for the one on the Ride object when Fare-by-leg is added
+            // TODO: What happens if previous fare is a NO_TRANSFER?
             Fare previousFare = fares.get(fares.size() - 1);
             fares.add(fare);
 
@@ -125,6 +131,13 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     private float getRidePrice(Ride ride, Fare.FareType fareType, Collection<FareRuleSet> fareRules) {
         if (IS_TEST) {
             // Testing, return default test ride price.
+            if(ride.routeData.getShortName().equalsIgnoreCase("101")) {
+                return DEFAULT_TEST_RIDE_PRICE + 1;
+            } else if(ride.routeData.getShortName().equalsIgnoreCase("102")) {
+                return DEFAULT_TEST_RIDE_PRICE + 2;
+            } else if(ride.routeData.getId().getAgencyId().equalsIgnoreCase(STREETCAR_AGENCY_ID)) {
+                return DEFAULT_TEST_RIDE_PRICE - 1;
+            }
             return DEFAULT_TEST_RIDE_PRICE;
         }
         return calculateCost(fareType, Lists.newArrayList(ride), fareRules);
@@ -197,6 +210,8 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                     return RideType.GCT_EXPRESS_Z2;
                 }
                 return RideType.GCT_LOCAL;
+            case STREETCAR_AGENCY_ID:
+                return RideType.STREETCAR;
         }
         // CobbLinc
         if (ride.feedId.equals("2")) return RideType.COBB_LOCAL;
@@ -245,6 +260,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                    case COBB_EXPRESS:
                    case GCT_EXPRESS_Z1:
                    case GCT_EXPRESS_Z2:
+                   case GCT_LOCAL:
                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
                    default:
                        return new TransferMeta(TransferType.END_TRANSFER);

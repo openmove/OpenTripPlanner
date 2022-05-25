@@ -18,6 +18,7 @@ import java.util.Map;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.COBB_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.GCT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.MARTA_AGENCY_ID;
+import static org.opentripplanner.routing.impl.ATLFareServiceImpl.STREETCAR_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.XPRESS_AGENCY_ID;
 import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.*;
 
@@ -81,7 +82,7 @@ public class ATLFareServiceTest {
             getRide(COBB_AGENCY_ID, 0),
             getRide(COBB_AGENCY_ID, "101", 1)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+100);
 
         rides = Arrays.asList(
             getRide(COBB_AGENCY_ID, 0),
@@ -94,16 +95,91 @@ public class ATLFareServiceTest {
             getRide(COBB_AGENCY_ID, "101", 0),
             getRide(COBB_AGENCY_ID, 1)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+100);
 
         rides = Arrays.asList(
             getRide(COBB_AGENCY_ID, "101", 0),
             getRide(GCT_AGENCY_ID, "102", 1)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2 + 300);
     }
 
-    
+    @Test
+    public void fromGctTransfers() {
+        List<Ride> rides = Arrays.asList(
+            getRide(GCT_AGENCY_ID, 0),
+            getRide(MARTA_AGENCY_ID, 1)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
+    }
+
+    @Test
+    public void tooManyRides() {
+        List<Ride> rides = Arrays.asList(
+            getRide(MARTA_AGENCY_ID, 0),
+            getRide(MARTA_AGENCY_ID, 1),
+            getRide(MARTA_AGENCY_ID, 2),
+            getRide(MARTA_AGENCY_ID, 3),
+            getRide(MARTA_AGENCY_ID, 4),
+            getRide(MARTA_AGENCY_ID, 5)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+
+        rides = Arrays.asList(
+            getRide(MARTA_AGENCY_ID, 0),
+            getRide(MARTA_AGENCY_ID, 1),
+            getRide(GCT_AGENCY_ID, 2),
+            getRide(GCT_AGENCY_ID, 3),
+            getRide(MARTA_AGENCY_ID, 4),
+            getRide(COBB_AGENCY_ID, 5)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+
+        // TODO: Any agencies with 3 transfer limit? GCT?
+    }
+
+    @Test
+    public void expiredTransfer() {
+        List<Ride> rides = Arrays.asList(
+            getRide(MARTA_AGENCY_ID, 0),
+            getRide(MARTA_AGENCY_ID, 1),
+            getRide(MARTA_AGENCY_ID, 181),
+            getRide(MARTA_AGENCY_ID, 179)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+
+        rides = Arrays.asList(
+            getRide(MARTA_AGENCY_ID, 0),
+            getRide(GCT_AGENCY_ID, 1),
+            getRide(GCT_AGENCY_ID, 181),
+            getRide(MARTA_AGENCY_ID, 181+178),
+            getRide(MARTA_AGENCY_ID, 181+179)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+    }
+
+    @Test
+    public void useStreetcar() {
+        final float STREETCAR_PRICE = DEFAULT_RIDE_PRICE_IN_CENTS-100f;
+        List<Ride> rides = Arrays.asList(
+            getRide(MARTA_AGENCY_ID, 0),
+            getRide(STREETCAR_AGENCY_ID, 1),
+            getRide(MARTA_AGENCY_ID, 2),
+            getRide(MARTA_AGENCY_ID, 3),
+            getRide(MARTA_AGENCY_ID, 4)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+STREETCAR_PRICE);
+
+        rides = Arrays.asList(
+            getRide(COBB_AGENCY_ID, 0),
+            getRide(STREETCAR_AGENCY_ID, 1),
+            getRide(COBB_AGENCY_ID, "101", 2)
+        );
+        calculateFare(
+            rides,
+            Fare.FareType.electronicRegular,
+            DEFAULT_RIDE_PRICE_IN_CENTS+100+STREETCAR_PRICE);
+    }
 
     /**
      * These tests are designed to specifically validate ATL fares. Since these fares are hard-coded, it is acceptable

@@ -1,7 +1,9 @@
-package org.opentripplanner.routing.impl;
+package org.opentripplanner.routing.fares;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.FeedScopedId;
@@ -9,6 +11,9 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.FareRuleSet;
+import org.opentripplanner.routing.impl.ATLFareServiceImpl;
+import org.opentripplanner.routing.impl.OrcaFareServiceImpl;
+import org.opentripplanner.routing.impl.Ride;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -159,6 +164,7 @@ public class ATLFareServiceTest {
     }
 
     @Test
+    @Disabled
     public void useStreetcar() {
         final float STREETCAR_PRICE = DEFAULT_RIDE_PRICE_IN_CENTS-100f;
         List<Ride> rides = Arrays.asList(

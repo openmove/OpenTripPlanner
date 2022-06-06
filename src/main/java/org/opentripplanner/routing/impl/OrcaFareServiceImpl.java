@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.routing.core.Fare;
+import org.opentripplanner.routing.core.FareComponent;
 import org.opentripplanner.routing.core.FareRuleSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -483,7 +484,12 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                 // If the new fare is more than the current ORCA amount, the transfer is extended.
                 if (legFare > orcaFareDiscount) {
                     freeTransferStartTime = ride.startTime;
+                    // Note: on first leg, discount will be 0 meaning no transfer was applied.
+                    addFareComponent(ride, fareType, currency, legFare - orcaFareDiscount, orcaFareDiscount != 0);
                     orcaFareDiscount = legFare;
+                } else {
+                    // Ride is free
+                    addFareComponent(ride, fareType, currency, 0, true);
                 }
            } else if (usesOrca(fareType) && !inFreeTransferWindow) {
                 // If using Orca and outside of the free transfer window, add the cumulative Orca fare (the maximum leg 
@@ -509,8 +515,10 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
                     // window needs to be reset to 0 so that it is not applied after looping through all rides.
                     orcaFareDiscount = 0;
                 }
+                addFareComponent(ride, fareType, currency, legFare, false);
             } else {
-                // If not using Orca, add the agencies default price for this leg.
+                // If not using Orca, add the agency's default price for this leg.
+                addFareComponent(ride, fareType, currency, legFare, false);
                 cost += legFare;
             }
         }
@@ -519,6 +527,21 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             fare.addFare(fareType, getMoney(currency, cost));
         }
         return cost > 0 && cost < Float.POSITIVE_INFINITY;
+    }
+
+    /**
+     * Adds a fare component to a given ride.
+     * @param ride Ride receiving fare component
+     * @param fareType Fare type for fare component
+     * @param currency Currency for fare
+     * @param cost Cost of leg fare
+     * @param isTransfer Is this component representing a transfer?
+     */
+    private static void addFareComponent(Ride ride, Fare.FareType fareType, Currency currency, float cost, boolean isTransfer) {
+        ride.fareComponents.put(
+            fareType,
+            new FareComponent(getMoney(currency, cost), isTransfer)
+        );
     }
 
     /**

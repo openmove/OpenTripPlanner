@@ -19,6 +19,9 @@ public class AtlantaWayPropertySetSource implements WayPropertySetSource {
         // Replace existing matching properties as the logic is that the first statement registered takes precedence over later statements
         props.setProperties("highway=trunk_link", StreetTraversalPermission.ALL, 2.5, 2.5);
         props.setProperties("highway=trunk", StreetTraversalPermission.ALL, 2.5, 2.5);
+
+        // Read the rest from the default set
+        new DefaultWayPropertySetSource().populateProperties(props);
     }
 }
 

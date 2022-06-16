@@ -16,8 +16,8 @@ class AtlantaWayPropertySetSourceTest {
 
     static {
         AtlantaWayPropertySetSource source = new AtlantaWayPropertySetSource();
-        wps.index();
         source.populateProperties(wps);
+        wps.index();
     }
 
     @ParameterizedTest

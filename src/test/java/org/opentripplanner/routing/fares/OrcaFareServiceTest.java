@@ -92,6 +92,23 @@ public class OrcaFareServiceTest {
     }
 
     /**
+     * Check to make sure the fare by leg is calculated properly for a trip with two rides.
+     */
+    @Test
+    public void calculateFareByLeg() {
+        List<Ride> rides = Arrays.asList(
+            getRide(KITSAP_TRANSIT_AGENCY_ID, 0),
+            getRide(COMM_TRANS_AGENCY_ID, 2)
+        );
+        Fare fare = new Fare();
+        orcaFareService.populateFare(fare, null, Fare.FareType.electronicRegular, rides, null);
+        Assertions.assertEquals(349, rides.get(0).fareComponents.get(Fare.FareType.electronicRegular).price.getCents());
+        Assertions.assertEquals(0, rides.get(1).fareComponents.get(Fare.FareType.electronicRegular).price.getCents());
+        Assertions.assertFalse(rides.get(0).fareComponents.get(Fare.FareType.electronicRegular).isTransfer);
+        Assertions.assertTrue(rides.get(1).fareComponents.get(Fare.FareType.electronicRegular).isTransfer);
+    }
+
+    /**
      * Total trip time is 2h 30m. The first four transfers are within the permitted two hour window. A single (highest)
      * Orca fare will be charged for these transfers. The fifth transfer is outside of the original two hour window so
      * a single Orca fare for this leg is applied and the two hour window will start again. The final transfer is within

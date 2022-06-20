@@ -364,7 +364,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case COMM_TRANS_LOCAL_SWIFT: return 1.25f;
             case COMM_TRANS_COMMUTER_EXPRESS: return 2.00f;
             case EVERETT_TRANSIT:
-                return fareType.equals(Fare.FareType.electronicSenior) ? 0.50f : defaultFare;
+                return 0.50f;
             case PIERCE_COUNTY_TRANSIT:
             case SEATTLE_STREET_CAR:
             case KITSAP_TRANSIT:

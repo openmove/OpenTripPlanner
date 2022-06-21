@@ -88,7 +88,7 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
             connection.setDoOutput(true);
             mapper.writeValue(connection.getOutputStream(), authRequest);
 
-            // send request and parse repsonse
+            // send request and parse response
             InputStream responseStream = connection.getInputStream();
             LyftAuthenticationResponse response = mapper.readValue(responseStream, LyftAuthenticationResponse.class);
             accessToken = response.access_token;
@@ -120,7 +120,7 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
 
         LOG.info("Made request to lyft API at following URL: " + requestUrl);
 
-        // make request, parse repsonse
+        // make request, parse response
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         if (connection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -188,7 +188,7 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
 
         LOG.info("Made request to lyft API at following URL: " + requestUrl);
 
-        // make request, parse repsonse
+        // make request, parse response
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -197,10 +197,10 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
             LyftRideEstimateResponse response = mapper.readValue(responseStream, LyftRideEstimateResponse.class);
 
             if (response.cost_estimates == null) {
-                throw new IOException("Unrecocginzed response format");
+                throw new IOException("Unrecognized response format");
             }
 
-            LOG.info("Recieved " + response.cost_estimates.size() + " lyft price/time estimates");
+            LOG.info("Received " + response.cost_estimates.size() + " lyft price/time estimates");
 
             List<RideEstimate> estimates = new ArrayList<RideEstimate>();
 
@@ -209,7 +209,7 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
                     TransportationNetworkCompany.LYFT,
                     estimate.currency,
                     estimate.estimated_duration_seconds,
-                    // Lyft's esimated cost is in the "minor" unit, so the following
+                    // Lyft's estimated cost is in the "minor" unit, so the following
                     // may not work in countries that don't have 100 minor units per major unit
                     // see https://en.wikipedia.org/wiki/ISO_4217#Treatment_of_minor_currency_units_(the_"exponent")
                     estimate.estimated_cost_cents_max / 100.0,

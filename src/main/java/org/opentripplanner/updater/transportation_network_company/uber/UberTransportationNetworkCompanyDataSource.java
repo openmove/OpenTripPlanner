@@ -41,10 +41,11 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
 
     private static final String UBER_API_URL = "https://api.uber.com/v1.2/";
 
+    private final String baseUrl; // for testing purposes
+    private final String clientId;
+    private final String clientSecret;
+
     private String accessToken = "1234";
-    private String baseUrl; // for testing purposes
-    private String clientId;
-    private String clientSecret;
     private Date tokenExpirationTime;
 
     public UberTransportationNetworkCompanyDataSource(JsonNode config) {
@@ -82,9 +83,9 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
                 "places"
             );
             connection.setDoOutput(true);
-            PrintWriter writer = new PrintWriter(connection.getOutputStream(), true);
-            writer.print(authRequest.toFormUrlEncoded());
-            writer.close();
+            try (PrintWriter writer = new PrintWriter(connection.getOutputStream(), true)) {
+                writer.print(authRequest.toFormUrlEncoded());
+            }
 
             // send request and parse response
             ObjectMapper mapper = new ObjectMapper();
@@ -92,7 +93,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             UberAuthenticationResponse response = mapper.readValue(responseStream, UberAuthenticationResponse.class);
             accessToken = response.access_token;
             tokenExpirationTime = new Date();
-            tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000);
+            tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000L);
 
             LOG.info("Received new Uber access token");
         }
@@ -143,7 +144,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             );
         }
 
-        if (arrivalTimes.size() == 0) {
+        if (arrivalTimes.isEmpty()) {
             LOG.warn(
                 "No Uber service available at {}, {}",
                 position.latitude,
@@ -171,7 +172,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         connection.setRequestProperty("Accept-Language", "en_US");
         connection.setRequestProperty("Content-Type", "application/json");
 
-        LOG.info("Made price estimate request to Uber API at following URL: " + requestUrl);
+        LOG.info("Made price estimate request to Uber API at following URL: {}", requestUrl);
 
         // Make request, parse response
         InputStream responseStream = connection.getInputStream();
@@ -199,7 +200,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             ));
         }
 
-        if (estimates.size() == 0) {
+        if (estimates.isEmpty()) {
             LOG.warn(
                 "No Uber service available for trip from {}, {} to {}, {}",
                 request.startPosition.latitude,

@@ -23,7 +23,7 @@ public interface WayPropertySetSource {
 			return new NorwayWayPropertySetSource();
 		} else if ("uk".equals(type)) {
 			return new UKWayPropertySetSource();
-		} else if ("atl".equals(type)) {
+		} else if ("atlanta".equals(type)) {
 			return new AtlantaWayPropertySetSource();
 		} else {
 			throw new IllegalArgumentException(String.format("Unknown osmWayPropertySet: '%s'", type));

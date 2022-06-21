@@ -232,7 +232,12 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
             case STREETCAR:
                 return new TransferMeta(TransferType.NO_TRANSFER);
             case COBB_LOCAL:
-                if(!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
+                if(!isElectronicPayment(fareType)) {
+                    if (fromRideType == RideType.COBB_LOCAL) {
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                    }
+                    return new TransferMeta(TransferType.END_TRANSFER);
+                }
                 switch(fromRideType) {
                     case COBB_LOCAL:
                     case COBB_EXPRESS:
@@ -242,6 +247,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                         return new TransferMeta(TransferType.END_TRANSFER);
                 }
             case COBB_EXPRESS:
+                if(!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
                 switch(fromRideType) {
                     case COBB_EXPRESS:
                     case MARTA:
@@ -285,6 +291,8 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                         return new TransferMeta(TransferType.END_TRANSFER);
                 }
             case GCT_LOCAL:
+                if(!isElectronicPayment(fareType))
+                    return new TransferMeta(TransferType.END_TRANSFER);
                 switch (fromRideType) {
                     case MARTA:
                     case GCT_LOCAL:
@@ -296,6 +304,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 }
             case GCT_EXPRESS_Z1:
             case GCT_EXPRESS_Z2:
+                if(!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
                 switch(fromRideType) {
                     case MARTA:
                         return new TransferMeta(TransferType.FREE_TRANSFER, 180, 3);

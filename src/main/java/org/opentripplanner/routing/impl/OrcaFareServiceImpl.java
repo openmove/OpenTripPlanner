@@ -435,8 +435,21 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             return defaultFare;
         }
         Map<Fare.FareType, Float> fares = washingtonStateFerriesFares.get(routeLongName.replaceAll(" ", ""));
+        // WSF doesn't support transfers so we only care about cash fares.
+        Fare.FareType wsfFareType;
+        if (fareType == Fare.FareType.electronicRegular) {
+            wsfFareType = Fare.FareType.regular;
+        } else if(fareType == Fare.FareType.electronicSenior) {
+            wsfFareType = Fare.FareType.senior;
+        } else if(fareType == Fare.FareType.electronicYouth) {
+            wsfFareType = Fare.FareType.youth;
+        } else if(fareType == Fare.FareType.electronicSpecial) {
+            wsfFareType = Fare.FareType.regular;
+        } else {
+            wsfFareType = fareType;
+        }
         // WSF is free in one direction on each route
-        return (fares != null && fares.get(fareType) != null) ? fares.get(fareType) : 0;
+        return (fares != null && fares.get(wsfFareType) != null) ? fares.get(wsfFareType) : 0;
     }
 
     /**

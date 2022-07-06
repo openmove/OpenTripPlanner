@@ -137,59 +137,59 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         // Spaces have been removed from the route name because of inconsistencies in the WSF GTFS route dataset.
         washingtonStateFerriesFares.put(
             "Seattle-BainbridgeIsland",
-            ImmutableMap.of(Fare.FareType.regular, 9.05f, Fare.FareType.youth, 4.50f, Fare.FareType.senior, 4.50f)
+            ImmutableMap.of(Fare.FareType.regular, 9.25f, Fare.FareType.youth, 4.60f, Fare.FareType.senior, 4.60f)
         );
         washingtonStateFerriesFares.put(
             "Seattle-Bremerton",
-            ImmutableMap.of(Fare.FareType.regular, 9.05f, Fare.FareType.youth, 4.50f, Fare.FareType.senior, 4.50f)
+            ImmutableMap.of(Fare.FareType.regular, 9.25f, Fare.FareType.youth, 4.60f, Fare.FareType.senior, 4.60f)
         );
         washingtonStateFerriesFares.put(
             "Mukilteo-Clinton",
-            ImmutableMap.of(Fare.FareType.regular, 5.55f, Fare.FareType.youth, 2.75f, Fare.FareType.senior, 2.75f)
+            ImmutableMap.of(Fare.FareType.regular, 5.65f, Fare.FareType.youth, 2.80f, Fare.FareType.senior, 2.80f)
         );
         washingtonStateFerriesFares.put(
             "Fauntleroy-VashonIsland",
-            ImmutableMap.of(Fare.FareType.regular, 5.95f, Fare.FareType.youth, 2.95f, Fare.FareType.senior, 2.95f)
+            ImmutableMap.of(Fare.FareType.regular, 6.10f, Fare.FareType.youth, 3.05f, Fare.FareType.senior, 3.05f)
         );
         washingtonStateFerriesFares.put(
             "Fauntleroy-Southworth",
-            ImmutableMap.of(Fare.FareType.regular, 7.10f, Fare.FareType.youth, 3.55f, Fare.FareType.senior, 3.55f)
+            ImmutableMap.of(Fare.FareType.regular, 7.20f, Fare.FareType.youth, 3.60f, Fare.FareType.senior, 3.60f)
         );
         washingtonStateFerriesFares.put(
             "Edmonds-Kingston",
-            ImmutableMap.of(Fare.FareType.regular, 9.05f, Fare.FareType.youth, 4.50f, Fare.FareType.senior, 4.50f)
+            ImmutableMap.of(Fare.FareType.regular, 9.25f, Fare.FareType.youth, 4.60f, Fare.FareType.senior, 4.60f)
         );
         washingtonStateFerriesFares.put(
             "PointDefiance-Tahlequah",
-            ImmutableMap.of(Fare.FareType.regular, 5.95f, Fare.FareType.youth, 2.95f, Fare.FareType.senior, 2.95f)
+            ImmutableMap.of(Fare.FareType.regular, 6.10f, Fare.FareType.youth, 3.05f, Fare.FareType.senior, 3.05f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-FridayHarbor",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-LopezIsland",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-OrcasIsland",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-ShawIsland",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Coupeville-PortTownsend",
-            ImmutableMap.of(Fare.FareType.regular, 3.80f, Fare.FareType.youth, 1.80f, Fare.FareType.senior, 1.80f)
+            ImmutableMap.of(Fare.FareType.regular, 3.85f, Fare.FareType.youth, 1.90f, Fare.FareType.senior, 1.90f)
         );
         washingtonStateFerriesFares.put(
             "PortTownsend-Coupeville",
-            ImmutableMap.of(Fare.FareType.regular, 3.80f, Fare.FareType.youth, 1.80f, Fare.FareType.senior, 1.80f)
+            ImmutableMap.of(Fare.FareType.regular, 3.85f, Fare.FareType.youth, 1.90f, Fare.FareType.senior, 1.90f)
         );
         washingtonStateFerriesFares.put(
             "Southworth-VashonIsland",
-            ImmutableMap.of(Fare.FareType.regular, 5.95f, Fare.FareType.youth, 2.95f, Fare.FareType.senior, 2.95f)
+            ImmutableMap.of(Fare.FareType.regular, 6.10f, Fare.FareType.youth, 3.05f, Fare.FareType.senior, 3.05f)
         );
 
         SoundTransitLinkFares.populateLinkFares(soundTransitLinkFares);
@@ -436,7 +436,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         }
         Map<Fare.FareType, Float> fares = washingtonStateFerriesFares.get(routeLongName.replaceAll(" ", ""));
         // WSF is free in one direction on each route
-        return (fares != null && fares.get(fareType) != null) ? fares.get(fareType) : defaultFare;
+        return (fares != null && fares.get(fareType) != null) ? fares.get(fareType) : 0;
     }
 
     /**

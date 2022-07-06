@@ -269,7 +269,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case electronicYouth:
                 return getYouthFare(fareType, rideType, defaultFare, ride.routeData);
             case electronicSpecial:
-                return getLiftFare(rideType, defaultFare);
+                return getLiftFare(rideType, defaultFare, ride.routeData);
             case electronicSenior:
             case senior:
                 return getSeniorFare(fareType, rideType, defaultFare, ride.routeData);
@@ -335,7 +335,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     /**
      * Apply Orca lift discount fares based on the ride type.
      */
-    private float getLiftFare(RideType rideType, float defaultFare) {
+    private float getLiftFare(RideType rideType, float defaultFare, Route route) {
         switch (rideType) {
             case COMM_TRANS_LOCAL_SWIFT: return 1.25f;
             case COMM_TRANS_COMMUTER_EXPRESS: return 2.00f;
@@ -351,6 +351,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case SEATTLE_STREET_CAR:
                 return 1.50f;
             case PIERCE_COUNTY_TRANSIT:
+            case WASHINGTON_STATE_FERRIES:
+                return getWashingtonStateFerriesFare(route.getLongName(), Fare.FareType.electronicSpecial, defaultFare);
             default:
                 return defaultFare;
         }

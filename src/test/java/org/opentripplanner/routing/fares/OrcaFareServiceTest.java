@@ -111,7 +111,7 @@ public class OrcaFareServiceTest {
     /**
      * Total trip time is 2h 30m. The first four transfers are within the permitted two hour window. A single (highest)
      * Orca fare will be charged for these transfers. The fifth transfer is outside of the original two hour window so
-     * a sigle Orca fare for this leg is applied and the two hour window will start again. The final transfer is within
+     * a single Orca fare for this leg is applied and the two hour window will start again. The final transfer is within
      * the new two hour window and will be free.
      */
     @Test

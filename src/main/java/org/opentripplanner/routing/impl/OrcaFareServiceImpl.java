@@ -451,6 +451,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             wsfFareType = fareType;
         }
         // WSF is free in one direction on each route
+        // If a fare is not found in the map, we can assume it's free.
+        // Route long name is reversed for the reverse direction on a single WSF route
         return (fares != null && fares.get(wsfFareType) != null) ? fares.get(wsfFareType) : 0;
     }
 

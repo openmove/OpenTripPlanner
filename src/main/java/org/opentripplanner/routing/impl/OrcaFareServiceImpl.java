@@ -350,9 +350,9 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case EVERETT_TRANSIT:
             case SEATTLE_STREET_CAR:
                 return 1.50f;
-            case PIERCE_COUNTY_TRANSIT:
             case WASHINGTON_STATE_FERRIES:
                 return getWashingtonStateFerriesFare(route.getLongName(), Fare.FareType.electronicSpecial, defaultFare);
+            case PIERCE_COUNTY_TRANSIT:
             default:
                 return defaultFare;
         }

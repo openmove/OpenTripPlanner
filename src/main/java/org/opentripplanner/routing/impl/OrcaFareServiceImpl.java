@@ -33,7 +33,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     public static final String PIERCE_COUNTY_TRANSIT_AGENCY_ID = "3";
     public static final String SKAGIT_TRANSIT_AGENCY_ID = "e0e4541a-2714-487b-b30c-f5c6cb4a310f";
     public static final String SEATTLE_STREET_CAR_AGENCY_ID = "23";
-    public static final String WASHINGTON_STATE_FERRIES_AGENCY_ID = "wsf";
+    public static final String WASHINGTON_STATE_FERRIES_AGENCY_ID = "WSF";
     public static final String KITSAP_TRANSIT_AGENCY_ID = "kt";
     public static final int ROUTE_TYPE_FERRY = 4;
 
@@ -137,59 +137,59 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         // Spaces have been removed from the route name because of inconsistencies in the WSF GTFS route dataset.
         washingtonStateFerriesFares.put(
             "Seattle-BainbridgeIsland",
-            ImmutableMap.of(Fare.FareType.regular, 9.05f, Fare.FareType.youth, 4.50f, Fare.FareType.senior, 4.50f)
+            ImmutableMap.of(Fare.FareType.regular, 9.25f, Fare.FareType.youth, 4.60f, Fare.FareType.senior, 4.60f)
         );
         washingtonStateFerriesFares.put(
             "Seattle-Bremerton",
-            ImmutableMap.of(Fare.FareType.regular, 9.05f, Fare.FareType.youth, 4.50f, Fare.FareType.senior, 4.50f)
+            ImmutableMap.of(Fare.FareType.regular, 9.25f, Fare.FareType.youth, 4.60f, Fare.FareType.senior, 4.60f)
         );
         washingtonStateFerriesFares.put(
             "Mukilteo-Clinton",
-            ImmutableMap.of(Fare.FareType.regular, 5.55f, Fare.FareType.youth, 2.75f, Fare.FareType.senior, 2.75f)
+            ImmutableMap.of(Fare.FareType.regular, 5.65f, Fare.FareType.youth, 2.80f, Fare.FareType.senior, 2.80f)
         );
         washingtonStateFerriesFares.put(
             "Fauntleroy-VashonIsland",
-            ImmutableMap.of(Fare.FareType.regular, 5.95f, Fare.FareType.youth, 2.95f, Fare.FareType.senior, 2.95f)
+            ImmutableMap.of(Fare.FareType.regular, 6.10f, Fare.FareType.youth, 3.05f, Fare.FareType.senior, 3.05f)
         );
         washingtonStateFerriesFares.put(
             "Fauntleroy-Southworth",
-            ImmutableMap.of(Fare.FareType.regular, 7.10f, Fare.FareType.youth, 3.55f, Fare.FareType.senior, 3.55f)
+            ImmutableMap.of(Fare.FareType.regular, 7.20f, Fare.FareType.youth, 3.60f, Fare.FareType.senior, 3.60f)
         );
         washingtonStateFerriesFares.put(
             "Edmonds-Kingston",
-            ImmutableMap.of(Fare.FareType.regular, 9.05f, Fare.FareType.youth, 4.50f, Fare.FareType.senior, 4.50f)
+            ImmutableMap.of(Fare.FareType.regular, 9.25f, Fare.FareType.youth, 4.60f, Fare.FareType.senior, 4.60f)
         );
         washingtonStateFerriesFares.put(
             "PointDefiance-Tahlequah",
-            ImmutableMap.of(Fare.FareType.regular, 5.95f, Fare.FareType.youth, 2.95f, Fare.FareType.senior, 2.95f)
+            ImmutableMap.of(Fare.FareType.regular, 6.10f, Fare.FareType.youth, 3.05f, Fare.FareType.senior, 3.05f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-FridayHarbor",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-LopezIsland",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-OrcasIsland",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Anacortes-ShawIsland",
-            ImmutableMap.of(Fare.FareType.regular, 14.50f, Fare.FareType.youth, 7.25f, Fare.FareType.senior, 7.25f)
+            ImmutableMap.of(Fare.FareType.regular, 14.85f, Fare.FareType.youth, 7.40f, Fare.FareType.senior, 7.40f)
         );
         washingtonStateFerriesFares.put(
             "Coupeville-PortTownsend",
-            ImmutableMap.of(Fare.FareType.regular, 3.80f, Fare.FareType.youth, 1.80f, Fare.FareType.senior, 1.80f)
+            ImmutableMap.of(Fare.FareType.regular, 3.85f, Fare.FareType.youth, 1.90f, Fare.FareType.senior, 1.90f)
         );
         washingtonStateFerriesFares.put(
             "PortTownsend-Coupeville",
-            ImmutableMap.of(Fare.FareType.regular, 3.80f, Fare.FareType.youth, 1.80f, Fare.FareType.senior, 1.80f)
+            ImmutableMap.of(Fare.FareType.regular, 3.85f, Fare.FareType.youth, 1.90f, Fare.FareType.senior, 1.90f)
         );
         washingtonStateFerriesFares.put(
             "Southworth-VashonIsland",
-            ImmutableMap.of(Fare.FareType.regular, 5.95f, Fare.FareType.youth, 2.95f, Fare.FareType.senior, 2.95f)
+            ImmutableMap.of(Fare.FareType.regular, 6.10f, Fare.FareType.youth, 3.05f, Fare.FareType.senior, 3.05f)
         );
 
         SoundTransitLinkFares.populateLinkFares(soundTransitLinkFares);
@@ -269,7 +269,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case electronicYouth:
                 return getYouthFare(fareType, rideType, defaultFare, ride.routeData);
             case electronicSpecial:
-                return getLiftFare(rideType, defaultFare);
+                return getLiftFare(rideType, defaultFare, ride.routeData);
             case electronicSenior:
             case senior:
                 return getSeniorFare(fareType, rideType, defaultFare, ride.routeData);
@@ -335,7 +335,7 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
     /**
      * Apply Orca lift discount fares based on the ride type.
      */
-    private float getLiftFare(RideType rideType, float defaultFare) {
+    private float getLiftFare(RideType rideType, float defaultFare, Route route) {
         switch (rideType) {
             case COMM_TRANS_LOCAL_SWIFT: return 1.25f;
             case COMM_TRANS_COMMUTER_EXPRESS: return 2.00f;
@@ -350,6 +350,8 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
             case EVERETT_TRANSIT:
             case SEATTLE_STREET_CAR:
                 return 1.50f;
+            case WASHINGTON_STATE_FERRIES:
+                return getWashingtonStateFerriesFare(route.getLongName(), Fare.FareType.electronicSpecial, defaultFare);
             case PIERCE_COUNTY_TRANSIT:
             default:
                 return defaultFare;
@@ -434,8 +436,24 @@ public class OrcaFareServiceImpl extends DefaultFareServiceImpl {
         if (routeLongName == null || routeLongName.isEmpty()) {
             return defaultFare;
         }
-        Float fare = washingtonStateFerriesFares.get(routeLongName.replaceAll(" ", "")).get(fareType);
-        return (fare != null) ? fare : defaultFare;
+        Map<Fare.FareType, Float> fares = washingtonStateFerriesFares.get(routeLongName.replaceAll(" ", ""));
+        // WSF doesn't support transfers so we only care about cash fares.
+        Fare.FareType wsfFareType;
+        if (fareType == Fare.FareType.electronicRegular) {
+            wsfFareType = Fare.FareType.regular;
+        } else if(fareType == Fare.FareType.electronicSenior) {
+            wsfFareType = Fare.FareType.senior;
+        } else if(fareType == Fare.FareType.electronicYouth) {
+            wsfFareType = Fare.FareType.youth;
+        } else if(fareType == Fare.FareType.electronicSpecial) {
+            wsfFareType = Fare.FareType.regular;
+        } else {
+            wsfFareType = fareType;
+        }
+        // WSF is free in one direction on each route
+        // If a fare is not found in the map, we can assume it's free.
+        // Route long name is reversed for the reverse direction on a single WSF route
+        return (fares != null && fares.get(wsfFareType) != null) ? fares.get(wsfFareType) : 0;
     }
 
     /**

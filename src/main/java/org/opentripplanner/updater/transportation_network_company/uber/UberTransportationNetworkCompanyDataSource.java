@@ -39,7 +39,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
     private static final Logger LOG = LoggerFactory.getLogger(UberTransportationNetworkCompanyDataSource.class);
 
     private static final String UBER_API_URL = "https://api.uber.com/v1.2/";
-    private static final String UBER_AUTHENTICATION_URL = "https://login.uber.com";
+    private static final String UBER_AUTHENTICATION_URL = "https://login.uber.com/";
 
     private final String baseUrl;
     private final String authenticationUrl;
@@ -70,11 +70,13 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         this.clientSecret = clientSecret;
     }
 
+    /**
+     * Obtains and caches an Uber API access token.
+     * @return The token value, which can be null if the call was unsuccessful.
+     */
     // Copied from Lyft class (TODO: Refactor).
     public String getAccessToken() throws IOException {
-        // check if token needs to be obtained
-        Date now = new Date();
-        if (tokenExpirationTime == null || now.after(tokenExpirationTime)) {
+        if (shouldGetNewToken()) {
             // token needs to be obtained
             LOG.info("Requesting new Uber access token");
 
@@ -88,9 +90,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             // set request body
             UberAuthenticationRequestBody authRequest = new UberAuthenticationRequestBody(
                 clientId,
-                clientSecret,
-                "client_credentials",
-                "ride_request.estimate"
+                clientSecret
             );
             connection.setDoOutput(true);
             connection.getOutputStream().write(authRequest.toRequestParamString().getBytes());
@@ -112,6 +112,14 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         }
 
         return accessToken;
+    }
+
+    /**
+     * Check if token needs to be obtained
+     */
+    public boolean shouldGetNewToken() {
+        Date now = new Date();
+        return tokenExpirationTime == null || now.after(tokenExpirationTime);
     }
 
     @Override

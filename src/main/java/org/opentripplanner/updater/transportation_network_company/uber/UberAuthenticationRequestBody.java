@@ -18,16 +18,17 @@ package org.opentripplanner.updater.transportation_network_company.uber;
  */
 public class UberAuthenticationRequestBody {
 
-    public String clientId;
-    public String clientSecret;
-    public String grant_type;
-    public String scope;
+    public final String clientId;
+    public final String clientSecret;
+    public final String grantType;
+    public final String scope;
 
-    public UberAuthenticationRequestBody(String clientId, String clientSecret, String grant_type, String scope) {
+    public UberAuthenticationRequestBody(String clientId, String clientSecret) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.grant_type = grant_type;
-        this.scope = scope;
+        // Defaults needed for price/time estimates.
+        this.grantType = "client_credentials";
+        this.scope = "ride_request.estimate";
     }
 
     /**
@@ -39,7 +40,7 @@ public class UberAuthenticationRequestBody {
             "client_id=%s&client_secret=%s&grant_type=%s&scope=%s",
             clientId,
             clientSecret,
-            grant_type,
+            grantType,
             scope
         );
     }

@@ -35,15 +35,24 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class UberTransportationNetworkCompanyDataSourceTest {
 
     public static final String CLIENT_ID = "testClientId";
     public static final String CLIENT_SECRET = "testClientSecret";
+    public static final String INVALID_CLIENT_ID = "invalidClientId";
+    public static final String TOKEN_PATH = "/login/oauth/v2/token";
+    public static final String API_TIME_PATH = "/api/estimates/time";
+    public static final String API_PRICE_PATH = "/api/estimates/price";
+    public static final String MOCK_API_URL = "http://localhost:8089/api/";
+    public static final String MOCK_TOKEN_URL = "http://localhost:8089/login/";
 
     private static final UberTransportationNetworkCompanyDataSource source = new UberTransportationNetworkCompanyDataSource(
-        "http://localhost:8089/",
-        "http://localhost:8090/",
+        MOCK_API_URL,
+        MOCK_TOKEN_URL,
         CLIENT_ID,
         CLIENT_SECRET
     );
@@ -53,29 +62,40 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(
         options()
-            .port(8090)
+            .port(8089)
             .usingFilesUnderDirectory("src/test/resources/updater/")
     );
 
     // Copied from lyft code (TODO: refactor)
     @Before
     public void setUp() throws Exception {
-        String accessToken = UUID.randomUUID().toString();
+        String accessToken = UUID.randomUUID().toString().replaceAll("-", "");
         // setup mock server to respond to ride estimate request
         stubFor(
-            post(urlPathEqualTo("/oauth/v2/token"))
+            post(urlPathEqualTo(TOKEN_PATH))
                 .withId(TOKEN_STUB_ID)
                 .withRequestBody(equalTo(
                     new UberAuthenticationRequestBody(
                         CLIENT_ID,
-                        CLIENT_SECRET,
-                        "client_credentials",
-                        "ride_request.estimate"
+                        CLIENT_SECRET
                     ).toRequestParamString()
                 ))
                 .willReturn(
                     aResponse()
                         .withBody(getAuthorizationResponseBody(accessToken))
+                )
+        );
+        stubFor(
+            post(urlPathEqualTo(TOKEN_PATH))
+                .withRequestBody(equalTo(
+                    new UberAuthenticationRequestBody(
+                        INVALID_CLIENT_ID,
+                        CLIENT_SECRET
+                    ).toRequestParamString()
+                ))
+                .willReturn(
+                    aResponse()
+                        .withBody("{\"error\":\"unauthorized_client\"}")
                 )
         );
     }
@@ -90,30 +110,44 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     }
 
     @Test
-    public void testGetAccessTokenSuccessful() throws IOException {
+    public void testGetAccessTokenSuccess() throws IOException {
         // Get access token for the first time.
         String token1 = source.getAccessToken();
 
         // Edit stub so that it returns a different token when called.
         // (Modified stub doesn't need to be reset as we don't rely on a particular token value.)
-        String newAccessToken = UUID.randomUUID().toString();
-        editStub(get(urlPathEqualTo("/oauth/v2/token"))
+        String newAccessToken = UUID.randomUUID().toString().replaceAll("-", "");
+        editStub(get(urlPathEqualTo(TOKEN_PATH))
             .withId(TOKEN_STUB_ID)
             .willReturn(
                 aResponse()
                     .withBody(getAuthorizationResponseBody(newAccessToken))));
 
         // Second call to getAccessToken should return the same original token, as it has not expired yet.
-        String token2 = source.getAccessToken();
-        assertEquals(token1, token2);
-   }
+        assertFalse(source.shouldGetNewToken());
+        assertEquals(token1, source.getAccessToken());
+    }
+
+    @Test
+    public void testGetAccessTokenError() throws IOException {
+        UberTransportationNetworkCompanyDataSource src = new UberTransportationNetworkCompanyDataSource(
+            MOCK_API_URL,
+            MOCK_TOKEN_URL,
+            INVALID_CLIENT_ID,
+            CLIENT_SECRET
+        );
+        assertNull(src.getAccessToken());
+
+        // Token is null, so we should still attempt to get one.
+        assertTrue(source.shouldGetNewToken());
+    }
 
     @Test
     public void testGetArrivalTimes() throws ExecutionException {
         // Setup mock server to respond to ride estimate request.
         // The mock server expects a bearer token in the header per Uber API requirements as of 2022.
         stubFor(
-            get(urlPathEqualTo("/estimates/time"))
+            get(urlPathEqualTo(API_TIME_PATH))
                 .withHeader("Authorization", matching("^Bearer [\\w|\\.]*"))
                 .withQueryParam("start_latitude", equalTo("1.2"))
                 .withQueryParam("start_longitude", equalTo("3.4"))
@@ -124,7 +158,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
         );
         // Old server tokens will be rejected at some point, so treat them the same as unauthorized.
         stubFor(
-            get(urlPathEqualTo("/estimates/time"))
+            get(urlPathEqualTo(API_TIME_PATH))
                 .withHeader("Authorization", matching("^Token [\\w|\\.]*"))
                 .withQueryParam("start_latitude", equalTo("1.2"))
                 .withQueryParam("start_longitude", equalTo("3.4"))
@@ -132,7 +166,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
         );
         // If no authentication is passed, I guess the API would return unauthorized.
         stubFor(
-            get(urlPathEqualTo("/estimates/time"))
+            get(urlPathEqualTo(API_TIME_PATH))
                 .withHeader("Authorization", StringValuePattern.ABSENT)
                 .withQueryParam("start_latitude", equalTo("1.2"))
                 .withQueryParam("start_longitude", equalTo("3.4"))
@@ -142,11 +176,11 @@ public class UberTransportationNetworkCompanyDataSourceTest {
 
         List<ArrivalTime> arrivalTimes = source.getArrivalTimes(1.2, 3.4);
 
-        assertEquals(arrivalTimes.size(),  8);
+        assertEquals(8, arrivalTimes.size());
         ArrivalTime arrival = arrivalTimes.get(0);
-        assertEquals(arrival.displayName, "POOL");
-        assertEquals(arrival.productId, "26546650-e557-4a7b-86e7-6a3942445247");
-        assertEquals(arrival.estimatedSeconds, 60);
+        assertEquals("POOL", arrival.displayName);
+        assertEquals("26546650-e557-4a7b-86e7-6a3942445247", arrival.productId);
+        assertEquals(60, arrival.estimatedSeconds);
     }
 
     @Test
@@ -154,7 +188,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
         // Setup mock server to respond to estimated ride time request.
         // The mock server expects a bearer token in the header per Uber API requirements as of 2022.
         stubFor(
-            get(urlPathEqualTo("/estimates/price"))
+            get(urlPathEqualTo(API_PRICE_PATH))
                 .withHeader("Authorization", matching("^Bearer [\\w|\\.]*"))
                 .withQueryParam("start_latitude", equalTo("1.2"))
                 .withQueryParam("start_longitude", equalTo("3.4"))
@@ -167,7 +201,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
         );
         // Old server tokens will be rejected at some point, so treat them the same as unauthorized.
         stubFor(
-            get(urlPathEqualTo("/estimates/price"))
+            get(urlPathEqualTo(API_PRICE_PATH))
                 .withHeader("Authorization", matching("^Token [\\w|\\.]*"))
                 .withQueryParam("start_latitude", equalTo("1.2"))
                 .withQueryParam("start_longitude", equalTo("3.4"))
@@ -177,7 +211,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
         );
         // If no authentication is passed, I guess the API would return unauthorized.
         stubFor(
-            get(urlPathEqualTo("/estimates/price"))
+            get(urlPathEqualTo(API_PRICE_PATH))
                 .withHeader("Authorization", StringValuePattern.ABSENT)
                 .withQueryParam("start_latitude", equalTo("1.2"))
                 .withQueryParam("start_longitude", equalTo("3.4"))

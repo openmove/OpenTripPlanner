@@ -13,6 +13,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 package org.opentripplanner.updater.transportation_network_company;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 import org.junit.Before;
@@ -21,10 +23,12 @@ import org.junit.Test;
 import org.opentripplanner.routing.transportation_network_company.ArrivalTime;
 import org.opentripplanner.routing.transportation_network_company.RideEstimate;
 import org.opentripplanner.updater.transportation_network_company.uber.UberAuthenticationRequestBody;
+import org.opentripplanner.updater.transportation_network_company.uber.UberAuthenticationResponse;
 import org.opentripplanner.updater.transportation_network_company.uber.UberTransportationNetworkCompanyDataSource;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -39,10 +43,12 @@ public class UberTransportationNetworkCompanyDataSourceTest {
 
     private static final UberTransportationNetworkCompanyDataSource source = new UberTransportationNetworkCompanyDataSource(
         "http://localhost:8089/",
-        "http://localhost:8090",
+        "http://localhost:8090/",
         CLIENT_ID,
         CLIENT_SECRET
     );
+
+    private static final UUID TOKEN_STUB_ID = UUID.randomUUID();
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(
@@ -54,9 +60,11 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     // Copied from lyft code (TODO: refactor)
     @Before
     public void setUp() throws Exception {
+        String accessToken = UUID.randomUUID().toString();
         // setup mock server to respond to ride estimate request
         stubFor(
             post(urlPathEqualTo("/oauth/v2/token"))
+                .withId(TOKEN_STUB_ID)
                 .withRequestBody(equalTo(
                     new UberAuthenticationRequestBody(
                         CLIENT_ID,
@@ -67,33 +75,38 @@ public class UberTransportationNetworkCompanyDataSourceTest {
                 ))
                 .willReturn(
                     aResponse()
-                        .withBodyFile("uber_authentication.json")
+                        .withBody(getAuthorizationResponseBody(accessToken))
                 )
         );
     }
 
-    /**
-     * Enable for development/troubleshooting purposes only (provide your own keys).
-     */
-    // @Test
-    public void testGetAccessTokenSuccessful() throws IOException, InterruptedException {
-        UberTransportationNetworkCompanyDataSource src = new UberTransportationNetworkCompanyDataSource(
-            "https://api.uber.com/v1.2/",
-            "https://login.uber.com/",
-            CLIENT_ID,
-            CLIENT_SECRET
-        );
-
-        // Get access token for the first time.
-        String token1 = src.getAccessToken();
-
-        // Wait a few seconds.
-        Thread.sleep(2000);
-
-        // Second call to getAccessToken should return the same token, as it has not expired yet.
-        String token2 = src.getAccessToken();
-        assertEquals(token1, token2);
+    private String getAuthorizationResponseBody(String accessToken) throws JsonProcessingException {
+        UberAuthenticationResponse response = new UberAuthenticationResponse();
+        response.access_token = accessToken;
+        response.expires_in = 2592000;
+        response.scope = "ride_request.estimate";
+        response.token_type = "Bearer";
+        return new ObjectMapper().writeValueAsString(response);
     }
+
+    @Test
+    public void testGetAccessTokenSuccessful() throws IOException {
+        // Get access token for the first time.
+        String token1 = source.getAccessToken();
+
+        // Edit stub so that it returns a different token when called.
+        // (Modified stub doesn't need to be reset as we don't rely on a particular token value.)
+        String newAccessToken = UUID.randomUUID().toString();
+        editStub(get(urlPathEqualTo("/oauth/v2/token"))
+            .withId(TOKEN_STUB_ID)
+            .willReturn(
+                aResponse()
+                    .withBody(getAuthorizationResponseBody(newAccessToken))));
+
+        // Second call to getAccessToken should return the same original token, as it has not expired yet.
+        String token2 = source.getAccessToken();
+        assertEquals(token1, token2);
+   }
 
     @Test
     public void testGetArrivalTimes() throws ExecutionException {

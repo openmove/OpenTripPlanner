@@ -80,7 +80,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
                 clientId,
                 clientSecret,
                 "client_credentials",
-                "places"
+                "ride_request.estimate"
             );
             connection.setDoOutput(true);
             try (PrintWriter writer = new PrintWriter(connection.getOutputStream(), true)) {

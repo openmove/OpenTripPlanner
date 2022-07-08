@@ -1,8 +1,6 @@
 {
-  "last_authenticated": 0,
   "access_token": "KA.ewogIC...",
   "expires_in": 2592000,
   "token_type": "Bearer",
-  "scope": "places",
-  "refresh_token": ""
+  "scope": "ride_request.estimate"
 }

@@ -60,9 +60,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
                         CLIENT_ID,
                         CLIENT_SECRET,
                         "client_credentials",
-                        // Any valid scope should be accepted per, e.g.:
-                        // https://developer.uber.com/docs/riders/references/api/v1.2/estimates-price-get
-                        "places"
+                        "ride_request.estimate"
                     ).toFormUrlEncoded()
                 ))
                 .willReturn(

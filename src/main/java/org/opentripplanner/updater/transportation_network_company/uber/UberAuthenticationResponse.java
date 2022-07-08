@@ -13,11 +13,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 package org.opentripplanner.updater.transportation_network_company.uber;
 
+/**
+ * Data structure for a response to an Uber access token request.
+ * All fields except error are populated if the request is successful.
+ * If the request failed, only the error field is populated.
+ */
 public class UberAuthenticationResponse {
     public String access_token;
+    public String error;
     public int expires_in;
-    public int last_authenticated;
-    public String refresh_token;
     public String scope;
     public String token_type;
 }

@@ -15,6 +15,9 @@ package org.opentripplanner.updater.transportation_network_company.uber;
 
 import java.net.URLEncoder;
 
+/**
+ * Data structure for requesting an Uber access token.
+ */
 public class UberAuthenticationRequestBody {
 
     public String clientId;

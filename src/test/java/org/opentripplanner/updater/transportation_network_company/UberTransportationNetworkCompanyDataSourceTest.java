@@ -23,6 +23,7 @@ import org.opentripplanner.routing.transportation_network_company.RideEstimate;
 import org.opentripplanner.updater.transportation_network_company.uber.UberAuthenticationRequestBody;
 import org.opentripplanner.updater.transportation_network_company.uber.UberTransportationNetworkCompanyDataSource;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -36,8 +37,9 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     public static final String CLIENT_ID = "testClientId";
     public static final String CLIENT_SECRET = "testClientSecret";
 
-    private static UberTransportationNetworkCompanyDataSource source = new UberTransportationNetworkCompanyDataSource(
+    private static final UberTransportationNetworkCompanyDataSource source = new UberTransportationNetworkCompanyDataSource(
         "http://localhost:8089/",
+        "http://localhost:8090",
         CLIENT_ID,
         CLIENT_SECRET
     );
@@ -45,7 +47,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(
         options()
-            .port(8089)
+            .port(8090)
             .usingFilesUnderDirectory("src/test/resources/updater/")
     );
 
@@ -61,13 +63,36 @@ public class UberTransportationNetworkCompanyDataSourceTest {
                         CLIENT_SECRET,
                         "client_credentials",
                         "ride_request.estimate"
-                    ).toFormUrlEncoded()
+                    ).toRequestParamString()
                 ))
                 .willReturn(
                     aResponse()
                         .withBodyFile("uber_authentication.json")
                 )
         );
+    }
+
+    /**
+     * Enable for development/troubleshooting purposes only (provide your own keys).
+     */
+    // @Test
+    public void testGetAccessTokenSuccessful() throws IOException, InterruptedException {
+        UberTransportationNetworkCompanyDataSource src = new UberTransportationNetworkCompanyDataSource(
+            "https://api.uber.com/v1.2/",
+            "https://login.uber.com/",
+            CLIENT_ID,
+            CLIENT_SECRET
+        );
+
+        // Get access token for the first time.
+        String token1 = src.getAccessToken();
+
+        // Wait a few seconds.
+        Thread.sleep(2000);
+
+        // Second call to getAccessToken should return the same token, as it has not expired yet.
+        String token2 = src.getAccessToken();
+        assertEquals(token1, token2);
     }
 
     @Test

@@ -13,8 +13,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 package org.opentripplanner.updater.transportation_network_company.uber;
 
-import java.net.URLEncoder;
-
 /**
  * Data structure for requesting an Uber access token.
  */
@@ -33,15 +31,16 @@ public class UberAuthenticationRequestBody {
     }
 
     /**
-     * Converts this object to application/x-www-form-urlencoded format ("name1=value1&name2=value2" encoded).
+     * Converts this object to application/x-www-form-urlencoded format ("name1=value1&name2=value2").
+     * (There should be no need to url-encode as there are no special characters in the values passed.)
      */
-    public String toFormUrlEncoded() {
-        return URLEncoder.encode(String.format(
-            "client_id:%s&client_secret:%s&grant_type:%s&scope:%s",
+    public String toRequestParamString() {
+        return String.format(
+            "client_id=%s&client_secret=%s&grant_type=%s&scope=%s",
             clientId,
             clientSecret,
             grant_type,
             scope
-        ));
+        );
     }
 }

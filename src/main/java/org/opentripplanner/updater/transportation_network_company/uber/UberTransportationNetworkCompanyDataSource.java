@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -40,8 +39,10 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
     private static final Logger LOG = LoggerFactory.getLogger(UberTransportationNetworkCompanyDataSource.class);
 
     private static final String UBER_API_URL = "https://api.uber.com/v1.2/";
+    private static final String UBER_AUTHENTICATION_URL = "https://login.uber.com";
 
-    private final String baseUrl; // for testing purposes
+    private final String baseUrl;
+    private final String authenticationUrl;
     private final String clientId;
     private final String clientSecret;
 
@@ -50,19 +51,27 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
 
     public UberTransportationNetworkCompanyDataSource(JsonNode config) {
         this.baseUrl = UBER_API_URL;
+        this.authenticationUrl = UBER_AUTHENTICATION_URL;
         this.clientId = config.path("clientId").asText();
         this.clientSecret = config.path("clientSecret").asText();
         this.wheelChairAccessibleRideType = config.path("wheelChairAccessibleRideType").asText();
     }
 
-    public UberTransportationNetworkCompanyDataSource (String baseUrl, String clientId, String clientSecret) {
+    /**
+     * This constructor is for testing purposes.
+     */
+    public UberTransportationNetworkCompanyDataSource (
+        String baseUrl,
+        String authenticationUrl,
+        String clientId, String clientSecret) {
         this.baseUrl = baseUrl;
+        this.authenticationUrl = authenticationUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
     }
 
     // Copied from Lyft class (TODO: Refactor).
-    private String getAccessToken() throws IOException {
+    public String getAccessToken() throws IOException {
         // check if token needs to be obtained
         Date now = new Date();
         if (tokenExpirationTime == null || now.after(tokenExpirationTime)) {
@@ -70,9 +79,10 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             LOG.info("Requesting new Uber access token");
 
             // prepare request to get token
-            UriBuilder uriBuilder = UriBuilder.fromUri(baseUrl + "oauth/v2/token");
+            UriBuilder uriBuilder = UriBuilder.fromUri(authenticationUrl + "oauth/v2/token");
             URL url = new URL(uriBuilder.toString());
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
             // set request body
@@ -83,14 +93,17 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
                 "ride_request.estimate"
             );
             connection.setDoOutput(true);
-            try (PrintWriter writer = new PrintWriter(connection.getOutputStream(), true)) {
-                writer.print(authRequest.toFormUrlEncoded());
-            }
+            connection.getOutputStream().write(authRequest.toRequestParamString().getBytes());
+            connection.getOutputStream().close();
 
             // send request and parse response
             ObjectMapper mapper = new ObjectMapper();
             InputStream responseStream = connection.getInputStream();
             UberAuthenticationResponse response = mapper.readValue(responseStream, UberAuthenticationResponse.class);
+            responseStream.close();
+
+            connection.disconnect();
+
             accessToken = response.access_token;
             tokenExpirationTime = new Date();
             tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000L);

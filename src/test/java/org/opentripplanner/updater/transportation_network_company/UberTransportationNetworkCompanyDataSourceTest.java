@@ -111,6 +111,8 @@ public class UberTransportationNetworkCompanyDataSourceTest {
 
     @Test
     public void testGetAccessTokenSuccess() throws IOException {
+        source.makeTokenExpire();
+        assertTrue(source.shouldGetNewToken());
         // Get access token for the first time.
         String token1 = source.getAccessToken();
 

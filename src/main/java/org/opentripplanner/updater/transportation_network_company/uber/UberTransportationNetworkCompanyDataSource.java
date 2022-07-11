@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -115,11 +116,10 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
     }
 
     /**
-     * Check if token needs to be obtained
+     * Checks if token needs to be obtained.
      */
     public boolean shouldGetNewToken() {
-        Date now = new Date();
-        return tokenExpirationTime == null || now.after(tokenExpirationTime);
+        return tokenExpirationTime == null || new Date().after(tokenExpirationTime);
     }
 
     @Override
@@ -232,5 +232,12 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         }
 
         return estimates;
+    }
+
+    /**
+     * Used for testing purposes only
+     */
+    public void makeTokenExpire() {
+        tokenExpirationTime = Date.from(Instant.now().minusSeconds(1));
     }
 }

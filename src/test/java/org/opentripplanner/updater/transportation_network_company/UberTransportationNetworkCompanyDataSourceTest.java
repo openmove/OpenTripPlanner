@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.opentripplanner.routing.transportation_network_company.ArrivalTime;
 import org.opentripplanner.routing.transportation_network_company.RideEstimate;
 import org.opentripplanner.updater.transportation_network_company.uber.UberAuthenticationRequestBody;
-import org.opentripplanner.updater.transportation_network_company.uber.UberAuthenticationResponse;
 import org.opentripplanner.updater.transportation_network_company.uber.UberTransportationNetworkCompanyDataSource;
 
 import java.io.IOException;
@@ -101,7 +100,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     }
 
     private String getAuthorizationResponseBody(String accessToken) throws JsonProcessingException {
-        UberAuthenticationResponse response = new UberAuthenticationResponse();
+        OAuthAuthenticationResponse response = new OAuthAuthenticationResponse();
         response.access_token = accessToken;
         response.expires_in = 2592000;
         response.scope = "ride_request.estimate";
@@ -111,10 +110,11 @@ public class UberTransportationNetworkCompanyDataSourceTest {
 
     @Test
     public void testGetAccessTokenSuccess() throws IOException {
-        source.makeTokenExpire();
-        assertTrue(source.shouldGetNewToken());
+        OAuthToken initialToken = source.getToken();
+        initialToken.makeTokenExpire();
+        assertTrue(initialToken.shouldRenew());
         // Get access token for the first time.
-        String token1 = source.getAccessToken();
+        String token1 = source.getToken().value;
 
         // Edit stub so that it returns a different token when called.
         // (Modified stub doesn't need to be reset as we don't rely on a particular token value.)
@@ -126,8 +126,9 @@ public class UberTransportationNetworkCompanyDataSourceTest {
                     .withBody(getAuthorizationResponseBody(newAccessToken))));
 
         // Second call to getAccessToken should return the same original token, as it has not expired yet.
-        assertFalse(source.shouldGetNewToken());
-        assertEquals(token1, source.getAccessToken());
+        OAuthToken newToken = source.getToken();
+        assertFalse(newToken.shouldRenew());
+        assertEquals(token1, newToken.value);
     }
 
     @Test
@@ -138,10 +139,11 @@ public class UberTransportationNetworkCompanyDataSourceTest {
             INVALID_CLIENT_ID,
             CLIENT_SECRET
         );
-        assertNull(src.getAccessToken());
 
         // Token is null, so we should still attempt to get one.
-        assertTrue(source.shouldGetNewToken());
+        OAuthToken token = src.getToken();
+        assertNull(token.value);
+        assertTrue(token.shouldRenew());
     }
 
     @Test

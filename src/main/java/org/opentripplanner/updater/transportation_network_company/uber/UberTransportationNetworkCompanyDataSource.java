@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.opentripplanner.routing.transportation_network_company.ArrivalTime;
 import org.opentripplanner.routing.transportation_network_company.RideEstimate;
 import org.opentripplanner.routing.transportation_network_company.TransportationNetworkCompany;
+import org.opentripplanner.updater.transportation_network_company.OAuthToken;
 import org.opentripplanner.updater.transportation_network_company.Position;
 import org.opentripplanner.updater.transportation_network_company.RideEstimateRequest;
 import org.opentripplanner.updater.transportation_network_company.TransportationNetworkCompanyDataSource;
@@ -30,9 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class UberTransportationNetworkCompanyDataSource extends TransportationNetworkCompanyDataSource {
@@ -46,9 +45,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
     private final String authenticationUrl;
     private final String clientId;
     private final String clientSecret;
-
-    private String accessToken = "1234";
-    private Date tokenExpirationTime;
+    private OAuthToken token = new OAuthToken();
 
     public UberTransportationNetworkCompanyDataSource(JsonNode config) {
         this.baseUrl = UBER_API_URL;
@@ -75,9 +72,8 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
      * Obtains and caches an Uber API access token.
      * @return The token value, which can be null if the call was unsuccessful.
      */
-    // Copied from Lyft class (TODO: Refactor).
-    public String getAccessToken() throws IOException {
-        if (shouldGetNewToken()) {
+    public OAuthToken getToken() throws IOException {
+        if (token.shouldRenew()) {
             // token needs to be obtained
             LOG.info("Requesting new Uber access token");
 
@@ -98,28 +94,12 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             connection.getOutputStream().close();
 
             // send request and parse response
-            ObjectMapper mapper = new ObjectMapper();
-            InputStream responseStream = connection.getInputStream();
-            UberAuthenticationResponse response = mapper.readValue(responseStream, UberAuthenticationResponse.class);
-            responseStream.close();
-
+            token = new OAuthToken(connection);
             connection.disconnect();
-
-            accessToken = response.access_token;
-            tokenExpirationTime = new Date();
-            tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000L);
-
             LOG.info("Received new Uber access token");
         }
 
-        return accessToken;
-    }
-
-    /**
-     * Checks if token needs to be obtained.
-     */
-    public boolean shouldGetNewToken() {
-        return tokenExpirationTime == null || new Date().after(tokenExpirationTime);
+        return token;
     }
 
     @Override
@@ -136,7 +116,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         String requestUrl = uriBuilder.toString();
         URL uberUrl = new URL(requestUrl);
         HttpURLConnection connection = (HttpURLConnection) uberUrl.openConnection();
-        connection.setRequestProperty("Authorization", "Bearer " + getAccessToken());
+        connection.setRequestProperty("Authorization", "Bearer " + getToken().value);
         connection.setRequestProperty("Accept-Language", "en_US");
         connection.setRequestProperty("Content-Type", "application/json");
 
@@ -189,7 +169,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         String requestUrl = uriBuilder.toString();
         URL uberUrl = new URL(requestUrl);
         HttpURLConnection connection = (HttpURLConnection) uberUrl.openConnection();
-        connection.setRequestProperty("Authorization", "Bearer " + getAccessToken());
+        connection.setRequestProperty("Authorization", "Bearer " + getToken().value);
         connection.setRequestProperty("Accept-Language", "en_US");
         connection.setRequestProperty("Content-Type", "application/json");
 
@@ -232,12 +212,5 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         }
 
         return estimates;
-    }
-
-    /**
-     * Used for testing purposes only
-     */
-    public void makeTokenExpire() {
-        tokenExpirationTime = Date.from(Instant.now().minusSeconds(1));
     }
 }

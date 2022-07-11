@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.opentripplanner.routing.transportation_network_company.ArrivalTime;
 import org.opentripplanner.routing.transportation_network_company.RideEstimate;
 import org.opentripplanner.routing.transportation_network_company.TransportationNetworkCompany;
+import org.opentripplanner.updater.transportation_network_company.OAuthAuthenticationResponse;
 import org.opentripplanner.updater.transportation_network_company.Position;
 import org.opentripplanner.updater.transportation_network_company.RideEstimateRequest;
 import org.opentripplanner.updater.transportation_network_company.TransportationNetworkCompanyDataSource;
@@ -90,7 +91,7 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
 
             // send request and parse response
             InputStream responseStream = connection.getInputStream();
-            LyftAuthenticationResponse response = mapper.readValue(responseStream, LyftAuthenticationResponse.class);
+            OAuthAuthenticationResponse response = mapper.readValue(responseStream, OAuthAuthenticationResponse.class);
             accessToken = response.access_token;
             tokenExpirationTime = new Date();
             tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000);

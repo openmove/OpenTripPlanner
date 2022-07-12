@@ -46,8 +46,8 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     public static final String TOKEN_PATH = "/login/oauth/v2/token";
     public static final String API_TIME_PATH = "/api/estimates/time";
     public static final String API_PRICE_PATH = "/api/estimates/price";
-    public static final String MOCK_API_URL = "http://localhost:8089/api/";
-    public static final String MOCK_TOKEN_URL = "http://localhost:8089/login/";
+    public static final String MOCK_API_URL = "http://localhost:8090/api/";
+    public static final String MOCK_TOKEN_URL = "http://localhost:8090/login/";
 
     private static final UberTransportationNetworkCompanyDataSource source = new UberTransportationNetworkCompanyDataSource(
         MOCK_API_URL,
@@ -61,11 +61,10 @@ public class UberTransportationNetworkCompanyDataSourceTest {
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(
         options()
-            .port(8089)
+            .port(8090)
             .usingFilesUnderDirectory("src/test/resources/updater/")
     );
 
-    // Copied from lyft code (TODO: refactor)
     @Before
     public void setUp() throws Exception {
         String accessToken = UUID.randomUUID().toString().replaceAll("-", "");

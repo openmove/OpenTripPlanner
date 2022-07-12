@@ -65,9 +65,17 @@ public class UberTransportationNetworkCompanyDataSourceTest {
             .usingFilesUnderDirectory("src/test/resources/updater/")
     );
 
-    // Copied from lyft code (TODO: refactor)
-    @Before
-    public void setUp() throws Exception {
+    private String getAuthorizationResponseBody(String accessToken) throws JsonProcessingException {
+        OAuthAuthenticationResponse response = new OAuthAuthenticationResponse();
+        response.access_token = accessToken;
+        response.expires_in = 2592000;
+        response.scope = "ride_request.estimate";
+        response.token_type = "Bearer";
+        return new ObjectMapper().writeValueAsString(response);
+    }
+
+    @Test
+    public void testGetAccessTokenSuccess() throws IOException {
         String accessToken = UUID.randomUUID().toString().replaceAll("-", "");
         // setup mock server to respond to ride estimate request
         stubFor(
@@ -84,32 +92,7 @@ public class UberTransportationNetworkCompanyDataSourceTest {
                         .withBody(getAuthorizationResponseBody(accessToken))
                 )
         );
-        stubFor(
-            post(urlPathEqualTo(TOKEN_PATH))
-                .withRequestBody(equalTo(
-                    new UberAuthenticationRequestBody(
-                        INVALID_CLIENT_ID,
-                        CLIENT_SECRET
-                    ).toRequestParamString()
-                ))
-                .willReturn(
-                    aResponse()
-                        .withBody("{\"error\":\"unauthorized_client\"}")
-                )
-        );
-    }
 
-    private String getAuthorizationResponseBody(String accessToken) throws JsonProcessingException {
-        OAuthAuthenticationResponse response = new OAuthAuthenticationResponse();
-        response.access_token = accessToken;
-        response.expires_in = 2592000;
-        response.scope = "ride_request.estimate";
-        response.token_type = "Bearer";
-        return new ObjectMapper().writeValueAsString(response);
-    }
-
-    @Test
-    public void testGetAccessTokenSuccess() throws IOException {
         OAuthToken initialToken = source.getToken();
         initialToken.makeTokenExpire();
         assertTrue(initialToken.isExpired());
@@ -133,6 +116,20 @@ public class UberTransportationNetworkCompanyDataSourceTest {
 
     @Test
     public void testGetAccessTokenError() throws IOException {
+        stubFor(
+            post(urlPathEqualTo(TOKEN_PATH))
+                .withRequestBody(equalTo(
+                    new UberAuthenticationRequestBody(
+                        INVALID_CLIENT_ID,
+                        CLIENT_SECRET
+                    ).toRequestParamString()
+                ))
+                .willReturn(
+                    aResponse()
+                        .withBody("{\"error\":\"unauthorized_client\"}")
+                )
+        );
+
         UberTransportationNetworkCompanyDataSource src = new UberTransportationNetworkCompanyDataSource(
             MOCK_API_URL,
             MOCK_TOKEN_URL,

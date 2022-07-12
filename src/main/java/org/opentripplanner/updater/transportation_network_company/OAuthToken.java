@@ -24,17 +24,22 @@ public class OAuthToken {
         return new OAuthToken();
     }
 
-    public OAuthToken(HttpURLConnection connection) throws IOException {
+    public OAuthToken(HttpURLConnection connection) {
         // send request and parse response
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        String newValue = null;
         try (InputStream responseStream = connection.getInputStream()) {
             OAuthAuthenticationResponse response = mapper.readValue(responseStream, OAuthAuthenticationResponse.class);
 
-            value = response.access_token;
+            newValue = response.access_token;
             tokenExpirationTime = new Date();
             tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000L);
+        } catch (IOException e) {
+
         }
+
+        value = newValue;
     }
 
     /**

@@ -829,7 +829,8 @@ If the `isWheelChairAccessible` is set to true, then the arrival and ride estima
 {
     "type": "transportation-network-company-updater",
     "sourceType": "uber",
-    "serverToken": "YOUR-SECRET-TOKEN",
+    "clientId": "YOUR-CLIENT-ID",
+    "clientSecret": "YOUR-CLIENT-SECRET",
     "wheelChairAccessibleRideType": "REGION-SPECIFIC-ID"
 }
 ```

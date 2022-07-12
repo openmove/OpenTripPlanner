@@ -9,14 +9,18 @@ import java.time.Instant;
 import java.util.Date;
 
 /**
- * Holds an OAuth access token for querying ride-hail APIs.
+ * Holds an OAuth access token and its expiration time for querying ride-hail APIs.
  */
 public class OAuthToken {
     public final String value;
     private Date tokenExpirationTime;
 
-    public OAuthToken() {
+    private OAuthToken() {
         value = null;
+    }
+
+    public static OAuthToken blank() {
+        return new OAuthToken();
     }
 
     public OAuthToken(HttpURLConnection connection) throws IOException {
@@ -35,7 +39,7 @@ public class OAuthToken {
     /**
      * Checks if a new token needs to be obtained.
      */
-    public boolean shouldRenew() {
+    public boolean isExpired() {
         return tokenExpirationTime == null || new Date().after(tokenExpirationTime);
     }
 

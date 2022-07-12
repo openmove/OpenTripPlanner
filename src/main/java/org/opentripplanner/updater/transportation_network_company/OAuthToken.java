@@ -28,13 +28,13 @@ public class OAuthToken {
         // send request and parse response
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        InputStream responseStream = connection.getInputStream();
-        OAuthAuthenticationResponse response = mapper.readValue(responseStream, OAuthAuthenticationResponse.class);
-        responseStream.close();
+        try (InputStream responseStream = connection.getInputStream()) {
+            OAuthAuthenticationResponse response = mapper.readValue(responseStream, OAuthAuthenticationResponse.class);
 
-        value = response.access_token;
-        tokenExpirationTime = new Date();
-        tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000L);
+            value = response.access_token;
+            tokenExpirationTime = new Date();
+            tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000L);
+        }
     }
 
     /**

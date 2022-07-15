@@ -37,6 +37,7 @@ class FareRuleMapper {
     private FareRule doMap(org.onebusaway.gtfs.model.FareRule rhs) {
         FareRule lhs = new FareRule();
 
+        lhs.setIdentifier(rhs.getIdentifier());
         lhs.setFare(fareAttributeMapper.map(rhs.getFare()));
         lhs.setRoute(routeMapper.map(rhs.getRoute()));
         lhs.setOriginId(rhs.getOriginId());
@@ -47,8 +48,8 @@ class FareRuleMapper {
         if(lhs.getOriginId() != null && lhs.getDestinationId() != null
                 && lhs.getRoutingId() != null
                 && allNodes != null){
-            String key = lhs.getOriginId()+"$"+lhs.getDestinationId()+"$"+lhs.getRoutingId();
-            if(allNodes.get(key) != null) {
+            String key = lhs.getOriginId()+"ᚫ"+lhs.getDestinationId()+"ᚫ"+lhs.getRoutingId();
+            if(allNodes.containsKey(key)) {
                 for (String traverseNode : allNodes.get(key).getTraversedNodes()) {
                     lhs.addTraversedNode(traverseNode);
                 }

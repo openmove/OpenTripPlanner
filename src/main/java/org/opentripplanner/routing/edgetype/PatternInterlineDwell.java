@@ -7,6 +7,7 @@ import org.opentripplanner.model.Trip;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.trippattern.TripTimes;
@@ -147,6 +148,7 @@ public class PatternInterlineDwell extends Edge implements OnboardEdge {
         int boardStopIndex = options.arriveBy ? newPattern.stopPattern.size - 1 : 0;
         if (!newTripTimes.tripAcceptable(state0, boardStopIndex)) return null;
 
+               
         int dwellTime = departureTime - arrivalTime;
         if (dwellTime < 0) return null;
 
@@ -156,6 +158,7 @@ public class PatternInterlineDwell extends Edge implements OnboardEdge {
         s1.setPreviousTrip(oldTrip);   // TODO check meaning
         s1.setTripTimes(newTripTimes);
         s1.incrementWeight(dwellTime);
+        s1.setOnBoardBike(state0.getNonTransitMode() == TraverseMode.BICYCLE); //if s0 is a bike leg, and the trip for s1 is allowed, we have a bike onboard
         // Mode should not change.
         return s1.makeState();
     }

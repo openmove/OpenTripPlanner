@@ -214,7 +214,11 @@ public class StateEditor {
             return;
         }
         child.time += (traversingBackward ? -milliseconds : milliseconds);
-    }    
+    }  
+    
+    public void setOnBoardBike(boolean hasBikeOnBoard) {
+        child.hasOnBoardBike = hasBikeOnBoard ? 1 : 0;
+    }
 
     public void incrementWalkDistance(double length) {
         if (length < 0) {
@@ -498,6 +502,10 @@ public class StateEditor {
 
     public boolean isRentingBike() {
         return child.isBikeRenting();
+    }
+    
+    public boolean hasOnBoardBike() {
+        return child.hasOnBoardBike == 1;
     }
 
     public long getLastAlightedTimeSeconds() {

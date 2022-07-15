@@ -71,6 +71,8 @@ public class State implements Cloneable {
     protected int[] pathParserStates;
 
     int callAndRideTime = 0;
+    
+    public int hasOnBoardBike = 0;
 
     private static final Logger LOG = LoggerFactory.getLogger(State.class);
 

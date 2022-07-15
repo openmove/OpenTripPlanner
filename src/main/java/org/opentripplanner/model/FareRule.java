@@ -20,6 +20,8 @@ public final class FareRule implements Serializable {
     private String containsId;
 
     private String routingId;
+    
+    private String identifier;
 
     private List<String> traversedNodes = new ArrayList<String>();
 
@@ -69,6 +71,14 @@ public final class FareRule implements Serializable {
 
     public void setRoutingId(String routingId) {
         this.routingId = routingId;
+    }
+    
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String id) {
+        this.identifier = id;
     }
 
     public List<String> getTraversedNodes() {

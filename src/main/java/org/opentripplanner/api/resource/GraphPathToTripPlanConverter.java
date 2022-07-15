@@ -513,10 +513,13 @@ public abstract class GraphPathToTripPlanConverter {
         // check at start or end because either could be the very beginning or end of the trip
         // which are temporary edges and stuff
         leg.hailedCar = states[0].isUsingHailedCar() || states[states.length - 1].isUsingHailedCar();
+        
 
         addModeAndAlerts(graph, leg, states, disableAlertFiltering, requestedLocale);
         if (leg.isTransitLeg()) {
             addRealTimeData(leg, states);
+            
+            leg.hasBikeOnBoard = states[0].hasOnBoardBike == 1 && states[states.length - 1].hasOnBoardBike == 1;
 
             leg.interStopGeometry = new ArrayList<>();
             for (Edge edge : edges) {

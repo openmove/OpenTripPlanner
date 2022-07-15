@@ -254,7 +254,7 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
 
         List<FareRuleSet> myFareRules = new ArrayList<>();
         for(FareRuleSet frs : regularFareRules){
-            if(!frs.getFareAttribute().getId().getId().equals("UNITN-LIBERA-CIRCOLAZIONE")){
+            if(!frs.getFareAttribute().getId().getId().equals("832")){
                 myFareRules.add(frs);
             }
         }
@@ -283,6 +283,8 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
             }
             hasFare = populateFare(fare, currency, fareType, rides, fareRules);
         }
+        
+        
         return hasFare ? fare : null;
     }
 
@@ -491,6 +493,7 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
                 detail.setAgencyId(rides.get(i).routeData.getAgency().getId());
             }
 
+            
             detail.fareRule = fareRule;
             details.add(detail);
 

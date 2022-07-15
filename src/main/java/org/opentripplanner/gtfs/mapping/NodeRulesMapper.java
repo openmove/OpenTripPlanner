@@ -32,7 +32,7 @@ class NodeRulesMapper {
     }
 
     String createKey(Node node){
-        return node.getOriginId()+"$"+node.getDestinationId()+"$"+node.getRoutingId();
+        return node.getOriginId()+"ᚫ"+node.getDestinationId()+"ᚫ"+node.getRoutingId();
     }
 
     private NodeRules doMap(org.onebusaway.gtfs.model.Node rhs) {

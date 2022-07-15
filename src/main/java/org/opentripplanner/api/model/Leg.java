@@ -280,6 +280,12 @@ public class Leg {
      */
     @JsonSerialize
     public String flexFlagStopDropOffMessage;
+    
+    /**
+     * true if this (transit) leg has bike on board
+     */
+    @JsonSerialize
+    public Boolean hasBikeOnBoard;
 
     /**
      * How easy is it to use this leg when using a wheelchair.

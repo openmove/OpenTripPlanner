@@ -1845,6 +1845,11 @@ public class IndexGraphQLSchema {
                         .dataFetcher(new PropertyDataFetcher("routingId"))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("identifier")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(new PropertyDataFetcher("identifier"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("modes")
                         .type(new GraphQLList(modeEnum))
                         .dataFetcher(environment -> {

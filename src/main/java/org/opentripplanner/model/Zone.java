@@ -21,6 +21,8 @@ public final class Zone extends IdentityBean<FeedScopedId> {
     private String zoneId;
 
     private List<Stop> stops = new ArrayList<>();
+    
+    private List<String> fareIdentifiers = new ArrayList<>();
 
     public Zone() {
 
@@ -83,5 +85,13 @@ public final class Zone extends IdentityBean<FeedScopedId> {
     public String toString() {
         return "<Zone " + this.id + ">";
     }
+
+	public List<String> getFareIdentifiers() {
+		return fareIdentifiers;
+	}
+
+	public void setFareIdentifiers(List<String> fareIdentifiers) {
+		this.fareIdentifiers = fareIdentifiers;
+	}
 
 }

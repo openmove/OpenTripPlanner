@@ -1896,7 +1896,7 @@ public class IndexGraphQLSchema {
                         .build())
                 .build();
         GraphQLObjectType simpleZoneType = GraphQLObjectType.newObject()
-                .name("Zone")
+                .name("ZoneShort")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("gtfsId")
                         .type(new GraphQLNonNull(Scalars.GraphQLString))
@@ -1907,6 +1907,11 @@ public class IndexGraphQLSchema {
                         .name("name")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(new PropertyDataFetcher("name"))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("fareIdentifiers")
+                        .type(new GraphQLList(Scalars.GraphQLString))
+                        .dataFetcher(new PropertyDataFetcher("fareIdentifiers"))
                         .build())
                 .build();
 
@@ -1965,7 +1970,9 @@ public class IndexGraphQLSchema {
                                             && rule.getOriginId().equals(originId.getId())
                                             && rule.getFare().getId().getAgencyId().equals(originId.getAgencyId())){
                                         FeedScopedId destinationId = new FeedScopedId(rule.getFare().getId().getAgencyId(),rule.getDestinationId());
-                                        Zone destinationZone = index.zonesById.get(destinationId);
+                                        Zone destinationZone = new Zone(index.zonesById.get(destinationId));
+                                        
+                                        
                                         if(destinationZone != null){
                                             List<TraverseMode> modes = new ArrayList<>();
 
@@ -1989,16 +1996,25 @@ public class IndexGraphQLSchema {
                                                 if(environment.getArgument("mode") == null){
                                                     //no filter
                                                     if(!destinationZones.contains(destinationZone)){
+                                                    	destinationZone.getFareIdentifiers().add(rule.getIdentifier());
                                                         destinationZones.add(destinationZone);
+                                                    }else {
+                                                    	destinationZones.get(destinationZones.indexOf(destinationZone))
+                                                    	 	.getFareIdentifiers().add(rule.getIdentifier());
                                                     }
                                                     break;
                                                 } else if(mode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
                                                     if(!destinationZones.contains(destinationZone)){
+                                                    	destinationZone.getFareIdentifiers().add(rule.getIdentifier());
                                                         destinationZones.add(destinationZone);
-                                                    }
+                                                    }else {
+                                                    	destinationZones.get(destinationZones.indexOf(destinationZone))
+                                                	 	.getFareIdentifiers().add(rule.getIdentifier());
+                                                }
                                                     break;
                                                 }
                                             }
+                                            
                                         }
                                     }
                                 }

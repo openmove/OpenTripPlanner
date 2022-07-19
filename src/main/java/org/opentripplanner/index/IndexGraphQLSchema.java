@@ -1951,6 +1951,10 @@ public class IndexGraphQLSchema {
                                 .type(Scalars.GraphQLString)
                                 .build())
                         .argument(GraphQLArgument.newArgument()
+                                .name("name")
+                                .type(Scalars.GraphQLString)
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
                                 .name("limit")
                                 .type(Scalars.GraphQLLong)
                                 .defaultValue(Long.MAX_VALUE)
@@ -2063,8 +2067,17 @@ public class IndexGraphQLSchema {
                                     }
                                 }
                             }
+                                                        
                             return destinationZones
-                                    .stream()
+                                    .parallelStream()
+                                    .filter(zone -> {
+                                    	String name = environment.getArgument("name");
+                                    	if(name == null) {
+                                    		return true;
+                                    	}
+                                    	Pattern p = Pattern.compile(name);
+                                    	return p.matcher(zone.getName()).matches();
+                                    })
                                     .limit(environment.getArgument("limit"))
                                     .collect(Collectors.toList());
                         })

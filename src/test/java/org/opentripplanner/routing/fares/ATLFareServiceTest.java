@@ -164,7 +164,6 @@ public class ATLFareServiceTest {
     }
 
     @Test
-    @Disabled
     public void useStreetcar() {
         final float STREETCAR_PRICE = DEFAULT_RIDE_PRICE_IN_CENTS-100f;
         List<Ride> rides = Arrays.asList(
@@ -176,15 +175,15 @@ public class ATLFareServiceTest {
         );
         calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+STREETCAR_PRICE);
 
-        rides = Arrays.asList(
-            getRide(COBB_AGENCY_ID, 0),
-            getRide(STREETCAR_AGENCY_ID, 1),
-            getRide(COBB_AGENCY_ID, "101", 2)
-        );
-        calculateFare(
-            rides,
-            Fare.FareType.electronicRegular,
-            DEFAULT_RIDE_PRICE_IN_CENTS+100+STREETCAR_PRICE);
+//        rides = Arrays.asList(
+//            getRide(COBB_AGENCY_ID, 0),
+//            getRide(STREETCAR_AGENCY_ID, 1),
+//            getRide(COBB_AGENCY_ID, "101", 2)
+//        );
+//        calculateFare(
+//            rides,
+//            Fare.FareType.electronicRegular,
+//            DEFAULT_RIDE_PRICE_IN_CENTS+100+STREETCAR_PRICE);
     }
 
     /**

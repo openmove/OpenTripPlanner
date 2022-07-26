@@ -84,7 +84,6 @@ public class FareRuleSet implements Serializable {
 
     public void addRoutingId(String origin, String destination, String routingId) {
         P2<String> key = new P2<String>(origin, destination);
-        System.out.println(origin+"/"+destination+"/"+routingId);
         if(this.routingIds.containsKey(key)){
             this.routingIds.get(key).add(routingId);
         }else{
@@ -221,7 +220,6 @@ public class FareRuleSet implements Serializable {
 		if(contains.isEmpty()) {
 			if(routes.isEmpty()) {
 				String key = startZone+"$"+endZone+"$"+routingId+"$null$null";
-				System.out.println(key);
 				if(this.identifiers.containsKey(key)) {
 					return this.identifiers.get(key);
 				}

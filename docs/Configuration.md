@@ -349,7 +349,8 @@ The current list of custom fare type is:
 - `san-francisco` (no parameters)
 - `new-york` (no parameters)
 - `seattle` (no parameters)
-- `orca` (no parameters) - Calculates various fare types based off various restrictions seen in each transit agency in the Pugest Sound region
+- `orca` (no parameters) - Calculates various fare types based off various restrictions seen in each transit agency in the Puget Sound region
+- `atl` (no parameters) - Calculates fares for the Breeze card in Atlanta
 - `highestFareInFreeTransferWindow` - Will apply the highest observed transit fare (across all operators) within a free transfer window, adding to the cost if a trip is boarded outside the free transfer window. It accepts the following parameters:
   - `freeTransferWindowInMinutes` - the number of minutes that free transfers are possible after the board time of the first transit leg. Default: 150 mintues.
   - `analyzeInterlinedTransfers` - If true, will treat interlined transfers as actual transfers. This is merely a work-around for transit agencies that choose to code their fares in a route-based fashion instead of a zone-based fashion. Default: false.

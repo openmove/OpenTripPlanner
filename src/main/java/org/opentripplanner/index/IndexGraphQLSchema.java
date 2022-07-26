@@ -2076,7 +2076,7 @@ public class IndexGraphQLSchema {
                                     		return true;
                                     	}
                                     	Pattern p = Pattern.compile(name);
-                                    	return p.matcher(zone.getName()).matches();
+                                    	return p.matcher(zone.getName() != null ? zone.getName() : "").matches();
                                     })
                                     .limit(environment.getArgument("limit"))
                                     .collect(Collectors.toList());
@@ -2425,7 +2425,7 @@ public class IndexGraphQLSchema {
                         String name = environment.getArgument("name");
                         Pattern p = Pattern.compile(name);
                         return index.zonesById.values().stream()
-                                .filter(zone -> p.matcher(zone.getName()).matches())
+                                .filter(zone -> p.matcher(zone.getName() != null ? zone.getName() : "").matches())
                                 .skip(environment.getArgument("skip"))
                                 .limit(environment.getArgument("limit"))
                                 .collect(Collectors.toList());

@@ -44,6 +44,8 @@ class FareRuleMapper {
         lhs.setDestinationId(rhs.getDestinationId());
         lhs.setContainsId(rhs.getContainsId());
         lhs.setRoutingId(rhs.getRoutingId());
+        
+        System.out.println(rhs.getRoutingId());
 
         if(lhs.getOriginId() != null && lhs.getDestinationId() != null
                 && lhs.getRoutingId() != null

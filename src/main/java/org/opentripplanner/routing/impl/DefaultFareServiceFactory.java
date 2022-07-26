@@ -85,6 +85,7 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
             }
 
             String routingId = rule.getRoutingId();
+            String identifier = rule.getIdentifier();
             if(routingId != null){
                 fareRule.addRoutingId(origin, destination, routingId);
                 Set<String> traversedNodes = new HashSet<>();
@@ -92,6 +93,13 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
                     traversedNodes.add(s);
                 }
                 fareRule.addTraversedNodes(origin,destination,routingId,traversedNodes);
+            }
+            if(identifier != null) {
+            	String routeId = null;
+            	if(route != null) {
+            		routeId = route.getId().getId();
+            	}
+            	fareRule.addIdentifier(origin, destination, contains, routeId, routingId, identifier);
             }
         }
     }

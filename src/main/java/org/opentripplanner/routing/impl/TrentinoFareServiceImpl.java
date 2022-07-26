@@ -351,11 +351,11 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
 
                 Set<String> routingIds = ruleSet.getRoutingIds(new P2<>(startZone,endZone));
                 String routingId = null;
+               
                 boolean found = true;
                 if(routingIds != null){
                     found = false;
                     for(String s : routingIds){
-                        System.out.println(s);
                         if(s != null){
                             Set<String> traversedNodes = ruleSet.getTraversedNodes(startZone, endZone, s);
                             if(traversedNodes.isEmpty()){
@@ -385,6 +385,8 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
                     }
                 }
                 if(found){
+                	String identifier = ruleSet.getIdentifier(startZone, endZone, zones, routes, routingId);
+                	
                     float newFare = getFarePrice(attribute, fareType);
                     if (newFare < bestFare) {
                         bestAttribute = attribute;
@@ -394,6 +396,7 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
                         fareRule.setOriginId(startZone);
                         fareRule.setFare(attribute);
                         fareRule.setRoutingId(routingId);
+                        fareRule.setIdentifier(identifier);
                     }
                 }
             }

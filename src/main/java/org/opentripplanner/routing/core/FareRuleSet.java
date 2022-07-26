@@ -19,6 +19,7 @@ public class FareRuleSet implements Serializable {
     private Set<FeedScopedId> trips;
     private HashMap<P2<String>, Set<String>> routingIds;
     private HashMap<String, Set<String>> traversedNodes;
+    private HashMap<String, String> identifiers;
     
     public FareRuleSet(FareAttribute fareAttribute) {
         this.fareAttribute = fareAttribute;
@@ -28,6 +29,7 @@ public class FareRuleSet implements Serializable {
         trips = new HashSet<FeedScopedId>();
         traversedNodes = new HashMap<String, Set<String>>();
         routingIds = new HashMap<P2<String>, Set<String>>();
+        identifiers = new HashMap<String,String>();
     }
 
     public void setAgency(String agency) {
@@ -49,6 +51,11 @@ public class FareRuleSet implements Serializable {
 
     public void addContains(String containsId) {
         contains.add(containsId);
+    }
+    
+    public void addIdentifier(String origin, String destination, String contains, String route, String routingId, String identifier) {
+    	String key = origin+"$"+destination+"$"+routingId+"$"+contains+"$"+route;
+    	this.identifiers.put(key, identifier);
     }
     
     public void addRoute(FeedScopedId route) {
@@ -77,6 +84,7 @@ public class FareRuleSet implements Serializable {
 
     public void addRoutingId(String origin, String destination, String routingId) {
         P2<String> key = new P2<String>(origin, destination);
+        System.out.println(origin+"/"+destination+"/"+routingId);
         if(this.routingIds.containsKey(key)){
             this.routingIds.get(key).add(routingId);
         }else{
@@ -204,5 +212,49 @@ public class FareRuleSet implements Serializable {
             return null;
         }
     }
+
+	public String getIdentifier(String startZone, String endZone, Set<String> zonesVisited, Set<FeedScopedId> routesVisited,
+			String routingId) {
+		
+		
+		
+		if(contains.isEmpty()) {
+			if(routes.isEmpty()) {
+				String key = startZone+"$"+endZone+"$"+routingId+"$null$null";
+				System.out.println(key);
+				if(this.identifiers.containsKey(key)) {
+					return this.identifiers.get(key);
+				}
+			}else {
+				for(FeedScopedId r: routesVisited) {
+					String key = startZone+"$"+endZone+"$"+routingId+"$null$"+r.getId();
+					if(this.identifiers.containsKey(key)) {
+						return this.identifiers.get(key);
+					}
+				}
+			}
+		}else {
+			for(String z: zonesVisited) {
+				if(routes.isEmpty()) {
+					String key = "null$null$null$"+z+"$null";
+					if(this.identifiers.containsKey(key)) {
+						return this.identifiers.get(key);
+					}
+				}else {
+					for(FeedScopedId r: routesVisited) {
+						String key = "null$null$null$"+z+"$"+r.getId();
+						if(this.identifiers.containsKey(key)) {
+							return this.identifiers.get(key);
+						}
+					}
+				}
+			}
+		}
+		String key = startZone+"$"+endZone+"$"+routingId+"$null$null";
+		if(this.identifiers.containsKey(key)) {
+			return this.identifiers.get(key);
+		}
+		return null;
+	}
 }
 

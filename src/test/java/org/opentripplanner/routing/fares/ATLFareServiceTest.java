@@ -175,6 +175,8 @@ public class ATLFareServiceTest {
         );
         calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+STREETCAR_PRICE);
 
+//        The COBB->COBB transfer does not work correctly in this case with the streetcar sandwiched in between.
+//        The test is commented because this scenario is not possible in the real world, so it's acceptable.
 //        rides = Arrays.asList(
 //            getRide(COBB_AGENCY_ID, 0),
 //            getRide(STREETCAR_AGENCY_ID, 1),

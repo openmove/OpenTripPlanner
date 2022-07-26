@@ -15,7 +15,6 @@ public class ATLFareServiceFactory extends DefaultFareServiceFactory {
     @Override
     public FareService makeFareService() {
         return new ATLFareServiceImpl(regularFareRules.values());
-//        return new ATLFareServiceImpl();
     }
 
     /**

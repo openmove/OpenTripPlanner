@@ -36,14 +36,19 @@ import java.util.List;
 public class UberTransportationNetworkCompanyDataSource extends TransportationNetworkCompanyDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(UberTransportationNetworkCompanyDataSource.class);
-
     private static final String UBER_API_URL = "https://api.uber.com/v1.2/";
     private static final String UBER_AUTHENTICATION_URL = "https://login.uber.com/";
+    private static final ObjectMapper mapper;
 
     private final String baseUrl;
     private final String authenticationUrl;
     private final String clientId;
     private final String clientSecret;
+
+    static {
+        mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     public UberTransportationNetworkCompanyDataSource(JsonNode config) {
         this.baseUrl = UBER_API_URL;
@@ -107,8 +112,6 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
 
         // Make request, parse response
         InputStream responseStream = connection.getInputStream();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         UberArrivalEstimateResponse response = mapper.readValue(responseStream, UberArrivalEstimateResponse.class);
 
         // serialize into Arrival Time objects
@@ -160,8 +163,6 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
 
         // Make request, parse response
         InputStream responseStream = connection.getInputStream();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         UberTripTimeEstimateResponse response = mapper.readValue(responseStream, UberTripTimeEstimateResponse.class);
 
         if (response.prices == null) {

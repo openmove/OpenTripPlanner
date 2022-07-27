@@ -37,12 +37,17 @@ import java.util.List;
 public class LyftTransportationNetworkCompanyDataSource extends TransportationNetworkCompanyDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(LyftTransportationNetworkCompanyDataSource.class);
-
     private static final String LYFT_API_URL = "https://api.lyft.com/";
+    private static final ObjectMapper mapper;
 
     private final String baseUrl;  // for testing purposes
     private final String clientId;
     private final String clientSecret;
+
+    static {
+        mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     public LyftTransportationNetworkCompanyDataSource(JsonNode config) {
         this.baseUrl = LYFT_API_URL;
@@ -65,9 +70,6 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
 
     @Override
     protected HttpURLConnection buildOAuthConnection() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
         // prepare request to get token
         UriBuilder uriBuilder = UriBuilder.fromUri(baseUrl + "oauth/token");
         URL url = new URL(uriBuilder.toString());
@@ -102,8 +104,6 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
         LOG.info("Made request to lyft API at following URL: " + requestUrl);
 
         // make request, parse response
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         if (connection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
             LyftArrivalEstimateResponse response = mapper.readValue(
                 connection.getInputStream(),
@@ -170,9 +170,6 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
         LOG.info("Made request to lyft API at following URL: " + requestUrl);
 
         // make request, parse response
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
         if (connection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
             InputStream responseStream = connection.getInputStream();
             LyftRideEstimateResponse response = mapper.readValue(responseStream, LyftRideEstimateResponse.class);

@@ -221,7 +221,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 return new TransferMeta(TransferType.NO_TRANSFER);
             case COBB_LOCAL:
                 if (!isElectronicPayment(fareType)) {
-                    if (fromRideType == RideType.COBB_LOCAL) {
+                    if (fromRideType == RideType.COBB_LOCAL || fromRideType == RideType.COBB_EXPRESS) {
                         return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
                     }
                     return new TransferMeta(TransferType.END_TRANSFER);
@@ -235,7 +235,17 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                         return new TransferMeta(TransferType.END_TRANSFER);
                 }
             case COBB_EXPRESS:
-                if (!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
+                if (!isElectronicPayment(fareType)) {
+                    switch(fromRideType) {
+                        case COBB_EXPRESS:
+                            return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                        case COBB_LOCAL:
+                            return new TransferMeta(TransferType.TRANSFER_PAY_DIFFERENCE, 180, 4);
+                        default:
+                            return new TransferMeta(TransferType.END_TRANSFER);
+                    }
+                }
+                // Electronic payment
                 switch(fromRideType) {
                     case COBB_EXPRESS:
                     case MARTA:

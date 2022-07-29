@@ -87,7 +87,7 @@ public class ATLFareServiceTest {
             getRide(COBB_AGENCY_ID, 0),
             getRide(COBB_AGENCY_ID, "101", 1)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+100);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS + 100);
 
         rides = Arrays.asList(
             getRide(COBB_AGENCY_ID, 0),
@@ -100,7 +100,7 @@ public class ATLFareServiceTest {
             getRide(COBB_AGENCY_ID, "101", 0),
             getRide(COBB_AGENCY_ID, 1)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+100);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS + 100);
 
         rides = Arrays.asList(
             getRide(COBB_AGENCY_ID, "101", 0),
@@ -128,7 +128,7 @@ public class ATLFareServiceTest {
             getRide(MARTA_AGENCY_ID, 4),
             getRide(MARTA_AGENCY_ID, 5)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
 
         rides = Arrays.asList(
             getRide(MARTA_AGENCY_ID, 0),
@@ -138,7 +138,7 @@ public class ATLFareServiceTest {
             getRide(MARTA_AGENCY_ID, 4),
             getRide(COBB_AGENCY_ID, 5)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
 
         // TODO: Any agencies with 3 transfer limit? GCT?
     }
@@ -151,16 +151,16 @@ public class ATLFareServiceTest {
             getRide(MARTA_AGENCY_ID, 181),
             getRide(MARTA_AGENCY_ID, 179)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
 
         rides = Arrays.asList(
             getRide(MARTA_AGENCY_ID, 0),
             getRide(GCT_AGENCY_ID, 1),
             getRide(GCT_AGENCY_ID, 181),
-            getRide(MARTA_AGENCY_ID, 181+178),
-            getRide(MARTA_AGENCY_ID, 181+179)
+            getRide(MARTA_AGENCY_ID, 181 + 178),
+            getRide(MARTA_AGENCY_ID, 181 + 179)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS*2);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
     }
 
     @Test
@@ -173,7 +173,7 @@ public class ATLFareServiceTest {
             getRide(MARTA_AGENCY_ID, 3),
             getRide(MARTA_AGENCY_ID, 4)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS+STREETCAR_PRICE);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS + STREETCAR_PRICE);
 
 //        The COBB->COBB transfer does not work correctly in this case with the streetcar sandwiched in between.
 //        The test is commented because this scenario is not possible in the real world, so it's acceptable.
@@ -185,7 +185,7 @@ public class ATLFareServiceTest {
 //        calculateFare(
 //            rides,
 //            Fare.FareType.electronicRegular,
-//            DEFAULT_RIDE_PRICE_IN_CENTS+100+STREETCAR_PRICE);
+//            DEFAULT_RIDE_PRICE_IN_CENTS + 100 + STREETCAR_PRICE);
     }
 
     /**

@@ -153,8 +153,8 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
         case "composite:additive":
             retval = new MultipleFareServiceFactory.AddingMultipleFareServiceFactory();
             break;
-        case "atl":
-            LOG.warn("The ATL fare service is not completed.");
+        case "atlanta":
+            LOG.warn("The Atlanta fare service is not completed.");
             retval = new ATLFareServiceFactory();
             break;
         case "bike-rental-time-based":

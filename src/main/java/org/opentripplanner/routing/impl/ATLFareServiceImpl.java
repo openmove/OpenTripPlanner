@@ -37,6 +37,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         List<Fare> fares = new ArrayList<Fare>();
         Fare.FareType fareType;
         Currency currency;
+        float lastFareWithTransfer;
         float currentDiscount = 0;
 
         public ATLTransfer(Currency currency, Fare.FareType fareType) {
@@ -57,6 +58,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 rides.add(ride);
                 fare.addFare(fareType, getMoney(currency, defaultFare));
                 fares.add(fare);
+                lastFareWithTransfer = defaultFare;
                 return true;
             }
 
@@ -96,17 +98,19 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
             rides.add(ride);
             if (transferClassification.type.equals(TransferType.FREE_TRANSFER)) {
                 fare.addFare(fareType, getMoney(currency, 0));
+                lastFareWithTransfer = defaultFare;
                 return true;
             } else if (transferClassification.type.equals(TransferType.TRANSFER_PAY_DIFFERENCE)) {
                 float newCost = 0;
-                float previousCost = previousFare.getFare(fareType).getCents() / 100f;
-                if (defaultFare > previousCost) {
-                    newCost = defaultFare - previousCost;
+                if (defaultFare > lastFareWithTransfer) {
+                    newCost = defaultFare - lastFareWithTransfer;
                 }
                 fare.addFare(fareType, getMoney(currency, newCost));
+                lastFareWithTransfer = defaultFare;
                 return true;
             } else if (transferClassification.type.equals(TransferType.TRANSFER_WITH_UPCHARGE)) {
                 fare.addFare(fareType, getMoney(currency, (float) transferClassification.upcharge / 100));
+                lastFareWithTransfer = defaultFare;
                 return true;
             }
             return true;
@@ -296,7 +300,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                     case GCT_LOCAL:
                     case GCT_EXPRESS_Z1:
                     case GCT_EXPRESS_Z2:
-                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 3);
                     default:
                         return new TransferMeta(TransferType.END_TRANSFER);
                 }

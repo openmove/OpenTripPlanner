@@ -177,15 +177,15 @@ public class ATLFareServiceTest {
 
 //        The COBB->COBB transfer does not work correctly in this case with the streetcar sandwiched in between.
 //        The test is commented because this scenario is not possible in the real world, so it's acceptable.
-//        rides = Arrays.asList(
-//            getRide(COBB_AGENCY_ID, 0),
-//            getRide(STREETCAR_AGENCY_ID, 1),
-//            getRide(COBB_AGENCY_ID, "101", 2)
-//        );
-//        calculateFare(
-//            rides,
-//            Fare.FareType.electronicRegular,
-//            DEFAULT_RIDE_PRICE_IN_CENTS + 100 + STREETCAR_PRICE);
+        rides = Arrays.asList(
+            getRide(COBB_AGENCY_ID, 0),
+            getRide(STREETCAR_AGENCY_ID, 1),
+            getRide(COBB_AGENCY_ID, "101", 2)
+        );
+        calculateFare(
+            rides,
+            Fare.FareType.electronicRegular,
+            DEFAULT_RIDE_PRICE_IN_CENTS + 100 + STREETCAR_PRICE);
     }
 
     /**

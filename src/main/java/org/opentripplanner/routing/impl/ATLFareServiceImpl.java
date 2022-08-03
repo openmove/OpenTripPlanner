@@ -42,6 +42,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         Fare.FareType fareType;
         Currency currency;
         float lastFareWithTransfer;
+        int maxRides;
 
         public ATLTransfer(Currency currency, Fare.FareType fareType) {
             this.fareType = fareType;
@@ -57,11 +58,13 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         public boolean addRide(Ride ride, float defaultFare) {
             // A transfer will always contain at least one ride.
             Fare fare = new Fare();
+            RideType toRideType = classify(ride);
             if (rides.size() == 0) {
                 rides.add(ride);
                 fare.addFare(fareType, getMoney(currency, defaultFare));
                 fares.add(fare);
                 lastFareWithTransfer = defaultFare;
+                maxRides = getMaxTransfers(toRideType);
                 return true;
             }
 
@@ -69,7 +72,6 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
             // TODO: Potential problem if the first trip of a transfer is a pay on exit?
             long transferStartTime = rides.get(0).startTime;
             RideType fromRideType = classify(latestRide);
-            RideType toRideType = classify(ride);
             TransferMeta transferClassification = classifyTransfer(toRideType, fromRideType, this.fareType);
 
             long transferUseTime = transferClassification.payOnExit ? ride.endTime : ride.startTime;
@@ -80,7 +82,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 // Consider the conditions under which this transfer will no longer be valid.
                 if (transferClassification.type.equals(TransferType.END_TRANSFER)) return false;
                 else if (transferUseTime >= transferStartTime + transferClassification.window * 60L) return false;
-                else if (rides.size() >= transferClassification.maxTransfers) return false;
+                else if (rides.size() >= maxRides) return false;
             }
 
             // The transfer is valid for this ride, so create a fare object.
@@ -149,7 +151,6 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
 
     private static class TransferMeta {
         public final int window; // Transfer window in mins
-        public final int maxTransfers; // How many transfers are allowed within window
         public final TransferType type;
         public final int upcharge;
         public final boolean payOnExit;
@@ -158,31 +159,29 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
          * Create a TransferMeta
          * @param type Type of transfer
          * @param window Window for transfer in mins
-         * @param maxTransfers Max transfers that can be made on one fare
          * @param upcharge Upcharge for the transfer in cents
          * @param payOnExit Whether the fare is charged at end of leg
          */
-        public TransferMeta(TransferType type, int window, int maxTransfers, int upcharge, boolean payOnExit) {
+        public TransferMeta(TransferType type, int window, int upcharge, boolean payOnExit) {
             this.type = type;
             this.window = window;
-            this.maxTransfers = maxTransfers;
             this.upcharge = upcharge;
             this.payOnExit = payOnExit;
         }
 
-        public TransferMeta(TransferType type, int window, int maxTransfers, int upcharge) {
-            this(type, window, maxTransfers, upcharge, false);
+        public TransferMeta(TransferType type, int window, int upcharge) {
+            this(type, window, upcharge, false);
         }
 
-        public TransferMeta(TransferType type, int window, int maxTransfers) {
-            this(type, window, maxTransfers, 0, false);
+        public TransferMeta(TransferType type, int window) {
+            this(type, window, 0, false);
             if (type.equals(TransferType.TRANSFER_WITH_UPCHARGE)) {
                 throw new IllegalArgumentException("Must specify the upcharge.");
             }
         }
 
         public TransferMeta(TransferType type) {
-            this(type, 0, 0, 0, false);
+            this(type, 0, 0, false);
             if (!(type.equals(TransferType.END_TRANSFER) || type.equals(TransferType.NO_TRANSFER))) {
                 throw new IllegalArgumentException("Window and maxTransfers arguments required for this transfer type.");
             }
@@ -225,6 +224,18 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         }
     }
 
+    private static int getMaxTransfers(RideType rideType) {
+        switch (rideType) {
+            // GCT only allows 3 transfers.
+            case GCT_EXPRESS_Z1:
+            case GCT_LOCAL:
+            case GCT_EXPRESS_Z2:
+                return 3;
+            default:
+                return 4;
+        }
+    }
+
     private static TransferMeta classifyTransfer(RideType toRideType, RideType fromRideType, Fare.FareType fareType) {
         switch (toRideType) {
             case STREETCAR:
@@ -233,7 +244,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
             case COBB_LOCAL:
                 if (!isElectronicPayment(fareType)) {
                     if (fromRideType == RideType.COBB_LOCAL || fromRideType == RideType.COBB_EXPRESS) {
-                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180);
                     }
                     return new TransferMeta(TransferType.END_TRANSFER);
                 }
@@ -241,7 +252,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                     case COBB_LOCAL:
                     case COBB_EXPRESS:
                     case MARTA:
-                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180);
                     default:
                         return new TransferMeta(TransferType.END_TRANSFER);
                 }
@@ -249,9 +260,9 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 if (!isElectronicPayment(fareType)) {
                     switch(fromRideType) {
                         case COBB_EXPRESS:
-                            return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                            return new TransferMeta(TransferType.FREE_TRANSFER, 180);
                         case COBB_LOCAL:
-                            return new TransferMeta(TransferType.TRANSFER_PAY_DIFFERENCE, 180, 4);
+                            return new TransferMeta(TransferType.TRANSFER_PAY_DIFFERENCE, 180);
                         default:
                             return new TransferMeta(TransferType.END_TRANSFER);
                     }
@@ -260,9 +271,9 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 switch(fromRideType) {
                     case COBB_EXPRESS:
                     case MARTA:
-                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180);
                     case COBB_LOCAL:
-                        return new TransferMeta(TransferType.TRANSFER_PAY_DIFFERENCE, 180, 4);
+                        return new TransferMeta(TransferType.TRANSFER_PAY_DIFFERENCE, 180);
                     default:
                         return new TransferMeta(TransferType.NO_TRANSFER);
                 }
@@ -276,7 +287,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                    case GCT_EXPRESS_Z1:
                    case GCT_EXPRESS_Z2:
                    case GCT_LOCAL:
-                       return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4);
+                       return new TransferMeta(TransferType.FREE_TRANSFER, 180);
                    default:
                        return new TransferMeta(TransferType.END_TRANSFER);
                }
@@ -289,13 +300,13 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                     case GCT_EXPRESS_Z2:
                     case XPRESS:
                         // Could there be a situation where MARTA to XPRESS transfer is not pay on exit?
-                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 4, 0, true);
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 0, true);
                     case COBB_LOCAL:
                         // ditto, is this always pay on exit?
-                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 4, 150, true);
+                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 150, true);
                     case GCT_LOCAL:
                         // ditto, is this always pay on exit?
-                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 4, 100, true);
+                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 100, true);
                     default:
                         return new TransferMeta(TransferType.END_TRANSFER);
                 }

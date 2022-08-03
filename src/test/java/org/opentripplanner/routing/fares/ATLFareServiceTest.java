@@ -145,7 +145,23 @@ public class ATLFareServiceTest {
         );
         calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
 
-        // TODO: Any agencies with 3 transfer limit? GCT?
+        rides = Arrays.asList(
+            getRide(GCT_AGENCY_ID, 0),
+            getRide(MARTA_AGENCY_ID, 1),
+            getRide(MARTA_AGENCY_ID, 2),
+            // new transfer - only got 3 from GCT
+            getRide(MARTA_AGENCY_ID, 3)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
+
+
+        rides = Arrays.asList(
+            getRide(MARTA_AGENCY_ID, 0),
+            getRide(MARTA_AGENCY_ID, 1),
+            getRide(MARTA_AGENCY_ID, 2),
+            getRide(GCT_AGENCY_ID, 3)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
     }
 
     @Test

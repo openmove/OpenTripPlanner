@@ -29,7 +29,11 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     }
 
     private enum RideType {
-        MARTA, COBB_LOCAL, COBB_EXPRESS, GCT_LOCAL, GCT_EXPRESS_Z1, GCT_EXPRESS_Z2, XPRESS, STREETCAR
+        MARTA,
+        COBB_LOCAL, COBB_EXPRESS, COBB_CIRCULATOR,
+        GCT_LOCAL, GCT_EXPRESS_Z1, GCT_EXPRESS_Z2,
+        XPRESS,
+        STREETCAR;
     }
 
     private static class ATLTransfer {
@@ -38,7 +42,6 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         Fare.FareType fareType;
         Currency currency;
         float lastFareWithTransfer;
-        float currentDiscount = 0;
 
         public ATLTransfer(Currency currency, Fare.FareType fareType) {
             this.fareType = fareType;
@@ -82,8 +85,6 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
 
             // The transfer is valid for this ride, so create a fare object.
             // TODO: Change this fare object out for the one on the Ride object when Fare-by-leg is added
-            // TODO: What happens if previous fare is a NO_TRANSFER?
-            Fare previousFare = fares.get(fares.size() - 1);
             fares.add(fare);
 
             if (transferClassification.type.equals(TransferType.NO_TRANSFER)) {
@@ -138,6 +139,8 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 return DEFAULT_TEST_RIDE_PRICE + 2;
             } else if (ride.routeData.getId().getAgencyId().equalsIgnoreCase(STREETCAR_AGENCY_ID)) {
                 return DEFAULT_TEST_RIDE_PRICE - 1;
+            } else if (ride.routeData.getShortName().equalsIgnoreCase("BLUE")) {
+                return 0; // free circulator
             }
             return DEFAULT_TEST_RIDE_PRICE;
         }
@@ -196,6 +199,9 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                     shortName.equalsIgnoreCase("101") ||
                     shortName.equalsIgnoreCase("102")) {
                     return RideType.COBB_EXPRESS;
+                } else if (shortName.equalsIgnoreCase("BLUE") ||
+                    shortName.equalsIgnoreCase("GREEN")) {
+                    return RideType.COBB_CIRCULATOR;
                 }
                 return RideType.COBB_LOCAL;
             case XPRESS_AGENCY_ID:
@@ -222,6 +228,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     private static TransferMeta classifyTransfer(RideType toRideType, RideType fromRideType, Fare.FareType fareType) {
         switch (toRideType) {
             case STREETCAR:
+            case COBB_CIRCULATOR:
                 return new TransferMeta(TransferType.NO_TRANSFER);
             case COBB_LOCAL:
                 if (!isElectronicPayment(fareType)) {

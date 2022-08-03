@@ -1,9 +1,7 @@
 package org.opentripplanner.routing.fares;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.FeedScopedId;
@@ -25,7 +23,6 @@ import static org.opentripplanner.routing.impl.ATLFareServiceImpl.GCT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.MARTA_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.STREETCAR_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.XPRESS_AGENCY_ID;
-import static org.opentripplanner.routing.impl.OrcaFareServiceImpl.*;
 
 public class ATLFareServiceTest {
     private static ATLFareServiceImpl atlFareService;
@@ -107,6 +104,14 @@ public class ATLFareServiceTest {
             getRide(GCT_AGENCY_ID, "102", 1)
         );
         calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2 + 300);
+
+        // Local to circulator to express
+        rides = Arrays.asList(
+            getRide(COBB_AGENCY_ID, 0),
+            getRide(COBB_AGENCY_ID, "BLUE", 1),
+            getRide(COBB_AGENCY_ID, "101", 1)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS + 100);
     }
 
     @Test
@@ -175,8 +180,6 @@ public class ATLFareServiceTest {
         );
         calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS + STREETCAR_PRICE);
 
-//        The COBB->COBB transfer does not work correctly in this case with the streetcar sandwiched in between.
-//        The test is commented because this scenario is not possible in the real world, so it's acceptable.
         rides = Arrays.asList(
             getRide(COBB_AGENCY_ID, 0),
             getRide(STREETCAR_AGENCY_ID, 1),

@@ -32,7 +32,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         MARTA,
         COBB_LOCAL, COBB_EXPRESS, COBB_CIRCULATOR,
         GCT_LOCAL, GCT_EXPRESS_Z1, GCT_EXPRESS_Z2,
-        XPRESS,
+        XPRESS_MORNING, XPRESS_AFTERNOON,
         STREETCAR;
     }
 
@@ -204,7 +204,13 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 }
                 return RideType.COBB_LOCAL;
             case XPRESS_AGENCY_ID:
-                return RideType.XPRESS;
+                // Get hour of trip start
+                long hours = (ride.startTime / 60 / 60) % 24;
+                if(hours > 12) {
+                    return RideType.XPRESS_AFTERNOON;
+                } else {
+                    return RideType.XPRESS_MORNING;
+                }
             case MARTA_AGENCY_ID:
                 return RideType.MARTA;
             case GCT_AGENCY_ID:
@@ -281,7 +287,8 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                if (!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
                switch(fromRideType) {
                    case MARTA:
-                   case XPRESS:
+                   case XPRESS_AFTERNOON:
+                   case XPRESS_MORNING:
                    case COBB_LOCAL:
                    case COBB_EXPRESS:
                    case GCT_EXPRESS_Z1:
@@ -291,22 +298,22 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                    default:
                        return new TransferMeta(TransferType.END_TRANSFER);
                }
-            case XPRESS:
+            case XPRESS_MORNING:
+            case XPRESS_AFTERNOON:
+                boolean payOnExit = toRideType == RideType.XPRESS_AFTERNOON;
                 if (!isElectronicPayment(fareType)) return new TransferMeta(TransferType.END_TRANSFER);
                 switch(fromRideType) {
                     case MARTA:
                     case COBB_EXPRESS:
                     case GCT_EXPRESS_Z1:
                     case GCT_EXPRESS_Z2:
-                    case XPRESS:
-                        // Could there be a situation where MARTA to XPRESS transfer is not pay on exit?
-                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 0, true);
+                    case XPRESS_AFTERNOON:
+                    case XPRESS_MORNING:
+                        return new TransferMeta(TransferType.FREE_TRANSFER, 180, 0, payOnExit);
                     case COBB_LOCAL:
-                        // ditto, is this always pay on exit?
-                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 150, true);
+                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 150, payOnExit);
                     case GCT_LOCAL:
-                        // ditto, is this always pay on exit?
-                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 100, true);
+                        return new TransferMeta(TransferType.TRANSFER_WITH_UPCHARGE, 180, 100, payOnExit);
                     default:
                         return new TransferMeta(TransferType.END_TRANSFER);
                 }

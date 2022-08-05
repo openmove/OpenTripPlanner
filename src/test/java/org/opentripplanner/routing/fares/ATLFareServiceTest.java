@@ -149,17 +149,26 @@ public class ATLFareServiceTest {
             getRide(GCT_AGENCY_ID, 0),
             getRide(MARTA_AGENCY_ID, 1),
             getRide(MARTA_AGENCY_ID, 2),
-            // new transfer - only got 3 from GCT
             getRide(MARTA_AGENCY_ID, 3)
         );
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
 
+        rides = Arrays.asList(
+                getRide(GCT_AGENCY_ID, 0),
+                getRide(MARTA_AGENCY_ID, 1),
+                getRide(MARTA_AGENCY_ID, 2),
+                getRide(MARTA_AGENCY_ID, 3),
+                // new transfer - only got 3 from GCT
+                getRide(MARTA_AGENCY_ID, 4)
+        );
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2);
 
         rides = Arrays.asList(
             getRide(MARTA_AGENCY_ID, 0),
             getRide(MARTA_AGENCY_ID, 1),
             getRide(MARTA_AGENCY_ID, 2),
-            getRide(GCT_AGENCY_ID, 3)
+            getRide(GCT_AGENCY_ID, 3),
+            getRide(GCT_AGENCY_ID, 4)
         );
         calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
     }

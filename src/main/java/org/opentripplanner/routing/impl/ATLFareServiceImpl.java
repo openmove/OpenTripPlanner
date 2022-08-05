@@ -2,7 +2,6 @@ package org.opentripplanner.routing.impl;
 
 import com.google.common.collect.Lists;
 import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Transfer;
 import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.FareRuleSet;
 import org.slf4j.Logger;
@@ -29,8 +28,9 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     }
 
     private enum RideType {
+        FREE_RIDE,
         MARTA,
-        COBB_LOCAL, COBB_EXPRESS, COBB_CIRCULATOR,
+        COBB_LOCAL, COBB_EXPRESS,
         GCT_LOCAL, GCT_EXPRESS_Z1, GCT_EXPRESS_Z2,
         XPRESS_MORNING, XPRESS_AFTERNOON,
         STREETCAR;
@@ -39,8 +39,8 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     private static class ATLTransfer {
         List<Ride> rides = new ArrayList<Ride>();
         List<Fare> fares = new ArrayList<Fare>();
-        Fare.FareType fareType;
-        Currency currency;
+        final Fare.FareType fareType;
+        final Currency currency;
         float lastFareWithTransfer;
         int maxRides;
 
@@ -82,7 +82,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 // Consider the conditions under which this transfer will no longer be valid.
                 if (transferClassification.type.equals(TransferType.END_TRANSFER)) return false;
                 else if (transferUseTime >= transferStartTime + transferClassification.window * 60L) return false;
-                else if (rides.size() >= maxRides) return false;
+                else if (rides.size() > maxRides) return false;
             }
 
             // The transfer is valid for this ride, so create a fare object.
@@ -200,13 +200,13 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                     return RideType.COBB_EXPRESS;
                 } else if (shortName.equalsIgnoreCase("BLUE") ||
                     shortName.equalsIgnoreCase("GREEN")) {
-                    return RideType.COBB_CIRCULATOR;
+                    return RideType.FREE_RIDE;
                 }
                 return RideType.COBB_LOCAL;
             case XPRESS_AGENCY_ID:
                 // Get hour of trip start
                 long hours = (ride.startTime / 60 / 60) % 24;
-                if(hours > 12) {
+                if (hours >= 12) {
                     return RideType.XPRESS_AFTERNOON;
                 } else {
                     return RideType.XPRESS_MORNING;
@@ -242,10 +242,14 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         }
     }
 
+    private static int getTransferWindow(RideType rideType) {
+        return 180;
+    }
+
     private static TransferMeta classifyTransfer(RideType toRideType, RideType fromRideType, Fare.FareType fareType) {
         switch (toRideType) {
             case STREETCAR:
-            case COBB_CIRCULATOR:
+            case FREE_RIDE:
                 return new TransferMeta(TransferType.NO_TRANSFER);
             case COBB_LOCAL:
                 if (!isElectronicPayment(fareType)) {

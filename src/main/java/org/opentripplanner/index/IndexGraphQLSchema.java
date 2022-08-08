@@ -1,51 +1,101 @@
 package org.opentripplanner.index;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.transit.realtime.GtfsRealtime;
-import graphql.language.StringValue;
-import graphql.schema.*;
-import org.geotools.geojson.geom.GeometryJSON;
-import org.locationtech.jts.geom.*;
-import graphql.Scalars;
-import graphql.relay.Relay;
-import graphql.relay.SimpleListConnection;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.geotools.geometry.jts.JTS;
+import org.geotools.measure.Measure;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.NoSuchAuthorityCodeException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.*;
-import org.opentripplanner.api.parameter.QualifiedMode;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.TripPlan;
+import org.opentripplanner.api.model.VertexType;
+import org.opentripplanner.api.model.WalkStep;
 import org.opentripplanner.common.model.P2;
-import org.opentripplanner.index.model.RealtimeVehiclePosition;
-import org.opentripplanner.model.*;
-import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.FareAttribute;
+import org.opentripplanner.model.FareRule;
+import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.Zone;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.StopCluster;
-import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.bike_park.BikePark;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
-import org.opentripplanner.routing.core.*;
+import org.opentripplanner.routing.core.Fare;
+import org.opentripplanner.routing.core.FareComponent;
+import org.opentripplanner.routing.core.Money;
+import org.opentripplanner.routing.core.OptimizeType;
+import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.core.WrappedCurrency;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
-import org.opentripplanner.routing.edgetype.Timetable;
-import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.trippattern.RealTimeState;
-import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.opentripplanner.util.PolylineEncoder;
 import org.opentripplanner.util.ResourceBundleSingleton;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.*;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import com.google.common.collect.ImmutableMap;
+import com.google.transit.realtime.GtfsRealtime;
+
+import graphql.Scalars;
+import graphql.language.StringValue;
+import graphql.relay.Relay;
+import graphql.relay.SimpleListConnection;
+import graphql.schema.Coercing;
+import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLEnumType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputObjectField;
+import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLScalarType;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLTypeReference;
+import graphql.schema.PropertyDataFetcher;
+import graphql.schema.TypeResolver;
+import si.uom.SI;
 
 public class IndexGraphQLSchema {
 
@@ -1975,7 +2025,7 @@ public class IndexGraphQLSchema {
                                             && rule.getFare().getId().getAgencyId().equals(originId.getAgencyId())){
                                         FeedScopedId destinationId = new FeedScopedId(rule.getFare().getId().getAgencyId(),rule.getDestinationId());
                                         Zone destinationZone = new Zone(index.zonesById.get(destinationId));
-                                        
+                                        destinationZone.setFareIdentifiers(new ArrayList<String>());
                                         
                                         if(destinationZone != null){
                                             List<TraverseMode> modes = new ArrayList<>();
@@ -1999,12 +2049,12 @@ public class IndexGraphQLSchema {
                                             for(TraverseMode mode : modes){
                                                 if(environment.getArgument("mode") == null){
                                                     //no filter
+                                                	
                                                     if(!destinationZones.contains(destinationZone)){
                                                     	destinationZone.getFareIdentifiers().add(rule.getIdentifier());
                                                         destinationZones.add(destinationZone);
                                                     }else {
-                                                    	destinationZones.get(destinationZones.indexOf(destinationZone))
-                                                    	 	.getFareIdentifiers().add(rule.getIdentifier());
+                                                    	destinationZones.get(destinationZones.indexOf(destinationZone)).getFareIdentifiers().add(rule.getIdentifier());
                                                     }
                                                     break;
                                                 } else if(mode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
@@ -2012,9 +2062,8 @@ public class IndexGraphQLSchema {
                                                     	destinationZone.getFareIdentifiers().add(rule.getIdentifier());
                                                         destinationZones.add(destinationZone);
                                                     }else {
-                                                    	destinationZones.get(destinationZones.indexOf(destinationZone))
-                                                	 	.getFareIdentifiers().add(rule.getIdentifier());
-                                                }
+                                                    	destinationZones.get(destinationZones.indexOf(destinationZone)).getFareIdentifiers().add(rule.getIdentifier());
+                                                    }
                                                     break;
                                                 }
                                             }
@@ -2029,7 +2078,7 @@ public class IndexGraphQLSchema {
                                 for (FareRule rule : rules) {
                                     if(rule.getContainsId() != null){
                                         FeedScopedId zoneId = new FeedScopedId(rule.getFare().getId().getAgencyId(),rule.getContainsId());
-                                        Zone zone = index.zonesById.get(zoneId);
+                                        Zone zone = new Zone(index.zonesById.get(zoneId));                                        		;
                                         if(zone != null){
                                             List<TraverseMode> modes = new ArrayList<>();
 
@@ -2053,12 +2102,18 @@ public class IndexGraphQLSchema {
                                                 if(environment.getArgument("mode") == null){
                                                     //no filter
                                                     if(!destinationZones.contains(zone)){
+                                                    	zone.getFareIdentifiers().add(rule.getIdentifier());
                                                         destinationZones.add(zone);
+                                                    }else {
+                                                    	destinationZones.get(destinationZones.indexOf(zone)).getFareIdentifiers().add(rule.getIdentifier());
                                                     }
                                                     break;
                                                 } else if(mode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
                                                     if(!destinationZones.contains(zone)){
+                                                    	zone.getFareIdentifiers().add(rule.getIdentifier());
                                                         destinationZones.add(zone);
+                                                    }else {
+                                                    	destinationZones.get(destinationZones.indexOf(zone)).getFareIdentifiers().add(rule.getIdentifier());
                                                     }
                                                     break;
                                                 }
@@ -2387,6 +2442,7 @@ public class IndexGraphQLSchema {
                     .dataFetcher(environment -> new ArrayList<>(
                             index.zonesById.values()
                                     .stream()
+                                    .sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
                                     .skip(environment.getArgument("skip"))
                                     .limit(environment.getArgument("limit"))
                                     .collect(Collectors.toList())
@@ -2426,6 +2482,7 @@ public class IndexGraphQLSchema {
                         Pattern p = Pattern.compile(name);
                         return index.zonesById.values().stream()
                                 .filter(zone -> p.matcher(zone.getName() != null ? zone.getName() : "").matches())
+                                .sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
                                 .skip(environment.getArgument("skip"))
                                 .limit(environment.getArgument("limit"))
                                 .collect(Collectors.toList());
@@ -2489,6 +2546,85 @@ public class IndexGraphQLSchema {
                                 .collect(Collectors.toList());
                     })
                     .build())
+		            .field(GraphQLFieldDefinition.newFieldDefinition()
+		                    .name("faresByRange")
+		                    .description("Get fare identifiers from zones order by distance from a point")
+		                    .type(new GraphQLList(Scalars.GraphQLString))
+		                    .argument(GraphQLArgument.newArgument()
+		                            .name("lat")
+		                            .type(Scalars.GraphQLFloat)
+		                            .build())
+		                    .argument(GraphQLArgument.newArgument()
+		                            .name("lon")
+		                            .type(Scalars.GraphQLFloat)
+		                            .build())
+		                    .argument(GraphQLArgument.newArgument()
+		                            .name("range")
+		                            .type(Scalars.GraphQLLong)
+		                            .defaultValue((long)1000)
+		                            .build())
+		                    .argument(GraphQLArgument.newArgument()
+		                            .name("limit")
+		                            .type(Scalars.GraphQLLong)
+		                            .defaultValue(Long.MAX_VALUE)
+		                            .build())
+		                    .argument(GraphQLArgument.newArgument()
+		                            .name("skip")
+		                            .type(Scalars.GraphQLLong)
+		                            .defaultValue((long)0)
+		                            .build())
+		                    .argument(GraphQLArgument.newArgument()
+		                            .name("mode")
+		                            .type(Scalars.GraphQLString)
+		                            .build())
+		                    .dataFetcher(environment -> {
+		                        double lon = environment.getArgument("lon");
+		                        double lat = environment.getArgument("lat");
+		                        long range = environment.getArgument("range");
+		                        Coordinate pointCoordinate = new Coordinate(lon, lat);
+		                        List<String> identifiers = new ArrayList();
+		                        return index.zonesById.values().stream()
+		                                .filter(zone -> {
+		                                	
+		                                	
+		                                			                                	
+		                                	Coordinate zoneCoordinate = new Coordinate(zone.getLon(), zone.getLat());
+		                                    if(calculateDistance(zoneCoordinate, pointCoordinate).doubleValue() >  range){ //distance in meters
+		                                    	return false;
+		                                    }
+		                                    
+                                            if (environment.getArgument("mode") == null) {
+                                                return true;
+                                            } else {
+                                                for(Stop stop : zone.getStops()){
+                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
+                                                            .stream()
+                                                            .map(pattern -> pattern.mode)
+                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                            .entrySet()
+                                                            .stream()
+                                                            .max(Comparator.comparing(Map.Entry::getValue))
+                                                            .map(e -> e.getKey())
+                                                            .orElse(null);
+                                                    if(traverseMode != null){
+                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                            return true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            return false;
+                                        }
+		                                )
+		                                .sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
+		                                .flatMap(zone -> zone.getFareIdentifiers().stream())
+		                                .distinct()
+		                                .skip(environment.getArgument("skip"))
+		                                .limit(environment.getArgument("limit"))
+		                                .collect(Collectors.toList());
+		                        
+		                    })
+		                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("route")
                 .description("Get a single route based on its id (format is Agency:RouteId)")
@@ -2748,7 +2884,57 @@ public class IndexGraphQLSchema {
             .build();
     }
 
-    private void createPlanType(GraphIndex index) {
+    private static Measure calculateDistance(Coordinate from, Coordinate to) {
+    	CoordinateReferenceSystem crs = null;
+    	CoordinateReferenceSystem sourceCRS = null;
+		try {
+			crs = CRS.decode("EPSG:3857", true);
+			sourceCRS = CRS.decode("EPSG:4326");
+		} catch (FactoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return new Measure(-1, SI.METRE);
+		}
+    	
+    	
+
+    	MathTransform transform = null;
+		try {
+			transform = CRS.findMathTransform(sourceCRS, crs);
+		} catch (FactoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return new Measure(-1, SI.METRE);
+		}
+    	
+    	Point pointFrom = new Point(from, new PrecisionModel(), 4326);
+    	Point pointTo = new Point(to, new PrecisionModel(), 4326);
+    	 	
+    	
+    	
+        double distance = 0.0;
+        try {
+			distance = JTS.orthodromicDistance(
+					JTS.transform(pointFrom, transform).getCoordinate(),
+					JTS.transform(pointTo, transform).getCoordinate(),
+			    crs
+			);
+		} catch (MismatchedDimensionException | TransformException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return new Measure(-1, SI.METRE);
+		}
+        
+
+        Measure dist = new Measure(distance, SI.METRE);
+        return dist;
+    }
+    
+    private static Double toRad(Double value) {
+    	 return value * Math.PI / 180;
+    	 }
+
+	private void createPlanType(GraphIndex index) {
         final GraphQLObjectType placeType = GraphQLObjectType.newObject()
                 .name("Place")
                 .field(GraphQLFieldDefinition.newFieldDefinition()

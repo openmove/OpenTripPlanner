@@ -328,6 +328,7 @@ public class TimetableSnapshotSource {
             return false;
         }
 
+        
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
         final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(tripUpdate,
                 timeZone, serviceDate);

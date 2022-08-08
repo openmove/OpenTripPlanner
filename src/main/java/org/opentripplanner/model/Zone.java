@@ -19,7 +19,9 @@ public final class Zone extends IdentityBean<FeedScopedId> {
     private double lon;
 
     private String zoneId;
-
+    
+    private int isContainsZone = 1;
+    
     private List<Stop> stops = new ArrayList<>();
     
     private List<String> fareIdentifiers = new ArrayList<>();
@@ -34,7 +36,9 @@ public final class Zone extends IdentityBean<FeedScopedId> {
         this.lat = obj.lat;
         this.lon = obj.lon;
         this.zoneId = obj.zoneId;
+        this.isContainsZone = obj.isContainsZone;
         this.stops = obj.stops;
+        this.fareIdentifiers = obj.fareIdentifiers;
     }
 
     public FeedScopedId getId() {
@@ -92,6 +96,15 @@ public final class Zone extends IdentityBean<FeedScopedId> {
 
 	public void setFareIdentifiers(List<String> fareIdentifiers) {
 		this.fareIdentifiers = fareIdentifiers;
+	}
+
+	public void setIsContainsZone(int b) {
+		this.isContainsZone = b;
+		
+	}
+	
+	public int getIsContainsZone() {
+		return this.isContainsZone;
 	}
 
 }

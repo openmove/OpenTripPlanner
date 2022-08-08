@@ -1,5 +1,6 @@
 package org.opentripplanner.gtfs.mapping;
 
+import org.onebusaway.gtfs.model.FareRule;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Zone;
 import org.opentripplanner.util.MapUtils;
@@ -15,9 +16,11 @@ class ZoneMapper {
     private final Map<org.onebusaway.gtfs.model.Zone, Zone> mappedZones = new HashMap<>();
 
     Collection<Stop> mappedStops;
+    Collection<FareRule> mappedRules;
 
-    Collection<Zone> map(Collection<org.onebusaway.gtfs.model.Zone> zones, Collection<Stop> mappedStops) {
+    Collection<Zone> map(Collection<org.onebusaway.gtfs.model.Zone> zones, Collection<Stop> mappedStops, Collection<FareRule> mappedRules) {
         this.mappedStops = mappedStops;
+        this.mappedRules = mappedRules;
         return MapUtils.mapToList(zones, this::map);
     }
 
@@ -37,6 +40,22 @@ class ZoneMapper {
         for(Stop s : mappedStops){
             if(s.getZoneId() != null && s.getZoneId().equals(rhs.getId().getId())){
                 lhs.getStops().add(s);
+            }
+        }
+        for(FareRule r : mappedRules){
+            if(rhs.getId().getId().equals(r.getContainsId())){
+            	lhs.setIsContainsZone(0);
+            	if(r.getIdentifier() != null) {
+            		lhs.getFareIdentifiers().add(r.getIdentifier());
+            	}
+                
+            }
+            
+            if(rhs.getId().getId().equals(r.getDestinationId()) || rhs.getId().getId().equals(r.getOriginId())){
+            	if(r.getIdentifier() != null) {
+            		lhs.getFareIdentifiers().add(r.getIdentifier());
+            	}
+                
             }
         }
         return lhs;

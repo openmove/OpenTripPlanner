@@ -17,7 +17,6 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     public static final String XPRESS_AGENCY_ID = "6";
     public static final String MARTA_AGENCY_ID = "5";
     public static final String GCT_AGENCY_ID = "4";
-    public static final String STREETCAR_AGENCY_ID = "xxx";
 
     private enum TransferType {
         END_TRANSFER, // Ends this transfer entirely.
@@ -207,10 +206,12 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                     return RideType.GCT_EXPRESS_Z2;
                 }
                 return RideType.GCT_LOCAL;
-            case STREETCAR_AGENCY_ID:
-                return RideType.STREETCAR;
             // Also catches MARTA_AGENCY_ID
             default:
+                // Streetcar GTFS published by MARTA
+                if(shortName.equalsIgnoreCase("atlsc")) {
+                    return RideType.STREETCAR;
+                }
                 return RideType.MARTA;
         }
     }

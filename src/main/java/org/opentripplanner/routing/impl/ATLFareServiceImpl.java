@@ -37,8 +37,8 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     }
 
     private static class ATLTransfer {
-        List<Ride> rides = new ArrayList<Ride>();
-        List<Fare> fares = new ArrayList<Fare>();
+        List<Ride> rides = new ArrayList<>();
+        List<Fare> fares = new ArrayList<>();
         final Fare.FareType fareType;
         final Currency currency;
         float lastFareWithTransfer;
@@ -51,9 +51,9 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         }
 
         /**
-         *
-         * @param ride
-         * @param defaultFare
+         * Adds a ride to this transfer.
+         * @param ride Ride to be added
+         * @param defaultFare Default fare to use for transfer calculations (usually from GTFS)
          * @return Whether the added ride is valid or not. If invalid, then this transfer has ended and a new one is needed for the ride.
          */
         public boolean addRide(Ride ride, float defaultFare) {
@@ -168,10 +168,6 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
             this.payOnExit = payOnExit;
         }
 
-        public TransferMeta(TransferType type, int upcharge) {
-            this(type, upcharge, false);
-        }
-
         public TransferMeta(TransferType type) {
             this(type, 0, false);
         }
@@ -200,12 +196,11 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 } else {
                     return RideType.XPRESS_MORNING;
                 }
-            case MARTA_AGENCY_ID:
-                return RideType.MARTA;
             case GCT_AGENCY_ID:
                 if (shortName.equalsIgnoreCase("102") ||
                     shortName.equalsIgnoreCase("103A") ||
-                    shortName.equalsIgnoreCase("110")) {
+                    shortName.equalsIgnoreCase("110") ||
+                    shortName.equalsIgnoreCase("swpr")) {
                     return RideType.GCT_EXPRESS_Z1;
                 } else if (shortName.equalsIgnoreCase("101") ||
                     shortName.equalsIgnoreCase("103")) {
@@ -214,6 +209,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 return RideType.GCT_LOCAL;
             case STREETCAR_AGENCY_ID:
                 return RideType.STREETCAR;
+            // Also catches MARTA_AGENCY_ID
             default:
                 return RideType.MARTA;
         }
@@ -367,7 +363,6 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                                 Collection<FareRuleSet> fareRules
     ) {
         LOG.info("ATL populateFare: {}, {} rides", fareType, rides.size());
-        Long freeTransferStartTime = null;
         List<ATLTransfer> transfers = new ArrayList<ATLTransfer>();
         for (Ride ride : rides) {
             float defaultFare = getRidePrice(ride, fareType, fareRules);

@@ -142,23 +142,19 @@ public class OrcaFareServiceTest {
     public void calculateFareThatIncludesNoFreeTransfers() {
         List<Ride> rides = Arrays.asList(
             getRide(KITSAP_TRANSIT_AGENCY_ID, 0),
-            getRide(WASHINGTON_STATE_FERRIES_AGENCY_ID, 30),
+            getRide(WASHINGTON_STATE_FERRIES_AGENCY_ID, 30, "VashonIsland-Fauntelroy"),
             getRide(KITSAP_TRANSIT_AGENCY_ID, 60),
             getRide(SKAGIT_TRANSIT_AGENCY_ID, 90),
             getRide(KITSAP_TRANSIT_AGENCY_ID, 120),
             getRide(WASHINGTON_STATE_FERRIES_AGENCY_ID, 150, "Fauntleroy-VashonIsland")
         );
-        calculateFare(rides, Fare.FareType.regular, DEFAULT_RIDE_PRICE_IN_CENTS * 5 + 595f);
-        calculateFare(rides, Fare.FareType.senior, DEFAULT_RIDE_PRICE_IN_CENTS * 3 + 50f +
-            DEFAULT_RIDE_PRICE_IN_CENTS + 295f);
-        calculateFare(rides, Fare.FareType.youth, 200f + DEFAULT_RIDE_PRICE_IN_CENTS + 200f + 50f + 200f + 295f);
-        calculateFare(rides, Fare.FareType.electronicSpecial, 100f + DEFAULT_RIDE_PRICE_IN_CENTS + 0f +
-            DEFAULT_RIDE_PRICE_IN_CENTS + 100f + DEFAULT_RIDE_PRICE_IN_CENTS);
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 2 + 0f +
-            DEFAULT_RIDE_PRICE_IN_CENTS * 3);
-        calculateFare(rides, Fare.FareType.electronicSenior, 100f + DEFAULT_RIDE_PRICE_IN_CENTS + 0f +
-            50f + 100f + DEFAULT_RIDE_PRICE_IN_CENTS);
-        calculateFare(rides, Fare.FareType.electronicYouth, 100f + DEFAULT_RIDE_PRICE_IN_CENTS + 0f + 50f + 100f + DEFAULT_RIDE_PRICE_IN_CENTS);
+        calculateFare(rides, Fare.FareType.regular, DEFAULT_RIDE_PRICE_IN_CENTS * 4 + 610f);
+        calculateFare(rides, Fare.FareType.senior, DEFAULT_RIDE_PRICE_IN_CENTS * 3 + 50f + 305f);
+        calculateFare(rides, Fare.FareType.youth, 200f + 200f + 50f + 200f + 305f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 100f + DEFAULT_RIDE_PRICE_IN_CENTS + 100f + 610f);
+        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS * 3 + 610f);
+        calculateFare(rides, Fare.FareType.electronicSenior, 100f + 50f + 100f + 305f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 100f + 50f + 100f + 305f);
     }
 
     /**
@@ -237,13 +233,13 @@ public class OrcaFareServiceTest {
         List<Ride> rides = Collections.singletonList(
             getRide(WASHINGTON_STATE_FERRIES_AGENCY_ID, 0, "Point Defiance - Tahlequah")
         );
-        calculateFare(rides, Fare.FareType.regular, 595f);
-        calculateFare(rides, Fare.FareType.senior, 295f);
-        calculateFare(rides, Fare.FareType.youth, 295f);
-        calculateFare(rides, Fare.FareType.electronicSpecial, DEFAULT_RIDE_PRICE_IN_CENTS);
-        calculateFare(rides, Fare.FareType.electronicRegular, DEFAULT_RIDE_PRICE_IN_CENTS);
-        calculateFare(rides, Fare.FareType.electronicSenior, DEFAULT_RIDE_PRICE_IN_CENTS);
-        calculateFare(rides, Fare.FareType.electronicYouth, DEFAULT_RIDE_PRICE_IN_CENTS);
+        calculateFare(rides, Fare.FareType.regular, 610f);
+        calculateFare(rides, Fare.FareType.senior, 305f);
+        calculateFare(rides, Fare.FareType.youth, 305f);
+        calculateFare(rides, Fare.FareType.electronicSpecial, 610f);
+        calculateFare(rides, Fare.FareType.electronicRegular, 610f);
+        calculateFare(rides, Fare.FareType.electronicSenior, 305f);
+        calculateFare(rides, Fare.FareType.electronicYouth, 305f);
     }
 
     /**

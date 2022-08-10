@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +50,12 @@ public class NoApiTransportationNetworkCompanyDataSource extends TransportationN
 
     @Override public TransportationNetworkCompany getTransportationNetworkCompanyType() {
         return TransportationNetworkCompany.NOAPI;
+    }
+
+    @Override
+    protected HttpURLConnection buildOAuthConnection() {
+        // There is no authentication for this class.
+        return null;
     }
 
     /**

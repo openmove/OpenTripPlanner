@@ -21,7 +21,6 @@ import java.util.Map;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.COBB_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.GCT_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.MARTA_AGENCY_ID;
-import static org.opentripplanner.routing.impl.ATLFareServiceImpl.STREETCAR_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.XPRESS_AGENCY_ID;
 
 public class ATLFareServiceTest {
@@ -198,7 +197,7 @@ public class ATLFareServiceTest {
         final float STREETCAR_PRICE = DEFAULT_RIDE_PRICE_IN_CENTS-100f;
         List<Ride> rides = Arrays.asList(
             getRide(MARTA_AGENCY_ID, 0),
-            getRide(STREETCAR_AGENCY_ID, 1),
+            getRide(MARTA_AGENCY_ID, "atlsc", 1 ),
             getRide(MARTA_AGENCY_ID, 2),
             getRide(MARTA_AGENCY_ID, 3),
             getRide(MARTA_AGENCY_ID, 4)
@@ -207,7 +206,7 @@ public class ATLFareServiceTest {
 
         rides = Arrays.asList(
             getRide(COBB_AGENCY_ID, 0),
-            getRide(STREETCAR_AGENCY_ID, 1),
+            getRide(MARTA_AGENCY_ID, "atlsc", 1),
             getRide(COBB_AGENCY_ID, "101", 2)
         );
         calculateFare(

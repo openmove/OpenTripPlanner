@@ -140,7 +140,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
                 return DEFAULT_TEST_RIDE_PRICE + 1;
             } else if (ride.routeData.getShortName().equalsIgnoreCase("102")) {
                 return DEFAULT_TEST_RIDE_PRICE + 2;
-            } else if (ride.routeData.getId().getAgencyId().equalsIgnoreCase(STREETCAR_AGENCY_ID)) {
+            } else if (ride.routeData.getShortName().equalsIgnoreCase("atlsc")) {
                 return DEFAULT_TEST_RIDE_PRICE - 1;
             } else if (ride.routeData.getShortName().equalsIgnoreCase("BLUE")) {
                 return 0; // free circulator

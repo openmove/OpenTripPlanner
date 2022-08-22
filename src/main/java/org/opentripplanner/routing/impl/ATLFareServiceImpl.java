@@ -11,7 +11,6 @@ import java.util.*;
 
 public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     public static final float DEFAULT_TEST_RIDE_PRICE = 3.49f;
-    public boolean IS_TEST;
 
     public static final String COBB_AGENCY_ID = "2";
     public static final String XPRESS_AGENCY_ID = "6";
@@ -133,20 +132,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
      * Get the ride price for a single leg. If testing, this class is being called directly so the required agency cash
      * values are not available therefore the default test price is used instead.
      */
-    private float getRidePrice(Ride ride, Fare.FareType fareType, Collection<FareRuleSet> fareRules) {
-        if (IS_TEST) {
-            // Testing, return default test ride price.
-            if (ride.routeData.getShortName().equalsIgnoreCase("101")) {
-                return DEFAULT_TEST_RIDE_PRICE + 1;
-            } else if (ride.routeData.getShortName().equalsIgnoreCase("102")) {
-                return DEFAULT_TEST_RIDE_PRICE + 2;
-            } else if (ride.routeData.getShortName().equalsIgnoreCase("atlsc")) {
-                return DEFAULT_TEST_RIDE_PRICE - 1;
-            } else if (ride.routeData.getShortName().equalsIgnoreCase("BLUE")) {
-                return 0; // free circulator
-            }
-            return DEFAULT_TEST_RIDE_PRICE;
-        }
+    protected float getRidePrice(Ride ride, Fare.FareType fareType, Collection<FareRuleSet> fareRules) {
         return calculateCost(fareType, Lists.newArrayList(ride), fareRules);
     }
 

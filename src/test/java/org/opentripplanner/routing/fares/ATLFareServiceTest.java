@@ -13,10 +13,7 @@ import org.opentripplanner.routing.impl.ATLFareServiceImpl;
 import org.opentripplanner.routing.impl.OrcaFareServiceImpl;
 import org.opentripplanner.routing.impl.Ride;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.COBB_AGENCY_ID;
 import static org.opentripplanner.routing.impl.ATLFareServiceImpl.GCT_AGENCY_ID;
@@ -27,11 +24,31 @@ public class ATLFareServiceTest {
     private static ATLFareServiceImpl atlFareService;
     private static float DEFAULT_RIDE_PRICE_IN_CENTS;
 
+    private static class TestATLFareServiceImpl extends ATLFareServiceImpl {
+
+        public TestATLFareServiceImpl(Collection<FareRuleSet> regularFareRules) {
+            super(regularFareRules);
+        }
+        @Override
+        protected float getRidePrice(Ride ride, Fare.FareType fareType, Collection<FareRuleSet> fareRules) {
+            // Testing, return default test ride price.
+            if (ride.routeData.getShortName().equalsIgnoreCase("101")) {
+                return DEFAULT_TEST_RIDE_PRICE + 1;
+            } else if (ride.routeData.getShortName().equalsIgnoreCase("102")) {
+                return DEFAULT_TEST_RIDE_PRICE + 2;
+            } else if (ride.routeData.getShortName().equalsIgnoreCase("atlsc")) {
+                return DEFAULT_TEST_RIDE_PRICE - 1;
+            } else if (ride.routeData.getShortName().equalsIgnoreCase("BLUE")) {
+                return 0; // free circulator
+            }
+            return DEFAULT_TEST_RIDE_PRICE;
+        }
+    }
+
     @BeforeAll
     public static void setUpClass() {
         Map<FeedScopedId, FareRuleSet> regularFareRules = new HashMap<>();
-        atlFareService = new ATLFareServiceImpl(regularFareRules.values());
-        atlFareService.IS_TEST = true;
+        atlFareService = new TestATLFareServiceImpl(regularFareRules.values());
         DEFAULT_RIDE_PRICE_IN_CENTS = ATLFareServiceImpl.DEFAULT_TEST_RIDE_PRICE * 100;
     }
 

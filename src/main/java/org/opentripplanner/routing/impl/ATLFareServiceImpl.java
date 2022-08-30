@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public class ATLFareServiceImpl extends DefaultFareServiceImpl {
-    public static final float DEFAULT_TEST_RIDE_PRICE = 3.49f;
-
     public static final String COBB_AGENCY_ID = "2";
     public static final String XPRESS_AGENCY_ID = "6";
     public static final String MARTA_AGENCY_ID = "5";

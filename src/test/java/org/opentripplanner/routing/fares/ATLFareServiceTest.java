@@ -22,7 +22,8 @@ import static org.opentripplanner.routing.impl.ATLFareServiceImpl.XPRESS_AGENCY_
 
 public class ATLFareServiceTest {
     private static ATLFareServiceImpl atlFareService;
-    private static float DEFAULT_RIDE_PRICE_IN_CENTS;
+    public static final float DEFAULT_TEST_RIDE_PRICE = 3.49f;
+    public static final float DEFAULT_RIDE_PRICE_IN_CENTS = DEFAULT_TEST_RIDE_PRICE * 100;
 
     private static class TestATLFareServiceImpl extends ATLFareServiceImpl {
 
@@ -42,7 +43,6 @@ public class ATLFareServiceTest {
                     return DEFAULT_TEST_RIDE_PRICE - 1;
                 case "blue":
                     return 0; // free circulator
-
             }
             return DEFAULT_TEST_RIDE_PRICE;
         }
@@ -52,7 +52,6 @@ public class ATLFareServiceTest {
     public static void setUpClass() {
         Map<FeedScopedId, FareRuleSet> regularFareRules = new HashMap<>();
         atlFareService = new TestATLFareServiceImpl(regularFareRules.values());
-        DEFAULT_RIDE_PRICE_IN_CENTS = ATLFareServiceImpl.DEFAULT_TEST_RIDE_PRICE * 100;
     }
 
     @Test
@@ -237,9 +236,9 @@ public class ATLFareServiceTest {
 
     /**
      * These tests are designed to specifically validate ATL fares. Since these fares are hard-coded, it is acceptable
-     * to make direct calls to the Orca fare service with predefined routes. Where the default fare is applied a test
-     * substitute {@link OrcaFareServiceImpl#DEFAULT_TEST_RIDE_PRICE} is used. This will be the same for all cash fare
-     * types.
+     * to make direct calls to the ATL fare service with predefined routes. Where the default fare is applied a test
+     * substitute {@link ATLFareServiceTest#DEFAULT_TEST_RIDE_PRICE} is used. This will be the same for all cash fare
+     * types except when overriden above.
      */
     private static void calculateFare(List<Ride> rides,
                                       Fare.FareType fareType,

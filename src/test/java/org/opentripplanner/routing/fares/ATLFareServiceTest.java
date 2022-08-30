@@ -31,15 +31,18 @@ public class ATLFareServiceTest {
         }
         @Override
         protected float getRidePrice(Ride ride, Fare.FareType fareType, Collection<FareRuleSet> fareRules) {
+            String routeShortName = ride.routeData.getShortName().toLowerCase();
             // Testing, return default test ride price.
-            if (ride.routeData.getShortName().equalsIgnoreCase("101")) {
-                return DEFAULT_TEST_RIDE_PRICE + 1;
-            } else if (ride.routeData.getShortName().equalsIgnoreCase("102")) {
-                return DEFAULT_TEST_RIDE_PRICE + 2;
-            } else if (ride.routeData.getShortName().equalsIgnoreCase("atlsc")) {
-                return DEFAULT_TEST_RIDE_PRICE - 1;
-            } else if (ride.routeData.getShortName().equalsIgnoreCase("BLUE")) {
-                return 0; // free circulator
+            switch (routeShortName) {
+                case "101":
+                    return DEFAULT_TEST_RIDE_PRICE + 1;
+                case "102":
+                    return DEFAULT_TEST_RIDE_PRICE + 2;
+                case "atlsc":
+                    return DEFAULT_TEST_RIDE_PRICE - 1;
+                case "blue":
+                    return 0; // free circulator
+
             }
             return DEFAULT_TEST_RIDE_PRICE;
         }

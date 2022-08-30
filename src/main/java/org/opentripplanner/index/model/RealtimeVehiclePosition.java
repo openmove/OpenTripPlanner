@@ -20,6 +20,7 @@ public class RealtimeVehiclePosition {
     public long seconds;
 
     public String patternId;
+    public FeedScopedId tripId;
 
     public VehicleStopStatus stopStatus;
     public String nextStopName;

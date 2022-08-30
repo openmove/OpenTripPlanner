@@ -94,6 +94,7 @@ public class VehiclePositionPatternMatcher {
                     Arrays.asList(pattern.stopVertices)
             );
             newPosition.patternId = pattern.code;
+            newPosition.tripId = trip.getId();       
 
             if (pattern.vehiclePositions == null) {
                 pattern.vehiclePositions = new HashMap<>();

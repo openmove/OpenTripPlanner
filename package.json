@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "mvn clean package -DskipTests -s openmove-settings.xml",
-    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-1.5.11-SNAPSHOT-shaded.jar --build ../otp/otp/vieste --inMemory "
+    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-1.5.12-SNAPSHOT-shaded.jar --build ../otp/otp/trentino --inMemory "
   },
   "homepage": "https://github.com/openmove/OpenTripPlanner#readme"
 }

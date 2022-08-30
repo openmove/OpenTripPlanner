@@ -247,12 +247,22 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
 
         // Copy the full list of station objects (with status updates) into a List, appending the floating bike stations.
         List<BikeRentalStation> stations = new LinkedList<>(stationInformationSource.getStations());
+        
+        for (BikeRentalStation floatbike : floatingBikeSource.getStations()) {
+        	//update floatBikes with networkId of the relative station
+        	for (BikeRentalStation station : stationInformationSource.getStations()) {
+        		if(floatbike.floatingBikeStationId != null && floatbike.floatingBikeStationId.equals(station.id)) {
+        			floatbike.networks = station.networks;
+        			break;
+        		}
+            }
+            
+        }
         stations.addAll(floatingBikeSource.getStations());
 
         // Set identical network ID on all stations
-        Set<String> networkIdSet = Sets.newHashSet(this.networkName);
-        for (BikeRentalStation station : stations) station.networks = networkIdSet;
-
+        //Set<String> networkIdSet = Sets.newHashSet(this.networkName);
+        //for (BikeRentalStation station : stations) station.networks = networkIdSet;
         return stations;
     }
 
@@ -296,6 +306,16 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
                 feedUpdateEpochSeconds
             );
             brstation.isCarStation = routeAsCar;
+            
+            if(stationNode.has("region_id")) {
+            	Set<String> networkIdSet = Sets.newHashSet(networkName+":"+stationNode.path("region_id").asText());
+                brstation.networks = networkIdSet;
+            }else {
+            	Set<String> networkIdSet = Sets.newHashSet(networkName);
+                brstation.networks = networkIdSet;
+            }
+            
+            
             return brstation;
         }
     }
@@ -317,6 +337,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
                 feedUpdateEpochSeconds
             );
             brstation.isCarStation = routeAsCar;
+                        
             return brstation;
         }
     }
@@ -343,6 +364,14 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
             brstation.allowDropoff = false;
             brstation.isFloatingBike = true;
             brstation.isCarStation = routeAsCar;
+
+            Set<String> networkIdSet = Sets.newHashSet(networkName);
+            brstation.networks = networkIdSet;
+            
+            if(stationNode.has("station_id")) {
+            	brstation.floatingBikeStationId = stationNode.path("station_id").asText();
+            }
+
             return brstation;
         }
     }

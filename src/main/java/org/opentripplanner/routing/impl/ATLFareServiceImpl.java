@@ -7,6 +7,8 @@ import org.opentripplanner.routing.core.FareRuleSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 
 public class ATLFareServiceImpl extends DefaultFareServiceImpl {
@@ -26,10 +28,17 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     private enum RideType {
         FREE_RIDE,
         MARTA,
-        COBB_LOCAL, COBB_EXPRESS,
-        GCT_LOCAL, GCT_EXPRESS_Z1, GCT_EXPRESS_Z2,
+        COBB_LOCAL, COBB_EXPRESS("100", "101", "102"),
+        GCT_LOCAL, GCT_EXPRESS_Z1("102", "103a", "110", "swpr"), GCT_EXPRESS_Z2("101", "103"),
         XPRESS_MORNING, XPRESS_AFTERNOON,
-        STREETCAR;
+        STREETCAR("atlsc");
+        private final HashSet<String> routeNames;
+        RideType(String... members){
+            this.routeNames = new HashSet<String>(Arrays.asList(members));
+        }
+        public boolean routeNamesContains(String s) {
+            return routeNames.contains(s);
+        }
     }
 
     private static class ATLTransfer {
@@ -158,42 +167,36 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
 
     private static RideType classify(Ride ride) {
         Route routeData = ride.routeData;
-        String shortName = routeData.getShortName();
+        String shortName = routeData.getShortName().toLowerCase();
+        final HashSet<String> COBB_FREE_RIDE_SHORT_NAMES = new HashSet<>(Arrays.asList("blue", "green"));
 
         switch(routeData.getId().getAgencyId()) {
             case COBB_AGENCY_ID:
-                if (shortName.equalsIgnoreCase("100") ||
-                    shortName.equalsIgnoreCase("101") ||
-                    shortName.equalsIgnoreCase("102")) {
+                if (RideType.COBB_EXPRESS.routeNamesContains(shortName)) {
                     return RideType.COBB_EXPRESS;
-                } else if (shortName.equalsIgnoreCase("BLUE") ||
-                    shortName.equalsIgnoreCase("GREEN")) {
+                } else if (COBB_FREE_RIDE_SHORT_NAMES.contains(shortName)) {
                     return RideType.FREE_RIDE;
                 }
                 return RideType.COBB_LOCAL;
             case XPRESS_AGENCY_ID:
                 // Get hour of trip start
-                long hours = (ride.startTime / 60 / 60) % 24;
+                long hours = Instant.ofEpochSecond(ride.startTime).atZone(ZoneId.of("America/New_York")).getHour();
                 if (hours >= 12) {
                     return RideType.XPRESS_AFTERNOON;
                 } else {
                     return RideType.XPRESS_MORNING;
                 }
             case GCT_AGENCY_ID:
-                if (shortName.equalsIgnoreCase("102") ||
-                    shortName.equalsIgnoreCase("103A") ||
-                    shortName.equalsIgnoreCase("110") ||
-                    shortName.equalsIgnoreCase("swpr")) {
+                if (RideType.GCT_EXPRESS_Z1.routeNamesContains(shortName)) {
                     return RideType.GCT_EXPRESS_Z1;
-                } else if (shortName.equalsIgnoreCase("101") ||
-                    shortName.equalsIgnoreCase("103")) {
+                } else if (RideType.GCT_EXPRESS_Z2.routeNamesContains(shortName)) {
                     return RideType.GCT_EXPRESS_Z2;
                 }
                 return RideType.GCT_LOCAL;
             // Also catches MARTA_AGENCY_ID
             default:
                 // Streetcar GTFS published by MARTA
-                if(shortName.equalsIgnoreCase("atlsc")) {
+                if(RideType.STREETCAR.routeNamesContains(shortName)) {
                     return RideType.STREETCAR;
                 }
                 return RideType.MARTA;

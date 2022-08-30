@@ -230,25 +230,12 @@ public class ATLFareServiceTest {
         Assertions.assertEquals(expectedFareInCents, fare.getFare(fareType).getCents());
     }
 
-
     private static Ride getRide(String agencyId, long startTimeMins) {
         return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", "");
     }
 
-    private static Ride getRide(String agencyId, long startTimeMins, String routeLongName) {
-        return createRide(agencyId, "-1", -1, null, startTimeMins, "", "", routeLongName);
-    }
-
-    private static Ride getRide(String agencyId, long startTimeMins, int rideType, String routeId, String tripId) {
-        return createRide(agencyId, "-1", rideType, null, startTimeMins, routeId, tripId, "");
-    }
-
     private static Ride getRide(String agencyId, String shortName, long startTimeMins) {
         return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "");
-    }
-
-    private static Ride getRide(String agencyId, String shortName, long startTimeMins, String firstStopName, String lastStopName) {
-        return createRide(agencyId, shortName, -1, null,startTimeMins, "", "", "", firstStopName, lastStopName);
     }
 
     /**

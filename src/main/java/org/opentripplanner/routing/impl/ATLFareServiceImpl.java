@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ATLFareServiceImpl extends DefaultFareServiceImpl {
     public static final String COBB_AGENCY_ID = "2";

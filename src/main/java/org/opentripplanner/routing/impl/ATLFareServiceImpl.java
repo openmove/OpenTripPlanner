@@ -32,9 +32,9 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
         GCT_LOCAL, GCT_EXPRESS_Z1("102", "103a", "110", "swpr"), GCT_EXPRESS_Z2("101", "103"),
         XPRESS_MORNING, XPRESS_AFTERNOON,
         STREETCAR("atlsc");
-        private final HashSet<String> routeNames;
+        private final Set<String> routeNames;
         RideType(String... members){
-            this.routeNames = new HashSet<String>(Arrays.asList(members));
+            this.routeNames = Arrays.stream(members).map(String::toLowerCase).collect(Collectors.toSet());
         }
         public boolean routeNamesContains(String s) {
             return routeNames.contains(s.toLowerCase());

@@ -1,0 +1,21 @@
+name: Publish package to GitHub Packages
+on:
+  create:
+    tags:
+      - ^v\d{1,}\.\d{1,}\.\d{1,}$
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+      - name: Publish package
+        run: mvn --batch-mode -Dmaven.test.skip=true -DreleaseVersion=$(git tag --points-at HEAD | sed 's/v//g') -DdevelopmentVersion=99.99.99 clean release:clean release:prepare release:perform
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

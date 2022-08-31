@@ -6,9 +6,6 @@
   "directories": {
     "doc": "docs"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/openmove/OpenTripPlanner.git"
@@ -19,6 +16,7 @@
     "url": "https://github.com/openmove/OpenTripPlanner/issues"
   },
   "scripts": {
+    "release": "mvn --batch-mode -Dmaven.test.skip=true -DreleaseVersion=${npm_package_version} -DdevelopmentVersion=99.99.99 clean release:clean release:prepare release:perform",
     "build": "mvn clean package -DskipTests -s openmove-settings.xml",
     "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-1.5.13-SNAPSHOT-shaded.jar --build ../otp/otp/trentino --inMemory "
   },

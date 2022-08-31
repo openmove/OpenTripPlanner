@@ -72,9 +72,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:http://github.com/opentripplanner/OpenTripPlanner.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/opentripplanner/OpenTripPlanner.git</developerConnection>
-        <url>http://github.com/opentripplanner/OpenTripPlanner</url>
+        <connection>scm:git:http://github.com/openmove/OpenTripPlanner.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/openmove/OpenTripPlanner.git</developerConnection>
+        <url>http://github.com/openmove/OpenTripPlanner</url>
     </scm>
 
     <properties>
@@ -87,12 +87,10 @@
     </properties>
 
     <distributionManagement>
-        <!-- We are using Sonatype Nexus Staging instead of Maven Release plugin.
-             Only a snapshot repo should be configured. Releases are done from that snapshot staging repo. -->
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
+        <repository>
+          <id>github-OpenTripPlanner</id>
+          <url>https://maven.pkg.github.com/openmove/OpenTripPlanner</url>
+        </repository>
     </distributionManagement>
 
     <build>
@@ -178,18 +176,6 @@
                     <!-- Target Java versions -->
                     <source>1.8</source>
                     <target>1.8</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <!-- Recommended way to deploy to OSSRH , which allows deferred manual release to Central. -->
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.7</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
             <plugin>
@@ -290,6 +276,16 @@
                     <failOnNoGitDirectory>false</failOnNoGitDirectory>
                     <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
                 </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-release-plugin</artifactId>
+              <version>2.4.2</version>
+              <configuration>
+                <tagNameFormat>v@{project.version}</tagNameFormat>
+                <autoVersionSubmodules>true</autoVersionSubmodules>
+                <releaseProfiles>releases</releaseProfiles>
+              </configuration>
             </plugin>
 
             <!-- There used to be a dependency-plugin:copy-dependencies plugin entry

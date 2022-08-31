@@ -18,7 +18,9 @@
   "scripts": {
     "release": "mvn --batch-mode -DreleaseVersion=${npm_package_version} -DdevelopmentVersion=${npm_package_version} clean release:clean release:prepare release:perform",
     "build": "mvn clean package -DskipTests -s openmove-settings.xml",
-    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-1.5.13-SNAPSHOT-shaded.jar --build ../otp/otp/trentino --inMemory "
+    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-1.5.13-SNAPSHOT-shaded.jar --build ../otp/otp/trentino --inMemory ",
+    "version": "git add -A .",
+    "postversion": "npm run release; git push --all; git push --tags"
   },
   "homepage": "https://github.com/openmove/OpenTripPlanner#readme"
 }

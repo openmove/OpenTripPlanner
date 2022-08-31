@@ -37,7 +37,7 @@ public class ATLFareServiceImpl extends DefaultFareServiceImpl {
             this.routeNames = new HashSet<String>(Arrays.asList(members));
         }
         public boolean routeNamesContains(String s) {
-            return routeNames.contains(s);
+            return routeNames.contains(s.toLowerCase());
         }
     }
 

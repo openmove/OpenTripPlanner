@@ -8,7 +8,7 @@
 
     <groupId>org.opentripplanner</groupId>
     <artifactId>otp</artifactId>
-    <version>1.5.13-SNAPSHOT</version>
+    <version>1.5.14-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <licenses>
@@ -75,7 +75,8 @@
         <connection>scm:git:http://github.com/openmove/OpenTripPlanner.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/openmove/OpenTripPlanner.git</developerConnection>
         <url>http://github.com/openmove/OpenTripPlanner</url>
-    </scm>
+      <tag>v1.5.13</tag>
+  </scm>
 
     <properties>
         <geotools.version>20.1</geotools.version>
@@ -284,7 +285,7 @@
               <configuration>
                 <tagNameFormat>v@{project.version}</tagNameFormat>
                 <autoVersionSubmodules>true</autoVersionSubmodules>
-                <releaseProfiles>releases</releaseProfiles>
+                <arguments>-Dmaven.javadoc.skip=true -Dmaven.test.skip=true</arguments>
               </configuration>
             </plugin>
 

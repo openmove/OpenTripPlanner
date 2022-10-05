@@ -2593,10 +2593,13 @@ public class IndexGraphQLSchema {
 		                                    	return false;
 		                                    }
 		                                    
+		                                    
+		                                    
                                             if (environment.getArgument("mode") == null) {
                                                 return true;
                                             } else {
-                                                for(Stop stop : zone.getStops()){
+                                            	
+                                            	for(Stop stop : zone.getStops()){
                                                     TraverseMode traverseMode = index.patternsForStop.get(stop)
                                                             .stream()
                                                             .map(pattern -> pattern.mode)
@@ -2608,16 +2611,57 @@ public class IndexGraphQLSchema {
                                                             .orElse(null);
                                                     if(traverseMode != null){
                                                         if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
-                                                            return true;
+                                                        	return true;                                                        	
                                                         }
                                                     }
-                                                }
+                                                }                                           	
+                                                
                                             }
                                             return false;
                                         }
 		                                )
 		                                .sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
-		                                .flatMap(zone -> zone.getFareIdentifiers().stream())
+		                                .flatMap(zone -> {
+		                                	List<String> fareIdentifiers = new ArrayList<String>();
+		                                	List<FareRule> fareRules = index.fareRulesById.values()
+                                        	.stream()
+                                        	.flatMap(Collection::stream)
+                                        	.filter(fareRule -> {
+                                        		return zone.getFareIdentifiers().contains(fareRule.getIdentifier());
+                                        	})
+                                        	.filter(fareRule -> {
+                                        		return fareRule.getOriginId().equals(zone.getZoneId());
+                                        	}).collect(Collectors.toList());
+		                                	for(FareRule fr : fareRules) {
+		                                		if (environment.getArgument("mode") == null) {
+		                                			fareIdentifiers.add(fr.getIdentifier()); 
+	                                            } else {
+			                                		for(Zone z : index.zonesById.values()) {
+			                                			
+			                                			if(z.getZoneId().equals(fr.getDestinationId())) {
+			                                				for(Stop stop : z.getStops()){
+			                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
+			                                                            .stream()
+			                                                            .map(pattern -> pattern.mode)
+			                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+			                                                            .entrySet()
+			                                                            .stream()
+			                                                            .max(Comparator.comparing(Map.Entry::getValue))
+			                                                            .map(e -> e.getKey())
+			                                                            .orElse(null);
+			                                                    if(traverseMode != null){
+			                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+			                                                        	fareIdentifiers.add(fr.getIdentifier());                                                    	
+			                                                        }
+			                                                    }
+			                                                }
+			                                			}
+			                                		}
+	                                            }	
+		                                		
+		                                	}
+		                                	return fareIdentifiers.stream();
+		                                })
 		                                .distinct()
 		                                .skip(environment.getArgument("skip"))
 		                                .limit(environment.getArgument("limit"))

@@ -72,9 +72,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:http://github.com/opentripplanner/OpenTripPlanner.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/opentripplanner/OpenTripPlanner.git</developerConnection>
-        <url>http://github.com/opentripplanner/OpenTripPlanner</url>
+        <connection>scm:git:http://github.com/openmove/OpenTripPlanner.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/openmove/OpenTripPlanner.git</developerConnection>
+        <url>http://github.com/openmove/OpenTripPlanner</url>
     </scm>
 
     <properties>
@@ -87,12 +87,10 @@
     </properties>
 
     <distributionManagement>
-        <!-- We are using Sonatype Nexus Staging instead of Maven Release plugin.
-             Only a snapshot repo should be configured. Releases are done from that snapshot staging repo. -->
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
+        <repository>
+            <id>github-onebusaway-gtfs-modules</id>
+            <url>https://maven.pkg.github.com/openmove/OpenTripPlanner</url>
+        </repository>
     </distributionManagement>
 
     <build>

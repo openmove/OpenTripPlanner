@@ -22,6 +22,7 @@ import org.opentripplanner.util.NonLocalizedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -116,7 +117,7 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
         } else if (regionsUrl != null) {
             try {
                 // fetch regions
-                InputStream data = fetchFromUrl(regionsUrl);
+                InputStream data = fetchFromUrlWithException(regionsUrl);
 
                 if (data == null) {
                     LOG.warn("Failed to get data from url " + regionsUrl);
@@ -127,6 +128,15 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
                 JsonNode rootNode = mapper.readTree(data);
                 regions = parseRegionJson(rootNode);
                 data.close();
+            } catch (FileNotFoundException fnf) {
+                // TODO: Refactor
+                LOG.warn("region GeoJson not found in configuration for Vehicle Rental Datasource." +
+                    "Dropoffs are assumed to be allowed in full extent of graph.");
+                GeometryFactory geometryFactory = new GeometryFactory();
+                VehicleRentalRegion entireEarthRegion = new VehicleRentalRegion();
+                entireEarthRegion.network = networkName;
+                entireEarthRegion.geometry = geometryFactory.toGeometry(new Envelope(-180, 180, -90, 90));
+                regions = Arrays.asList(entireEarthRegion);
             } catch (IOException e) {
                 LOG.warn("Error reading vehicle rental regions from " + regionsUrl, e);
                 return;
@@ -612,6 +622,16 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
             LOG.error("Received no data from URL fetch from: {}", url);
         }
         return data;
+    }
+
+    /**
+     * Helper to fetch data from a URL, or file or something.
+     *
+     * @param url The URL or file or something to fetch from
+     * @return An inputStream if successful or null if not successful
+     */
+    private InputStream fetchFromUrlWithException(String url) throws IOException {
+        return getDataFromUrlOrFile(url, headerName, headerValue);
     }
 
     @Override

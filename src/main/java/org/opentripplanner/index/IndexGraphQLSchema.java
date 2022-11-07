@@ -2316,7 +2316,17 @@ public class IndexGraphQLSchema {
                                 .collect(Collectors.toList()))
                                 .get(environment);
                 	}catch(Exception e) {
-                		return new SimpleListConnection(new ArrayList<String>());
+                		return new SimpleListConnection(index.findClosestStopsFlyCrow(
+                                environment.getArgument("lat"), environment.getArgument("lon"),
+                                environment.getArgument("radius")
+                            )
+                                .stream()
+                                .filter(stopAndDistance -> environment.getArgument("agency") == null ||
+                                    stopAndDistance.stop.getId().getAgencyId()
+                                        .equalsIgnoreCase(environment.getArgument("agency")))
+                                .sorted(Comparator.comparing(s -> (float) s.distance))
+                                .collect(Collectors.toList()))
+                                .get(environment);
                 	}
                 })
                 .build())

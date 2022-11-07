@@ -2302,18 +2302,23 @@ public class IndexGraphQLSchema {
                     .type(Scalars.GraphQLString)
                     .build())
                 .argument(relay.getConnectionFieldArguments())
-                .dataFetcher(environment ->
-                    new SimpleListConnection(index.findClosestStopsByWalking(
-                        environment.getArgument("lat"), environment.getArgument("lon"),
-                        environment.getArgument("radius")
-                    )
-                        .stream()
-                        .filter(stopAndDistance -> environment.getArgument("agency") == null ||
-                            stopAndDistance.stop.getId().getAgencyId()
-                                .equalsIgnoreCase(environment.getArgument("agency")))
-                        .sorted(Comparator.comparing(s -> (float) s.distance))
-                        .collect(Collectors.toList()))
-                        .get(environment))
+                .dataFetcher(environment -> {
+                	try {
+                		return new SimpleListConnection(index.findClosestStopsByWalking(
+                                environment.getArgument("lat"), environment.getArgument("lon"),
+                                environment.getArgument("radius")
+                            )
+                                .stream()
+                                .filter(stopAndDistance -> environment.getArgument("agency") == null ||
+                                    stopAndDistance.stop.getId().getAgencyId()
+                                        .equalsIgnoreCase(environment.getArgument("agency")))
+                                .sorted(Comparator.comparing(s -> (float) s.distance))
+                                .collect(Collectors.toList()))
+                                .get(environment);
+                	}catch(Exception e) {
+                		return new SimpleListConnection(new ArrayList<String>());
+                	}
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("stopsByName")

@@ -378,6 +378,19 @@ public class GraphIndex {
         rr.rctx.destroy();
         return visitor.stopsFound;
     }
+    
+    public List<StopAndDistance> findClosestStopsFlyCrow(double lat, double lon, int radius) {
+    	Envelope env = new Envelope(new Coordinate(lon, lat));
+    	List<StopAndDistance> ret = new ArrayList<>();
+        env.expandBy(SphericalDistanceLibrary.metersToLonDegrees(radius, lat),
+                SphericalDistanceLibrary.metersToDegrees(radius));
+        for (TransitStop stop :  stopSpatialIndex.query(env)) {
+            double distance = SphericalDistanceLibrary.distance(lat, lon, stop.getLat(), stop.getLon());
+            if (distance < radius) ret.add(new StopAndDistance(stop.getStop(), (int) distance));
+        }
+        return ret;
+    	
+    }
 
     public static class StopAndDistance {
         public Stop stop;

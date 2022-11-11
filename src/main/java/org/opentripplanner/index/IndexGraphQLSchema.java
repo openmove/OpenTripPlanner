@@ -64,6 +64,7 @@ import org.opentripplanner.routing.core.WrappedCurrency;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.GraphIndex;
+import org.opentripplanner.routing.graph.GraphIndex.StopAndDistance;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
@@ -2595,93 +2596,101 @@ public class IndexGraphQLSchema {
 		                    .dataFetcher(environment -> {
 		                        double lon = environment.getArgument("lon");
 		                        double lat = environment.getArgument("lat");
-		                        long range = environment.getArgument("range");
-		                        Coordinate pointCoordinate = new Coordinate(lon, lat);
-		                        List<String> identifiers = new ArrayList();
-		                        return index.zonesById.values().stream()
-		                                .filter(zone -> {
-		                                	
-		                                	
-		                                			                                	
-		                                	Coordinate zoneCoordinate = new Coordinate(zone.getLon(), zone.getLat());
-		                                    if(calculateDistance(zoneCoordinate, pointCoordinate).doubleValue() >  range){ //distance in meters
-		                                    	return false;
-		                                    }
-		                                    
-		                                    
-		                                    
-                                            if (environment.getArgument("mode") == null) {
-                                                return true;
+		                        int range = Math.toIntExact(environment.getArgument("range"));
+
+		                        return index.findClosestStopsFlyCrow(lat, lon, range)
+		                        		.stream()
+		                        		.sorted(Comparator.comparing(s -> (float) s.distance))
+		                        		.map(item -> {
+		                        			FeedScopedId zoneId = new FeedScopedId(item.stop.getId().getAgencyId(),item.stop.getZoneId());
+		                        			if (environment.getArgument("mode") == null) {
+		                        				Zone zone = index.zonesById.get(zoneId);
+		                        				if(zone!= null) {
+		                        					System.out.println(zone.getName());
+		                        				}
+		                        				return zone;
                                             } else {
                                             	
-                                            	for(Stop stop : zone.getStops()){
-                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
-                                                            .stream()
-                                                            .map(pattern -> pattern.mode)
-                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                                                            .entrySet()
-                                                            .stream()
-                                                            .max(Comparator.comparing(Map.Entry::getValue))
-                                                            .map(e -> e.getKey())
-                                                            .orElse(null);
-                                                    if(traverseMode != null){
-                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
-                                                        	return true;                                                        	
-                                                        }
+                                            	TraverseMode traverseMode = index.patternsForStop.get(item.stop)
+                                                        .stream()
+                                                        .map(pattern -> pattern.mode)
+                                                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                        .entrySet()
+                                                        .stream()
+                                                        .max(Comparator.comparing(Map.Entry::getValue))
+                                                        .map(e -> e.getKey())
+                                                        .orElse(null);
+                                                if(traverseMode != null){
+                                                    if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                    	return index.zonesById.get(zoneId);                                   	
                                                     }
-                                                }                                           	
-                                                
+                                                }
                                             }
-                                            return false;
-                                        }
-		                                )
-		                                .sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
+		                        			return null;
+		                        		})
+		                        		.filter(Objects::nonNull)
+		                        		.distinct()
+		                        		.sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
 		                                .flatMap(zone -> {
-		                                	List<String> fareIdentifiers = new ArrayList<String>();
+		                                	System.out.println(">>>>"+zone.getName());
+		                                	List<String> fareIdentifiers = new ArrayList<String>();		                                		
 		                                	List<FareRule> fareRules = index.fareRulesById.values()
                                         	.stream()
                                         	.flatMap(Collection::stream)
                                         	.filter(fareRule -> {
-                                        		return zone.getFareIdentifiers().contains(fareRule.getIdentifier());
+                                        		if(zone.getFareIdentifiers() != null) {
+                                        			return zone.getFareIdentifiers().contains(fareRule.getIdentifier());
+                                        		}
+                                        		return false;
                                         	})
                                         	.filter(fareRule -> {
-                                        		return fareRule.getOriginId().equals(zone.getZoneId());
+                                        		if(fareRule.getOriginId() != null) {
+                                        			return fareRule.getOriginId().equals(zone.getZoneId());
+                                        		}else if (fareRule.getContainsId() != null){
+                                        			return fareRule.getContainsId().equals(zone.getZoneId());
+                                        		}
+                                        		return false;
                                         	}).collect(Collectors.toList());
 		                                	for(FareRule fr : fareRules) {
 		                                		if (environment.getArgument("mode") == null) {
 		                                			fareIdentifiers.add(fr.getIdentifier()); 
 	                                            } else {
 			                                		for(Zone z : index.zonesById.values()) {
-			                                			
-			                                			if(z.getZoneId().equals(fr.getDestinationId())) {
-			                                				for(Stop stop : z.getStops()){
-			                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
-			                                                            .stream()
-			                                                            .map(pattern -> pattern.mode)
-			                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-			                                                            .entrySet()
-			                                                            .stream()
-			                                                            .max(Comparator.comparing(Map.Entry::getValue))
-			                                                            .map(e -> e.getKey())
-			                                                            .orElse(null);
-			                                                    if(traverseMode != null){
-			                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
-			                                                        	fareIdentifiers.add(fr.getIdentifier());                                                    	
-			                                                        }
-			                                                    }
-			                                                }
+			                                			if(fr.getDestinationId() != null) {
+			                                				if(z.getZoneId().equals(fr.getDestinationId())) {
+				                                				for(Stop stop : z.getStops()){
+				                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
+				                                                            .stream()
+				                                                            .map(pattern -> pattern.mode)
+				                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+				                                                            .entrySet()
+				                                                            .stream()
+				                                                            .max(Comparator.comparing(Map.Entry::getValue))
+				                                                            .map(e -> e.getKey())
+				                                                            .orElse(null);
+				                                                    if(traverseMode != null){
+				                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+				                                                        	fareIdentifiers.add(fr.getIdentifier());                                                    	
+				                                                        }
+				                                                    }
+				                                                }
+				                                			}
+			                                			}else {
+			                                				fareIdentifiers.add(fr.getIdentifier()); 
 			                                			}
+			                                			
 			                                		}
 	                                            }	
 		                                		
 		                                	}
-		                                	return fareIdentifiers.stream();
+		                                	
+	                             
+	                                	return fareIdentifiers.stream();
 		                                })
 		                                .distinct()
 		                                .skip(environment.getArgument("skip"))
 		                                .limit(environment.getArgument("limit"))
 		                                .collect(Collectors.toList());
-		                        
 		                    })
 		                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()

@@ -2605,9 +2605,7 @@ public class IndexGraphQLSchema {
 		                        			FeedScopedId zoneId = new FeedScopedId(item.stop.getId().getAgencyId(),item.stop.getZoneId());
 		                        			if (environment.getArgument("mode") == null) {
 		                        				Zone zone = index.zonesById.get(zoneId);
-		                        				if(zone!= null) {
-		                        					System.out.println(zone.getName());
-		                        				}
+		                        				
 		                        				return zone;
                                             } else {
                                             	
@@ -2632,7 +2630,6 @@ public class IndexGraphQLSchema {
 		                        		.distinct()
 		                        		.sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
 		                                .flatMap(zone -> {
-		                                	System.out.println(">>>>"+zone.getName());
 		                                	List<String> fareIdentifiers = new ArrayList<String>();		                                		
 		                                	List<FareRule> fareRules = index.fareRulesById.values()
                                         	.stream()

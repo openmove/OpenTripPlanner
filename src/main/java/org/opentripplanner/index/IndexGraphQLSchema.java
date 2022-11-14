@@ -2600,7 +2600,7 @@ public class IndexGraphQLSchema {
 
 		                        return index.findClosestStopsFlyCrow(lat, lon, range)
 		                        		.stream()
-		                        		.sorted(Comparator.comparing(s -> (float) s.distance))
+		                        		//.sorted(Comparator.comparing(s -> (float) s.distance))
 		                        		.map(item -> {
 		                        			FeedScopedId zoneId = new FeedScopedId(item.stop.getId().getAgencyId(),item.stop.getZoneId());
 		                        			if (environment.getArgument("mode") == null) {
@@ -2630,60 +2630,52 @@ public class IndexGraphQLSchema {
 		                        		.distinct()
 		                        		.sorted(Comparator.comparing(zone -> (int) zone.getIsContainsZone()))
 		                                .flatMap(zone -> {
-		                                	List<String> fareIdentifiers = new ArrayList<String>();		                                		
-		                                	List<FareRule> fareRules = index.fareRulesById.values()
+		                                	return index.fareRulesById.values()
                                         	.stream()
                                         	.flatMap(Collection::stream)
-                                        	.filter(fareRule -> {
+                                        	.map(fareRule -> {
                                         		if(zone.getFareIdentifiers() != null) {
-                                        			return zone.getFareIdentifiers().contains(fareRule.getIdentifier());
+                                        			if(zone.getFareIdentifiers().contains(fareRule.getIdentifier())) {
+                                        				if((fareRule.getOriginId() != null && fareRule.getOriginId().equals(zone.getZoneId()))
+                                        						|| fareRule.getContainsId() != null
+                                        						) {
+                                                			if (environment.getArgument("mode") == null) {
+            		                                			return fareRule.getIdentifier(); 
+            	                                            } else {
+            			                                		for(Zone z : index.zonesById.values()) {
+            			                                			if(fareRule.getDestinationId() != null) {
+            			                                				if(z.getZoneId().equals(fareRule.getDestinationId())) {
+            				                                				for(Stop stop : z.getStops()){
+            				                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
+            				                                                            .stream()
+            				                                                            .map(pattern -> pattern.mode)
+            				                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+            				                                                            .entrySet()
+            				                                                            .stream()
+            				                                                            .max(Comparator.comparing(Map.Entry::getValue))
+            				                                                            .map(e -> e.getKey())
+            				                                                            .orElse(null);
+            				                                                    if(traverseMode != null){
+            				                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+            				                                                        	return fareRule.getIdentifier();                                                    	
+            				                                                        }
+            				                                                    }
+            				                                                }
+            				                                			}
+            			                                			}else {
+            			                                				return fareRule.getIdentifier(); 
+            			                                			}
+            			                                			
+            			                                		}
+            	                                            }
+                                                		}
+                                        			}
+                                        			return null;
                                         		}
-                                        		return false;
-                                        	})
-                                        	.filter(fareRule -> {
-                                        		if(fareRule.getOriginId() != null) {
-                                        			return fareRule.getOriginId().equals(zone.getZoneId());
-                                        		}else if (fareRule.getContainsId() != null){
-                                        			return fareRule.getContainsId().equals(zone.getZoneId());
-                                        		}
-                                        		return false;
-                                        	}).collect(Collectors.toList());
-		                                	for(FareRule fr : fareRules) {
-		                                		if (environment.getArgument("mode") == null) {
-		                                			fareIdentifiers.add(fr.getIdentifier()); 
-	                                            } else {
-			                                		for(Zone z : index.zonesById.values()) {
-			                                			if(fr.getDestinationId() != null) {
-			                                				if(z.getZoneId().equals(fr.getDestinationId())) {
-				                                				for(Stop stop : z.getStops()){
-				                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
-				                                                            .stream()
-				                                                            .map(pattern -> pattern.mode)
-				                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-				                                                            .entrySet()
-				                                                            .stream()
-				                                                            .max(Comparator.comparing(Map.Entry::getValue))
-				                                                            .map(e -> e.getKey())
-				                                                            .orElse(null);
-				                                                    if(traverseMode != null){
-				                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
-				                                                        	fareIdentifiers.add(fr.getIdentifier());                                                    	
-				                                                        }
-				                                                    }
-				                                                }
-				                                			}
-			                                			}else {
-			                                				fareIdentifiers.add(fr.getIdentifier()); 
-			                                			}
-			                                			
-			                                		}
-	                                            }	
-		                                		
-		                                	}
-		                                	
-	                             
-	                                	return fareIdentifiers.stream();
+                                        		return null;
+                                        	});
 		                                })
+                                    	.filter(Objects::nonNull)
 		                                .distinct()
 		                                .skip(environment.getArgument("skip"))
 		                                .limit(environment.getArgument("limit"))

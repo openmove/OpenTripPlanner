@@ -18,7 +18,7 @@
   "scripts": {
     "deploy": "mvn deploy:deploy-file -s openmove-settings.xml -DgroupId=org.opentripplanner -DartifactId=otp -Dversion=${npm_package_version}-SNAPSHOT -Dclassifier=shaded -Dpackaging=jar -Dfile=target/otp-${npm_package_version}-SNAPSHOT-shaded.jar -Durl=https://maven.pkg.github.com/openmove/OpenTripPlanner -DrepositoryId=otp",
     "build": "mvn clean package -DskipTests -s openmove-settings.xml",
-    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-${npm_package_version}-SNAPSHOT-shaded.jar --build ../otp/otp/trentino --inMemory "
+    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-${npm_package_version}-SNAPSHOT-shaded.jar --build ../otp/otp/debug/ --inMemory "
   },
   "homepage": "https://github.com/openmove/OpenTripPlanner#readme"
 }

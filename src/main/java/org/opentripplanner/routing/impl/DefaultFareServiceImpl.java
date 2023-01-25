@@ -347,6 +347,8 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                     continue;
                 }
                 float newFare = getFarePrice(attribute, fareType);
+                String routingId = null;
+                String identifier = ruleSet.getIdentifier(startZone, endZone, zones, routes, routingId);
                 if (newFare < bestFare) {
                     bestAttribute = attribute;
                     bestFare = newFare;
@@ -354,6 +356,7 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                     fareRule.setDestinationId(endZone);
                     fareRule.setOriginId(startZone);
                     fareRule.setFare(attribute);
+                    fareRule.setIdentifier(identifier);
                 }
             }
         }

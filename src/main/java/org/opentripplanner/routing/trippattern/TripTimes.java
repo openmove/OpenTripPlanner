@@ -102,6 +102,10 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     private final int[] continuousPickup;
 
     private final int[] continuousDropOff;
+    
+    private final int[] pickupType;
+
+    private final int[] dropOffType;
 
     private final double[] serviceAreaRadius;
 
@@ -141,6 +145,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         final int[] sequences  = new int[nStops];
         final int[] continuousPickup = new int[nStops];
         final int[] continuousDropOff = new int[nStops];
+        final int[] pickupType = new int[nStops];
+        final int[] dropOffType = new int[nStops];
         final double[] serviceAreaRadius = new double[nStops];
         final String[] serviceArea = new String[nStops];
         final BitSet timepoints = new BitSet(nStops);
@@ -156,6 +162,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             timepoints.set(s, st.getTimepoint() == 1);
             continuousPickup[s] = st.getContinuousPickup();
             continuousDropOff[s] = st.getContinuousDropOff();
+            pickupType[s] = st.getPickupType();
+            dropOffType[s] = st.getDropOffType();
 
             if (st.getStartServiceAreaRadius() != StopTime.MISSING_VALUE) {
                 radius = st.getStartServiceAreaRadius();
@@ -196,6 +204,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.timepoints = deduplicator.deduplicateBitSet(timepoints);
         this.continuousPickup = deduplicator.deduplicateIntArray(continuousPickup);
         this.continuousDropOff = deduplicator.deduplicateIntArray(continuousDropOff);
+        this.pickupType = deduplicator.deduplicateIntArray(pickupType);
+        this.dropOffType = deduplicator.deduplicateIntArray(dropOffType);
         this.serviceAreaRadius = deduplicator.deduplicateDoubleArray(serviceAreaRadius);
         this.serviceArea = deduplicator.deduplicateStringArray(serviceArea);
         if (trip.getDrtMaxTravelTime() != null) {
@@ -227,6 +237,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.maxTravelTime = object.maxTravelTime;
         this.avgTravelTime = object.avgTravelTime;
         this.advanceBookMin = object.advanceBookMin;
+        this.pickupType = object.pickupType;
+        this.dropOffType = object.dropOffType;
     }
 
     /**
@@ -409,6 +421,16 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     /** Returns whether this stop allows continuous dropoff */
     public int getContinuousDropOff(final int stop) {
         return continuousDropOff[stop];
+    }
+    
+    /** Returns whether this stop allows pickup */
+    public int getPickupType(final int stop) {
+        return pickupType[stop];
+    }
+
+    /** Returns whether this stop allows dropoff */
+    public int getDropOffType(final int stop) {
+        return dropOffType[stop];
     }
 
     /** Returns associated dropoff/pickup radius for this stop*/

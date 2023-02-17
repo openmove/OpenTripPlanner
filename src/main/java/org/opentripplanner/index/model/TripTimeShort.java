@@ -36,6 +36,9 @@ public class TripTimeShort {
     public int continuousDropOff;
     public double serviceAreaRadius;
     public String serviceArea;
+    public int pickupType;
+    public int dropOffType;
+    
 
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.
@@ -60,6 +63,9 @@ public class TripTimeShort {
         serviceAreaRadius  = tt.getServiceAreaRadius(i);
         serviceArea        = tt.getServiceArea(i);
         stopSequence       = tt.getStopSequence(i);
+        pickupType		   = tt.getPickupType(i);
+        dropOffType		   = tt.getDropOffType(i);
+        
     }
 
     public TripTimeShort(TripTimes tt, int i, Stop stop, ServiceDay sd) {

@@ -38,6 +38,7 @@ import org.opentripplanner.api.model.VertexType;
 import org.opentripplanner.api.model.WalkStep;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.index.model.DestinationType;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.model.Agency;
@@ -262,6 +263,8 @@ public class IndexGraphQLSchema {
     public GraphQLOutputType stopAtDistanceType = new GraphQLTypeReference("StopAtDistance");
 
     public GraphQLOutputType stoptimesInPatternType = new GraphQLTypeReference("StoptimesInPattern");
+    
+    public GraphQLOutputType destinationType = new GraphQLTypeReference("DestinationType");
 
     public GraphQLObjectType queryType;
 
@@ -814,6 +817,20 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> ((StopTimesInPattern) environment.getSource()).times)
                 .build())
             .build();
+        
+        destinationType = GraphQLObjectType.newObject()
+                .name("DestinationType")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("trip")
+                    .type(tripType)
+                    .dataFetcher(environment -> ((DestinationType) environment.getSource()).trip)
+                    .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("stop")
+                    .type(stopType)
+                    .dataFetcher(environment -> ((DestinationType) environment.getSource()).stop)
+                    .build())
+                .build();
 
         clusterType = GraphQLObjectType.newObject()
             .name("Cluster")
@@ -1034,6 +1051,40 @@ public class IndexGraphQLSchema {
                         (boolean) environment.getArgument("omitNonPickups")))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("destinations")
+                    .type(new GraphQLList(stopType))
+                    .argument(GraphQLArgument.newArgument()
+                            .name("date")
+                            .type(Scalars.GraphQLString)
+                            .build())
+                    .dataFetcher(environment -> {
+	                    try { 
+	                    	List<StopTimesInPattern> list = index.getStopTimesForStop(
+		                            (Stop) environment.getSource(),
+		                            ServiceDate.parseString(environment.getArgument("date")),
+		                            true);
+	                    	List<Stop> returnList = new ArrayList<Stop>();
+	                    	for(StopTimesInPattern s: list) {
+	                    		List<TripTimeShort> tts = s.times;
+	                    		for(TripTimeShort trip : tts) {
+	                    			int sequence = trip.stopSequence;
+	                    			Trip mTrip = index.tripForId.get(trip.tripId);
+	                    			List<TripTimeShort> stoptimes = index.getStopTimesForTrip(mTrip, ServiceDate.parseString(environment.getArgument("date")));
+	                    			for(TripTimeShort stoptime : stoptimes) {
+	                    					if(stoptime.stopSequence > sequence && stoptime.dropOffType != 1) {
+	                    						Stop stop = index.stopForId.get(stoptime.stopId);
+	                    						returnList.add(stop);
+	                    					}
+	                    			}
+	                    		}
+	                    	}
+	                        return returnList;
+	                    } catch (ParseException e) {
+	                        return null;
+	                    }
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stoptimesWithoutPatterns")
                 .type(new GraphQLList(stoptimeType))
                 .argument(GraphQLArgument.newArgument()
@@ -1150,6 +1201,16 @@ public class IndexGraphQLSchema {
                 .type(Scalars.GraphQLInt)
                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).stopSequence)
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("pickupType")
+                    .type(Scalars.GraphQLInt)
+                    .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).pickupType)
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("dropOffType")
+                    .type(Scalars.GraphQLInt)
+                    .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).dropOffType)
+                    .build())
             .build();
 
         tripType = GraphQLObjectType.newObject()

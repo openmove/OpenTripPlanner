@@ -2375,6 +2375,7 @@ public class IndexGraphQLSchema {
                                     stopAndDistance.stop.getId().getAgencyId()
                                         .equalsIgnoreCase(environment.getArgument("agency")))
                                 .sorted(Comparator.comparing(s -> (float) s.distance))
+                                .distinct()
                                 .collect(Collectors.toList()))
                                 .get(environment);
                 	}catch(Exception e) {
@@ -2387,6 +2388,7 @@ public class IndexGraphQLSchema {
                                     stopAndDistance.stop.getId().getAgencyId()
                                         .equalsIgnoreCase(environment.getArgument("agency")))
                                 .sorted(Comparator.comparing(s -> (float) s.distance))
+                                .distinct()
                                 .collect(Collectors.toList()))
                                 .get(environment);
                 	}

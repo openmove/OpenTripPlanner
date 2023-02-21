@@ -400,6 +400,23 @@ public class GraphIndex {
             this.stop = stop;
             this.distance = distance;
         }
+        
+        @Override
+        public boolean equals(Object o) {
+            // self check
+            if (this == o)
+                return true;
+            // null check
+            if (o == null)
+                return false;
+            // type check and cast
+            if (getClass() != o.getClass())
+                return false;
+            
+        	StopAndDistance sd = (StopAndDistance) o;
+        	return sd.stop.equals(stop);
+        }
+        
     }
 
     static private class StopFinderTraverseVisitor implements TraverseVisitor {

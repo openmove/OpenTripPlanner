@@ -500,9 +500,10 @@ public class GraphIndex {
 
         // Calculate the number of days to add
         int days = (int) Math.ceil((double) timeRange / 86400);
+        if(timeRange >= 86400) days += 1;
         List<ServiceDate> serviceDates = new ArrayList<>();
         serviceDates.add(new ServiceDate(date).previous());
-        for (int i = 0; i < days; i++) serviceDates.add(new ServiceDate(date).shift(i));
+        for (int i = 0; i <= days; i++) serviceDates.add(new ServiceDate(date).shift(i));
 
         for (TripPattern pattern : patternsForStop.get(stop)) {
 

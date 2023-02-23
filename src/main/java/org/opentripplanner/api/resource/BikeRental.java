@@ -18,10 +18,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
-import org.opentripplanner.routing.graph.GraphIndex.StopAndDistance;
 import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.opentripplanner.util.ResourceBundleSingleton;
 

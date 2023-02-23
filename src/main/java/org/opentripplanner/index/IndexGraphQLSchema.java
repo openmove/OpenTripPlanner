@@ -705,7 +705,7 @@ public class IndexGraphQLSchema {
                 .argument(GraphQLArgument.newArgument()
                         .name("transportModes")
                         .description("List of transportation modes that the user is willing to use. Default: `[\"WALK\",\"TRANSIT\"]`")
-                        .type(new GraphQLList(transportModeInputType))
+                        .type(new GraphQLList(Scalars.GraphQLString))
                         .build())
                 .argument(GraphQLArgument.newArgument()
                         .name("modeWeight")

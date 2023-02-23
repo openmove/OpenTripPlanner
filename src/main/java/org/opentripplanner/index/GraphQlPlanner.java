@@ -233,6 +233,12 @@ public class GraphQlPlanner {
             new QualifiedModeSet((String)environment.getArgument("modes")).applyToRoutingRequest(request);
             request.setModes(request.modes);
         }
+        
+        if(hasArgument(environment, "transportModes")) {
+        	List<String> transportModes = environment.getArgument("transportModes");
+        	new QualifiedModeSet(transportModes).applyToRoutingRequest(request);
+            request.setModes(request.modes);
+        }
 
         if (request.allowBikeRental && !hasArgument(environment, "bikeSpeed")) {
             //slower bike speed for bike sharing, based on empirical evidence from DC.

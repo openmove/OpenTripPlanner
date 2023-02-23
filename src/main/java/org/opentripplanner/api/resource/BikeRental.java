@@ -15,11 +15,13 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
+import org.opentripplanner.routing.graph.GraphIndex.StopAndDistance;
 import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
-
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.opentripplanner.util.ResourceBundleSingleton;
 
@@ -35,6 +37,13 @@ public class BikeRental {
     public BikeRentalStationList getBikeRentalStations(
             @QueryParam("lowerLeft") String lowerLeft,
             @QueryParam("upperRight") String upperRight,
+            @QueryParam("minLat") Double minLat,
+            @QueryParam("minLon") Double minLon,
+            @QueryParam("maxLat") Double maxLat,
+            @QueryParam("maxLon") Double maxLon,
+            @QueryParam("lat")    Double lat,
+            @QueryParam("lon")    Double lon,
+            @QueryParam("radius") Double radius,
             @PathParam("routerId") String routerId,
             @QueryParam("locale") String locale_param) {
 
@@ -45,15 +54,24 @@ public class BikeRental {
         locale = ResourceBundleSingleton.INSTANCE.getLocale(locale_param);
         if (bikeRentalService == null) return new BikeRentalStationList();
         Envelope envelope;
-        if (lowerLeft != null) {
+        if (lowerLeft != null && upperRight != null) {
             envelope = getEnvelope(lowerLeft, upperRight);
+        } else if (minLon != null && maxLon != null && minLat != null && maxLat != null){
+        	envelope = new Envelope(minLon,maxLon,minLat,maxLat); 
         } else {
             envelope = new Envelope(-180,180,-90,90); 
         }
         Collection<BikeRentalStation> stations = bikeRentalService.getBikeRentalStations();
         List<BikeRentalStation> out = new ArrayList<>();
         for (BikeRentalStation station : stations) {
-            if (envelope.contains(station.x, station.y)) {
+        	if (radius != null && lon != null && lat != null) {
+            	double distance = SphericalDistanceLibrary.distance(lat, lon, station.y, station.x);
+                if (distance < radius) {
+                	BikeRentalStation station_localized = station.clone();
+                    station_localized.locale = locale;
+                    out.add(station_localized);
+                }
+            }else if (envelope.contains(station.x, station.y)) {
                 BikeRentalStation station_localized = station.clone();
                 station_localized.locale = locale;
                 out.add(station_localized);

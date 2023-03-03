@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2008 (http://www.altova.com) by Nicholas Knowles Knowles (Kizoom Ltd) -->
+<xsd:schema xmlns="http://www.netex.org.uk/netex" xmlns:netex="http://www.netex.org.uk/netex" xmlns:siri="http://www.siri.org.uk/siri" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.1" id="netex_accountUse_support">
+  <xsd:include schemaLocation="../../netex_framework/netex_genericFramework/netex_loggable_support.xsd"/>
+  <!-- =============================================================== -->
+  <!-- ====TYPE OF CUSTOMER ACCOUNT ENTRY================================================== -->
+  <xsd:complexType name="typeOfCustomerAccountEntryRefs_RelStructure">
+    <xsd:complexContent>
+      <xsd:extension base="oneToManyRelationshipStructure">
+        <xsd:sequence>
+          <xsd:element ref="TypeOfCustomerAccountEntryRef" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:simpleType name="TypeOfCustomerAccountEntryIdType">
+    <xsd:restriction base="TypeOfValueIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="TypeOfCustomerAccountEntryRef" type="TypeOfCustomerAccountEntryRefStructure" substitutionGroup="TypeOfEntityRef"/>
+  <xsd:complexType name="TypeOfCustomerAccountEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="TypeOfValueRefStructure">
+        <xsd:attribute name="ref" type="TypeOfCustomerAccountEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====CUSTOMER ACCOUNT ENTRY.======================================================== -->
+  <xsd:simpleType name="CustomerAccountEntryIdType">
+    <xsd:restriction base="LogEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="CustomerAccountEntryRef" type="CustomerAccountEntryRefStructure" substitutionGroup="LogEntryRef"/>
+  <xsd:complexType name="CustomerAccountEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="LogEntryRefStructure">
+        <xsd:attribute name="ref" type="CustomerAccountEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====CUSTOMER REGISTRATION.======================================================== -->
+  <xsd:simpleType name="CustomerRegistrationIdType">
+    <xsd:restriction base="CustomerAccountEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="CustomerRegistrationRef" type="CustomerRegistrationRefStructure" abstract="false" substitutionGroup="CustomerAccountEntryRef"/>
+  <xsd:complexType name="CustomerRegistrationRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="CustomerAccountEntryRefStructure">
+        <xsd:attribute name="ref" type="CustomerRegistrationIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====CUSTOMER DEREGISTRATION.======================================================== -->
+  <xsd:simpleType name="CustomerDeregistrationIdType">
+    <xsd:restriction base="CustomerAccountEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="CustomerDeregistrationRef" type="CustomerDeregistrationRefStructure" abstract="false" substitutionGroup="CustomerAccountEntryRef"/>
+  <xsd:complexType name="CustomerDeregistrationRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="CustomerAccountEntryRefStructure">
+        <xsd:attribute name="ref" type="CustomerDeregistrationIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====NO ACCESS RIGHTS ON ACCOUNT.======================================================== -->
+  <xsd:simpleType name="NoAccessRightsOnAccountIdType">
+    <xsd:restriction base="CustomerAccountEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="NoAccessRightsOnAccountRef" type="NoAccessRightsOnAccountRefStructure" abstract="false" substitutionGroup="CustomerAccountEntryRef"/>
+  <xsd:complexType name="NoAccessRightsOnAccountRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="CustomerAccountEntryRefStructure">
+        <xsd:attribute name="ref" type="NoAccessRightsOnAccountIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====INSUFFICIENT ACCESS RIGHTS ON ACCOUNT.======================================================== -->
+  <xsd:simpleType name="InsufficientAccessRightsOnAccountIdType">
+    <xsd:restriction base="CustomerAccountEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="InsufficientAccessRightsOnAccountRef" type="InsufficientAccessRightsOnAccountRefStructure" abstract="false" substitutionGroup="CustomerAccountEntryRef"/>
+  <xsd:complexType name="InsufficientAccessRightsOnAccountRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="CustomerAccountEntryRefStructure">
+        <xsd:attribute name="ref" type="InsufficientAccessRightsOnAccountIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+</xsd:schema>

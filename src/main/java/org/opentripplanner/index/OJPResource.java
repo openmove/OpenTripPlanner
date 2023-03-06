@@ -9,6 +9,7 @@ import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
 import org.rutebanken.netex.model.DayType;
 
+import com.bliksemlabs.ojp.model.AbstractFunctionalServiceRequestStructure;
 import com.bliksemlabs.ojp.model.BusSubmodesOfTransportEnumeration;
 import com.bliksemlabs.ojp.model.FunicularSubmodesOfTransportEnumeration;
 import com.bliksemlabs.ojp.model.LocationStructure;
@@ -19,6 +20,7 @@ import com.bliksemlabs.ojp.model.OJPResponseStructure;
 import com.bliksemlabs.ojp.model.ParticipantRefStructure;
 import com.bliksemlabs.ojp.model.RailSubmodesOfTransportEnumeration;
 import com.bliksemlabs.ojp.model.ServiceDelivery;
+import com.bliksemlabs.ojp.model.ServiceDeliveryErrorConditionStructure;
 import com.bliksemlabs.ojp.model.StopPointRefStructure;
 import com.bliksemlabs.ojp.model.TelecabinSubmodesOfTransportEnumeration;
 import com.bliksemlabs.ojp.model.TramSubmodesOfTransportEnumeration;
@@ -29,15 +31,26 @@ import com.google.common.collect.Sets;
 import de.vdv.ojp.InternationalTextStructure;
 import de.vdv.ojp.ModeStructure;
 import de.vdv.ojp.OJPLocationInformationDeliveryStructure;
+import de.vdv.ojp.OJPLocationInformationRequestStructure;
+import de.vdv.ojp.OJPMultiPointTripRequestStructure;
+import de.vdv.ojp.OJPStopEventRequestStructure;
+import de.vdv.ojp.OJPTripInfoRequestStructure;
+import de.vdv.ojp.OJPTripRequestStructure;
 import de.vdv.ojp.PlaceResultStructure;
 import de.vdv.ojp.PlaceStructure;
+import de.vdv.ojp.PlaceTypeEnumeration;
+import de.vdv.ojp.PtModeFilterStructure;
 import de.vdv.ojp.StopPlaceStructure;
 import de.vdv.ojp.StopPointStructure;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -76,6 +89,8 @@ public class OJPResource {
     @Consumes(MediaType.APPLICATION_XML)
     public Response ojpExec (OJP request) {
     	
+    	List<JAXBElement<? extends AbstractFunctionalServiceRequestStructure>> list = request.getOJPRequest().getServiceRequest().getAbstractFunctionalServiceRequest();
+    	
     	OJP ojp = new OJP();
     	OJPResponseStructure v = new OJPResponseStructure();
     	ServiceDelivery s = new ServiceDelivery();
@@ -83,103 +98,48 @@ public class OJPResource {
     	ParticipantRefStructure producer = new ParticipantRefStructure();
     	producer.setValue("OpenMove");
 		s.setProducerRef(producer );
-		
-		List<StopAndDistance> stops = graphIndex.findClosestStopsFlyCrow(44.827360,8.454970, 200);
-	
-		
-		OJPLocationInformationDeliveryStructure location = new OJPLocationInformationDeliveryStructure();
-		
-		location.setStatus(true);
-		
-		float sumDistances = 0;
-		
-		for(StopAndDistance stop : stops) {
-			 float mDistance = stop.distance;
-			 if(mDistance == 0) {
-				 mDistance = (float) 0.001;
-			 }
-			 sumDistances += (float) (1 / mDistance);
-		}
-		
-		
-		for(StopAndDistance stop : stops) {
-			PlaceResultStructure place = new PlaceResultStructure();
-			PlaceStructure p = new PlaceStructure();
-			StopPointStructure sp = new StopPointStructure();
-			InternationalTextStructure it = new InternationalTextStructure();
-			NaturalLanguageStringStructure nL = new NaturalLanguageStringStructure();
-			nL.setLang("it");
-			nL.setValue(stop.stop.getName());
-			it.setText(nL);
-			sp.setStopPointName(it);
-			sp.setWheelchairAccessible(stop.stop.getWheelchairBoarding() == 1);
-			LocationStructure geo = new LocationStructure();
-			geo.setLatitude(BigDecimal.valueOf(stop.stop.getLat()));
-			geo.setLongitude(BigDecimal.valueOf(stop.stop.getLon()));
-			p.setGeoPosition(geo);
-			StopPointRefStructure sRef = new StopPointRefStructure();
-			sRef.setValue(stop.stop.getId().toString());
-			sp.setStopPointRef(sRef );
-			p.setStopPoint(sp);
-			p.setLocationName(it);
-			
-			
-			place.setLocation(p);
-			
-			
-			Set<Route> routes = graphIndex.routesForStop(stop.stop);
-			
-			List<Integer> types = new ArrayList<Integer>();
-			
-			for(Route r : routes) {
-					if(!types.contains(r.getType())){
-						types.add(r.getType());
-					}
-			
-			}
-			
-			for(Integer type : types) {
-				ModeStructure m = new ModeStructure();
-				switch(type) {
-					case 0: m.setPtMode(VehicleModesOfTransportEnumeration.TRAM); m.setTramSubmode(TramSubmodesOfTransportEnumeration.ALL_TRAM_SERVICES); break;
-		            case 1: m.setPtMode(VehicleModesOfTransportEnumeration.METRO); m.setMetroSubmode(MetroSubmodesOfTransportEnumeration.ALL_RAIL_SERVICES); break;
-		            case 2: m.setPtMode(VehicleModesOfTransportEnumeration.RAIL); m.setRailSubmode(RailSubmodesOfTransportEnumeration.ALL_RAIL_SERVICES); break;
-		            case 3: m.setPtMode(VehicleModesOfTransportEnumeration.BUS); m.setBusSubmode(BusSubmodesOfTransportEnumeration.ALL_BUS_SERVICES); break;
-		            case 4: m.setPtMode(VehicleModesOfTransportEnumeration.FERRY_SERVICE); m.setWaterSubmode(WaterSubmodesOfTransportEnumeration.ALL_WATER_TRANSPORT_SERVICES); break;
-		            case 5: m.setPtMode(VehicleModesOfTransportEnumeration.TRAM); m.setTramSubmode(TramSubmodesOfTransportEnumeration.CITY_TRAM); break;
-		            case 6: m.setPtMode(VehicleModesOfTransportEnumeration.TELECABIN); m.setTelecabinSubmode(TelecabinSubmodesOfTransportEnumeration.ALL_TELECABIN_SERVICES); break;
-		            case 7: m.setPtMode(VehicleModesOfTransportEnumeration.FUNICULAR); m.setFunicularSubmode(FunicularSubmodesOfTransportEnumeration.ALL_FUNICULAR_SERVICES); break;
-		            default: m.setPtMode(VehicleModesOfTransportEnumeration.UNKNOWN); break;
-				}
-				place.getMode().add(m);
-			}
-			
-			
-			place.setComplete(true);
-			//   1/distance / sum(1/distance)
-			
-			float mDistance = stop.distance;
-			 if(mDistance == 0) { // cannot be 0
-				 mDistance = (float) 0.001;
-			 }
-			
-			place.setProbability((float)((double)((float) ((1/mDistance) / sumDistances) * 100)));
-					
-			location.getLocation().add(place);
-		}
-		
-		
-		JAXBElement<OJPLocationInformationDeliveryStructure> locationElem = 
-				new JAXBElement<OJPLocationInformationDeliveryStructure>(
-						new QName("http://www.vdv.de/ojp","OJPLocationInformationDelivery"), 
-						OJPLocationInformationDeliveryStructure.class, 
-						location
-						);
-   	 
-		
-		s.getAbstractFunctionalServiceDelivery().add(locationElem);
-
-		s.setResponseTimestamp(request.getOJPRequest().getServiceRequest().getRequestTimestamp());
+    	
+    	for(JAXBElement<? extends AbstractFunctionalServiceRequestStructure> elem : list) {
+    		if(elem.getDeclaredType().equals(OJPLocationInformationRequestStructure.class)) {
+    			//Prepare OJPLocationInformationDeliveryStructure
+    			
+    			OJPLocationInformationRequestStructure informationRequest = (OJPLocationInformationRequestStructure) elem.getValue();
+    			OJPLocationDeliveryFactory locationDeliveryFactory = new OJPLocationDeliveryFactory(graphIndex, informationRequest);
+   			
+    			OJPLocationInformationDeliveryStructure location = locationDeliveryFactory.create();
+    			JAXBElement<OJPLocationInformationDeliveryStructure> locationElem = 
+    					new JAXBElement<OJPLocationInformationDeliveryStructure>(
+    							new QName("http://www.vdv.de/ojp","OJPLocationInformationDelivery"), 
+    							OJPLocationInformationDeliveryStructure.class, 
+    							location
+    							);
+    	   	 
+    			
+    			s.getAbstractFunctionalServiceDelivery().add(locationElem);
+    			
+    			
+    		}
+    		
+    		if(elem.getDeclaredType().equals(OJPStopEventRequestStructure.class)) {
+    			
+    		}
+    		
+    		if(elem.getDeclaredType().equals(OJPTripInfoRequestStructure.class)) {
+    			
+    		}
+    		
+    		if(elem.getDeclaredType().equals(OJPTripRequestStructure.class)) {
+    			
+    		}
+    		
+    		if(elem.getDeclaredType().equals(OJPMultiPointTripRequestStructure.class)) {
+    			
+    		}
+    	}
+    	
+  
+    	ZonedDateTime responseTimestamp = ZonedDateTime.now();
+    	s.setResponseTimestamp(responseTimestamp.toLocalDateTime());
 		s.setStatus(true);
     	v.setServiceDelivery(s);
     	

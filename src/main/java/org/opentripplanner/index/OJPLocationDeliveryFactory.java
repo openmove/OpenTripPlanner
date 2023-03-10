@@ -15,10 +15,8 @@ import org.locationtech.jts.geom.Envelope;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.graph.GraphIndex.StopAndDistance;
-import org.opentripplanner.routing.vertextype.TransitVertex;
 
 import com.bliksemlabs.ojp.model.BusSubmodesOfTransportEnumeration;
 import com.bliksemlabs.ojp.model.ErrorDescriptionStructure;
@@ -57,7 +55,6 @@ public class OJPLocationDeliveryFactory {
 	
     private static VehicleModesOfTransportEnumeration getTraverseMode(Route route) {
         int routeType = route.getType();
-        /* TPEG Extension  https://groups.google.com/d/msg/gtfs-changes/keT5rTPS7Y0/71uMz2l6ke0J */
         if (routeType >= 100 && routeType < 200) { // Railway Service
             return VehicleModesOfTransportEnumeration.RAIL;
         } else if (routeType >= 200 && routeType < 300) { //Coach Service

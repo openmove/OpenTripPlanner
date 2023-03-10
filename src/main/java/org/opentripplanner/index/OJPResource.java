@@ -1,60 +1,27 @@
 package org.opentripplanner.index;
 
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.opentripplanner.common.LuceneIndex;
-import org.opentripplanner.model.Route;
 import org.opentripplanner.routing.graph.GraphIndex;
-import org.opentripplanner.routing.graph.GraphIndex.StopAndDistance;
 import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
-import org.rutebanken.netex.model.DayType;
-
 import com.bliksemlabs.ojp.model.AbstractFunctionalServiceRequestStructure;
-import com.bliksemlabs.ojp.model.BusSubmodesOfTransportEnumeration;
-import com.bliksemlabs.ojp.model.FunicularSubmodesOfTransportEnumeration;
-import com.bliksemlabs.ojp.model.LocationStructure;
-import com.bliksemlabs.ojp.model.MetroSubmodesOfTransportEnumeration;
-import com.bliksemlabs.ojp.model.NaturalLanguageStringStructure;
+import com.bliksemlabs.ojp.model.AbstractServiceDeliveryStructure;
 import com.bliksemlabs.ojp.model.OJP;
 import com.bliksemlabs.ojp.model.OJPResponseStructure;
 import com.bliksemlabs.ojp.model.ParticipantRefStructure;
-import com.bliksemlabs.ojp.model.RailSubmodesOfTransportEnumeration;
 import com.bliksemlabs.ojp.model.ServiceDelivery;
-import com.bliksemlabs.ojp.model.ServiceDeliveryErrorConditionStructure;
-import com.bliksemlabs.ojp.model.StopPointRefStructure;
-import com.bliksemlabs.ojp.model.TelecabinSubmodesOfTransportEnumeration;
-import com.bliksemlabs.ojp.model.TramSubmodesOfTransportEnumeration;
-import com.bliksemlabs.ojp.model.VehicleModesOfTransportEnumeration;
-import com.bliksemlabs.ojp.model.WaterSubmodesOfTransportEnumeration;
-import com.google.common.collect.Sets;
 
-import de.vdv.ojp.InternationalTextStructure;
-import de.vdv.ojp.ModeStructure;
 import de.vdv.ojp.OJPLocationInformationDeliveryStructure;
 import de.vdv.ojp.OJPLocationInformationRequestStructure;
 import de.vdv.ojp.OJPMultiPointTripRequestStructure;
+import de.vdv.ojp.OJPStopEventDeliveryStructure;
 import de.vdv.ojp.OJPStopEventRequestStructure;
 import de.vdv.ojp.OJPTripInfoRequestStructure;
 import de.vdv.ojp.OJPTripRequestStructure;
-import de.vdv.ojp.PlaceResultStructure;
-import de.vdv.ojp.PlaceStructure;
-import de.vdv.ojp.PlaceTypeEnumeration;
-import de.vdv.ojp.PtModeFilterStructure;
-import de.vdv.ojp.StopPlaceStructure;
-import de.vdv.ojp.StopPointStructure;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -121,7 +88,17 @@ public class OJPResource {
     		}
     		
     		if(elem.getDeclaredType().equals(OJPStopEventRequestStructure.class)) {
+    			OJPStopEventRequestStructure stopEventRequest = (OJPStopEventRequestStructure) elem.getValue();
+    			OJPStopEventsFactory eventDeliveryFactory = new OJPStopEventsFactory(graphIndex,stopEventRequest);
+    			OJPStopEventDeliveryStructure event = eventDeliveryFactory.create();
     			
+    			JAXBElement<OJPStopEventDeliveryStructure> eventElem = 
+    					new JAXBElement<OJPStopEventDeliveryStructure>(
+    							new QName("http://www.vdv.de/ojp","OJPStopEventDelivery"), 
+    							OJPStopEventDeliveryStructure.class, 
+    							event
+    							);
+				s.getAbstractFunctionalServiceDelivery().add(eventElem);
     		}
     		
     		if(elem.getDeclaredType().equals(OJPTripInfoRequestStructure.class)) {

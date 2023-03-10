@@ -15,6 +15,7 @@ import de.vdv.ojp.OJPLocationInformationRequestStructure;
 import de.vdv.ojp.OJPMultiPointTripRequestStructure;
 import de.vdv.ojp.OJPStopEventDeliveryStructure;
 import de.vdv.ojp.OJPStopEventRequestStructure;
+import de.vdv.ojp.OJPTripInfoDeliveryStructure;
 import de.vdv.ojp.OJPTripInfoRequestStructure;
 import de.vdv.ojp.OJPTripRequestStructure;
 
@@ -102,7 +103,16 @@ public class OJPResource {
     		}
     		
     		if(elem.getDeclaredType().equals(OJPTripInfoRequestStructure.class)) {
-    			
+    			OJPTripInfoRequestStructure tripInfoRequest = (OJPTripInfoRequestStructure) elem.getValue();
+    			OJPTripInfoFactory tripInfoFactory = new OJPTripInfoFactory(graphIndex,tripInfoRequest);
+    			OJPTripInfoDeliveryStructure tripInfo = tripInfoFactory.create();
+    			JAXBElement<OJPTripInfoDeliveryStructure> eventElem = 
+    					new JAXBElement<OJPTripInfoDeliveryStructure>(
+    							new QName("http://www.vdv.de/ojp","OJPTripInfoDelivery"), 
+    							OJPTripInfoDeliveryStructure.class, 
+    							tripInfo
+    							);
+				s.getAbstractFunctionalServiceDelivery().add(eventElem);
     		}
     		
     		if(elem.getDeclaredType().equals(OJPTripRequestStructure.class)) {

@@ -333,8 +333,8 @@ public class OJPStopEventsFactory {
 				String pattern = "yyyy-MM-dd";
 				SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
-				//op.setValue(simpleDateFormat.format(dateVal));
-				op.setValue(graphIndex.tripForId.get(tts.tripId).getServiceId().toString());
+				op.setValue(simpleDateFormat.format(dateVal));
+				//op.setValue(graphIndex.tripForId.get(tts.tripId).getServiceId().toString());
 				
 				JAXBElement<OperatingDayRefStructure> opElem = 
     					new JAXBElement<OperatingDayRefStructure>(

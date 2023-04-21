@@ -1,7 +1,8 @@
-package org.opentripplanner.index;
+package org.opentripplanner.ojp;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -159,7 +160,12 @@ public class OJPTripInfoFactory {
 		
 		if(request.getOperatingDayRef() != null) {
 			String dateString = request.getOperatingDayRef().getValue();
-			dateTmp = simpleDateFormat.parse(dateString);
+			try {
+				dateTmp = simpleDateFormat.parse(dateString);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			date = dateTmp.toInstant()
 				      .atZone(ZoneId.systemDefault())
 				      .toLocalDateTime();

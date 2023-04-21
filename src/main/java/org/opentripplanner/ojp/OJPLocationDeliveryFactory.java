@@ -1,4 +1,4 @@
-package org.opentripplanner.index;
+package org.opentripplanner.ojp;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

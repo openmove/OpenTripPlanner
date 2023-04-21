@@ -1,10 +1,9 @@
-package org.opentripplanner.index;
+package org.opentripplanner.ojp;
 
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
 import com.bliksemlabs.ojp.model.AbstractFunctionalServiceRequestStructure;
-import com.bliksemlabs.ojp.model.AbstractServiceDeliveryStructure;
 import com.bliksemlabs.ojp.model.OJP;
 import com.bliksemlabs.ojp.model.OJPResponseStructure;
 import com.bliksemlabs.ojp.model.ParticipantRefStructure;
@@ -15,6 +14,7 @@ import de.vdv.ojp.OJPLocationInformationRequestStructure;
 import de.vdv.ojp.OJPMultiPointTripRequestStructure;
 import de.vdv.ojp.OJPStopEventDeliveryStructure;
 import de.vdv.ojp.OJPStopEventRequestStructure;
+import de.vdv.ojp.OJPTripDeliveryStructure;
 import de.vdv.ojp.OJPTripInfoDeliveryStructure;
 import de.vdv.ojp.OJPTripInfoRequestStructure;
 import de.vdv.ojp.OJPTripRequestStructure;
@@ -116,7 +116,18 @@ public class OJPResource {
     		}
     		
     		if(elem.getDeclaredType().equals(OJPTripRequestStructure.class)) {
+    			OJPTripRequestStructure tripRequest = (OJPTripRequestStructure) elem.getValue();
     			
+    			OJPTripFactory tripFactory = new OJPTripFactory(graphIndex,tripRequest);
+    			OJPTripDeliveryStructure trip = tripFactory.create();
+    			JAXBElement<OJPTripDeliveryStructure> tripElem = 
+    					new JAXBElement<OJPTripDeliveryStructure>(
+    							new QName("http://www.vdv.de/ojp","OJPTripDelivery"), 
+    							OJPTripDeliveryStructure.class, 
+    							trip
+    							);
+    			
+    			s.getAbstractFunctionalServiceDelivery().add(tripElem);
     		}
     		
     		if(elem.getDeclaredType().equals(OJPMultiPointTripRequestStructure.class)) {

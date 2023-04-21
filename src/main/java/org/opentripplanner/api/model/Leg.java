@@ -89,6 +89,9 @@ public class Leg {
 
     @JsonSerialize
     public String agencyUrl;
+    
+    @JsonSerialize
+    public String agencyFareUrl;
 
     @JsonSerialize
     public String agencyBrandingUrl;

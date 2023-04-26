@@ -1493,8 +1493,7 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> {
                     try{
                         TripPattern tripPattern = (TripPattern) environment.getSource();
-                        LineString geometry = index.patternForTrip
-                                .get(tripPattern).geometry;
+                        LineString geometry = tripPattern.geometry;
 
                         Geometry geometry2D;
                         if(geometry == null){

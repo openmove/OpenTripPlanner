@@ -593,6 +593,69 @@ public class IndexAPI {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
         }
     }
+    
+    /** Return all stops in any pattern on a given route. */
+    @GET
+    @Path("/vehicles")
+    public Response getVehiclePositions (@QueryParam("minLat") Double minLat,
+            @QueryParam("minLon") Double minLon,
+            @QueryParam("maxLat") Double maxLat,
+            @QueryParam("maxLon") Double maxLon,
+            @QueryParam("lat")    Double lat,
+            @QueryParam("lon")    Double lon,
+            @QueryParam("radius") Double radius) {
+    	
+    	
+    	List<RealtimeVehiclePosition> vehiclePositions = new ArrayList<>();
+    	for (String key: index.patternForId.keySet()) {
+    		
+    		TripPattern pattern = index.patternForId.get(key);
+    		vehiclePositions.addAll(pattern.getVehiclePositions());
+    	}
+    	
+    	if (uriInfo.getQueryParameters().isEmpty()) {
+        	return Response.status(Status.OK).entity(vehiclePositions).build();
+    	}
+    	
+    	List<RealtimeVehiclePosition> returnPositions = new ArrayList<>();
+    	boolean expectCircle = (lat != null || lon != null || radius != null);
+        if (expectCircle) {
+            if (lat == null || lon == null || radius == null || radius < 0) {
+                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+            }
+            if (radius > MAX_STOP_SEARCH_RADIUS){
+                radius = MAX_STOP_SEARCH_RADIUS;
+            }
+            Coordinate coord = new Coordinate(lon, lat);
+            
+            for (RealtimeVehiclePosition position : vehiclePositions) {
+                double distance = SphericalDistanceLibrary.fastDistance(new Coordinate(position.lon, position.lat), coord);
+
+                if (distance < radius) {
+                	returnPositions.add(position);
+                }
+            }
+            
+        }else {
+        	/* We're not circle mode, we must be in box mode. */
+            if (minLat == null || minLon == null || maxLat == null || maxLon == null) {
+                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+            }
+            if (maxLat <= minLat || maxLon <= minLon) {
+                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+            }
+            
+            Envelope envelope = new Envelope(new Coordinate(minLon, minLat), new Coordinate(maxLon, maxLat));
+            for (RealtimeVehiclePosition position : vehiclePositions) {
+                Coordinate coord = new Coordinate(position.lon, position.lat);
+                if(envelope.contains(coord)) {
+                	returnPositions.add(position);
+                }
+            }            
+        }
+        return Response.status(Status.OK).entity(returnPositions).build();
+    	
+    }
 
     @GET
     @Path("/patterns/{patternId}/semanticHash")

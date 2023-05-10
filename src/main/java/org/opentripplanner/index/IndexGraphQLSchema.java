@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.geotools.geometry.jts.JTS;
@@ -39,6 +41,7 @@ import org.opentripplanner.api.model.WalkStep;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.DestinationType;
+import org.opentripplanner.index.model.RealtimeVehiclePosition;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.model.Agency;
@@ -259,6 +262,8 @@ public class IndexGraphQLSchema {
     public GraphQLOutputType stopType = new GraphQLTypeReference("Stop");
 
     public GraphQLOutputType tripType = new GraphQLTypeReference("Trip");
+    
+    public GraphQLOutputType vehiclePositionType = new GraphQLTypeReference("VehiclePosition"); 
 
     public GraphQLOutputType stopAtDistanceType = new GraphQLTypeReference("StopAtDistance");
 
@@ -1212,6 +1217,72 @@ public class IndexGraphQLSchema {
                     .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).dropOffType)
                     .build())
             .build();
+        
+        vehiclePositionType = GraphQLObjectType.newObject()
+	        .name("VehiclePosition")
+	        .withInterface(nodeInterface)
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+	            .name("vehicleId")
+	            .type(new GraphQLNonNull(Scalars.GraphQLString))
+	            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).vehicleId)
+	            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("label")
+		            .type(Scalars.GraphQLString)
+		            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).label)
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("speed")
+		            .type(Scalars.GraphQLFloat)
+		            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).speed)
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("lat")
+		            .type(Scalars.GraphQLFloat)
+		            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).lat)
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("lon")
+		            .type(Scalars.GraphQLFloat)
+		            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).lon)
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("heading")
+		            .type(Scalars.GraphQLFloat)
+		            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).heading)
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("time")
+		            .type(Scalars.GraphQLLong)
+		            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).seconds)
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("stoptime")
+		            .type(stoptimeType)
+		            .dataFetcher(environment -> {
+		            	int sequence = ((RealtimeVehiclePosition) environment.getSource()).nextStopSequenceId;
+		            	FeedScopedId tripId = ((RealtimeVehiclePosition) environment.getSource()).tripId;
+		            	FeedScopedId stopId = ((RealtimeVehiclePosition) environment.getSource()).nextStopId;
+		            	long millis = ((RealtimeVehiclePosition) environment.getSource()).seconds * 1000;
+		            	Trip mTrip = index.tripForId.get(tripId);
+		            	Date date = new Date(millis);
+		            	
+		            	
+		            	List<TripTimeShort> stoptimes = index
+		            			.getStopTimesForTrip(mTrip, new ServiceDate(date))
+		            			.stream()
+		            			.filter(s -> s.stopSequence == sequence && s.stopId.equals(stopId))
+		            			.collect(Collectors.toList());
+		            	if(stoptimes.isEmpty()) {
+		            		return null;
+		            	}
+            			return stoptimes.get(0);
+		            	
+		            	
+		            	
+		            })
+		            .build())
+	        .build();
 
         tripType = GraphQLObjectType.newObject()
             .name("Trip")
@@ -1280,6 +1351,20 @@ public class IndexGraphQLSchema {
                 .dataFetcher(
                     environment -> index.patternForTrip.get((Trip) environment.getSource()))
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("realtimeVehiclePosition")
+                    .type(vehiclePositionType)
+                    .dataFetcher(
+                        environment -> {
+                        	Trip trip = (Trip) environment.getSource();
+                        	return index.patternForTrip.get(trip)
+                        			.getVehiclePositions()
+                        			.stream()
+                        			.filter(vp -> vp.tripId.equals(trip.getId()))
+                        			.collect(Collectors.toList());
+                        }
+                        )
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stops")
                 .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(stopType))))

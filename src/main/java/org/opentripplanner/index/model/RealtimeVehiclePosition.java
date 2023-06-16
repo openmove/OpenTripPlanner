@@ -1,6 +1,7 @@
 package org.opentripplanner.index.model;
 
 import com.google.transit.realtime.GtfsRealtime.VehiclePosition.CongestionLevel;
+import com.google.transit.realtime.GtfsRealtime.VehiclePosition.OccupancyStatus;
 import com.google.transit.realtime.GtfsRealtime.VehiclePosition.VehicleStopStatus;
 import org.opentripplanner.model.FeedScopedId;
 
@@ -28,4 +29,8 @@ public class RealtimeVehiclePosition {
     public int nextStopSequenceId;
 
     public CongestionLevel congestionLevel;
+    public OccupancyStatus occupancyStatus;
+    
+    public int occupancyPercentage;
+    
 }

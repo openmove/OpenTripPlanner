@@ -92,6 +92,9 @@ public class CarParkUpdater extends PollingGraphUpdater {
             if (sourceType.equals("park-and-ride")) {
                 source = new ODHCarParkDataSource();
             }
+            if (sourceType.equals("park-openmove")) {
+                source = new OMCarParkDataSource();
+            }
         }
 
         if (source == null) {

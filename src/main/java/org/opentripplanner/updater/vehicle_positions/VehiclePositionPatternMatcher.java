@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -126,6 +127,16 @@ public class VehiclePositionPatternMatcher {
             }
             newPosition.vehicleId = vehiclePosition.getVehicle().getId();
         }
+        
+        if(newPosition.vehicleId == null) {
+        	if(vehiclePosition.hasTrip()) {
+        		newPosition.vehicleId = vehiclePosition.getTrip().getTripId();
+        	}else {
+        		UUID uuid = UUID.randomUUID();
+                String uuidAsString = uuid.toString();
+            	newPosition.vehicleId = uuidAsString;
+        	}        	
+        }
 
         if (vehiclePosition.hasCurrentStatus()) {
             newPosition.stopStatus = vehiclePosition.getCurrentStatus();
@@ -133,6 +144,13 @@ public class VehiclePositionPatternMatcher {
 
         if (vehiclePosition.hasCongestionLevel()) {
             newPosition.congestionLevel = vehiclePosition.getCongestionLevel();
+        }
+        
+        if (vehiclePosition.hasOccupancyStatus()) {
+            newPosition.occupancyStatus = vehiclePosition.getOccupancyStatus();
+        }
+        if (vehiclePosition.hasOccupancyPercentage()) {
+            newPosition.occupancyPercentage = vehiclePosition.getOccupancyPercentage();
         }
 
         if (vehiclePosition.hasTimestamp()) {

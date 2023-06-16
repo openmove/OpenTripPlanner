@@ -9,7 +9,6 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.vertextype.ParkAndRideVertex;
 
 import org.locationtech.jts.geom.LineString;
-import org.opentripplanner.updater.car_park.ODHCarParkDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

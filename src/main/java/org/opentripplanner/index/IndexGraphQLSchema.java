@@ -38,6 +38,7 @@ import org.opentripplanner.api.model.Place;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.model.VertexType;
 import org.opentripplanner.api.model.WalkStep;
+import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.DestinationType;
@@ -237,6 +238,28 @@ public class IndexGraphQLSchema {
             .value("INFO", GtfsRealtime.Alert.SeverityLevel.INFO, "Info alerts are used for informational messages that should not have a significant effect on user's journey, for example: A single entrance to a metro station is temporarily closed.")
             .value("WARNING", GtfsRealtime.Alert.SeverityLevel.WARNING, "Warning alerts are used when a single stop or route has a disruption that can affect user's journey, for example: All trams on a specific route are running with irregular schedules.")
             .value("SEVERE", GtfsRealtime.Alert.SeverityLevel.SEVERE, "Severe alerts are used when a significant part of public transport services is affected, for example: All train services are cancelled due to technical problems.")
+            .build();
+    
+    public static GraphQLEnumType congestionLevelEnum = GraphQLEnumType.newEnum()
+            .name("CongestionLevelType")
+            .description("Congestion level of a vehicle")
+            .value("UNKNOWN_CONGESTION_LEVEL", GtfsRealtime.VehiclePosition.CongestionLevel.UNKNOWN_CONGESTION_LEVEL, "Congestion is unknown")
+            .value("RUNNING_SMOOTHLY", GtfsRealtime.VehiclePosition.CongestionLevel.RUNNING_SMOOTHLY, "No congestion")
+            .value("STOP_AND_GO", GtfsRealtime.VehiclePosition.CongestionLevel.STOP_AND_GO, "The vehicle stop and go")
+            .value("CONGESTION", GtfsRealtime.VehiclePosition.CongestionLevel.CONGESTION, "There is a significant congestion")
+            .value("SEVERE_CONGESTION", GtfsRealtime.VehiclePosition.CongestionLevel.SEVERE_CONGESTION, "People are leaving their cars!")
+            .build();
+    
+    public static GraphQLEnumType occupancyStatusEnum = GraphQLEnumType.newEnum()
+            .name("OccupancyStatusType")
+            .description("Occupancy status of a vehicle")
+            .value("EMPTY", GtfsRealtime.VehiclePosition.OccupancyStatus.EMPTY, "The vehicle is considered empty by most measures, and has few or no passengers onboard, but is still accepting passengers.")
+            .value("MANY_SEATS_AVAILABLE", GtfsRealtime.VehiclePosition.OccupancyStatus.MANY_SEATS_AVAILABLE, "The vehicle has a relatively large percentage of seats available.")
+            .value("FEW_SEATS_AVAILABLE", GtfsRealtime.VehiclePosition.OccupancyStatus.FEW_SEATS_AVAILABLE, "The vehicle has a relatively small percentage of seats available.")
+            .value("STANDING_ROOM_ONLY", GtfsRealtime.VehiclePosition.OccupancyStatus.STANDING_ROOM_ONLY, "The vehicle can currently accommodate only standing passengers.")
+            .value("CRUSHED_STANDING_ROOM_ONLY", GtfsRealtime.VehiclePosition.OccupancyStatus.CRUSHED_STANDING_ROOM_ONLY, "The vehicle can currently accommodate only standing passengers and has limited space for them.")
+            .value("FULL", GtfsRealtime.VehiclePosition.OccupancyStatus.FULL, "The vehicle is considered full by most measures, but may still be allowing passengers to board.")
+            .value("NOT_ACCEPTING_PASSENGERS", GtfsRealtime.VehiclePosition.OccupancyStatus.NOT_ACCEPTING_PASSENGERS, "The vehicle is not accepting additional passengers.")
             .build();
 
     private final GtfsRealtimeFuzzyTripMatcher fuzzyTripMatcher;
@@ -1222,8 +1245,15 @@ public class IndexGraphQLSchema {
 	        .name("VehiclePosition")
 	        .withInterface(nodeInterface)
 	        .field(GraphQLFieldDefinition.newFieldDefinition()
+	                .name("id")
+	                .type(new GraphQLNonNull(Scalars.GraphQLID))
+	                .dataFetcher(environment -> relay.toGlobalId(
+	                	vehiclePositionType.getName(),
+	                    ((RealtimeVehiclePosition) environment.getSource()).vehicleId))
+	                .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
 	            .name("vehicleId")
-	            .type(new GraphQLNonNull(Scalars.GraphQLString))
+	            .type(Scalars.GraphQLString)
 	            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).vehicleId)
 	            .build())
 	        .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1255,6 +1285,35 @@ public class IndexGraphQLSchema {
 		            .name("time")
 		            .type(Scalars.GraphQLLong)
 		            .dataFetcher(environment -> ((RealtimeVehiclePosition) environment.getSource()).seconds)
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("trip")
+		            .type(tripType)
+		            .dataFetcher(environment -> {
+		            	FeedScopedId tripId = ((RealtimeVehiclePosition) environment.getSource()).tripId;
+		            	return index.tripForId.get(tripId);
+		            })
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("congestionLevel")
+		            .type(congestionLevelEnum)
+		            .dataFetcher(environment -> {
+		            	return ((RealtimeVehiclePosition) environment.getSource()).congestionLevel;
+		            })
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("occupancyStatus")
+		            .type(occupancyStatusEnum)
+		            .dataFetcher(environment -> {
+		            	return ((RealtimeVehiclePosition) environment.getSource()).occupancyStatus;
+		            })
+		            .build())
+	        .field(GraphQLFieldDefinition.newFieldDefinition()
+		            .name("occupancyPercentage")
+		            .type(Scalars.GraphQLInt)
+		            .dataFetcher(environment -> {
+		            	return ((RealtimeVehiclePosition) environment.getSource()).occupancyPercentage;
+		            })
 		            .build())
 	        .field(GraphQLFieldDefinition.newFieldDefinition()
 		            .name("stoptime")
@@ -1357,11 +1416,15 @@ public class IndexGraphQLSchema {
                     .dataFetcher(
                         environment -> {
                         	Trip trip = (Trip) environment.getSource();
-                        	return index.patternForTrip.get(trip)
+                        	List<RealtimeVehiclePosition> rtp = index.patternForTrip.get(trip)
                         			.getVehiclePositions()
                         			.stream()
                         			.filter(vp -> vp.tripId.equals(trip.getId()))
                         			.collect(Collectors.toList());
+                        	if(rtp.isEmpty()) {
+                        		return null;
+                        	}
+                        	return rtp.get(0);
                         }
                         )
                     .build())
@@ -1571,6 +1634,18 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stops")
                 .type(new GraphQLList(new GraphQLNonNull(stopType)))
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("realtimeVehiclePositions")
+                .type(new GraphQLList(vehiclePositionType))
+                .dataFetcher(
+                    environment -> {
+                    	return ((TripPattern) environment.getSource())
+                    			.getVehiclePositions()
+                    			.stream()
+                    			.collect(Collectors.toList());
+                    }
+                    )
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("geometry")
@@ -2869,6 +2944,57 @@ public class IndexGraphQLSchema {
                 ))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("realtimeVehiclePositions")
+                    .description("Get all vehicle positions for the specified graph")
+                    .type(new GraphQLList(vehiclePositionType))
+                    .argument(GraphQLArgument.newArgument()
+                            .name("lat")
+                            .description("Latitude of the location")
+                            .type(Scalars.GraphQLFloat)
+                            .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("lon")
+                        .description("Longitude of the location")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("radius")
+                        .description("Radius (in meters) to search for from the specidied location")
+                        .type(Scalars.GraphQLInt)
+                        .build())
+                    .dataFetcher(environment -> {
+                    	return index.patternForId.values()
+                        .stream()
+                        .flatMap(p -> p.getVehiclePositions().stream().filter(
+                        		v -> {
+                        			Coordinate coord = null;
+                        			int radius = 0;
+                                    if(environment.getArgument("lon") != null && environment.getArgument("lat") != null && environment.getArgument("radius") != null) {
+                                    	
+                                    	double lon = environment.getArgument("lon");
+                                    	double lat = environment.getArgument("lat");
+                                    	radius =  Math.toIntExact(environment.getArgument("radius"));
+                                    	
+                                    	coord = new Coordinate(lon, lat);
+                                    }
+                        			if(coord != null) {
+                        				double distance = SphericalDistanceLibrary.fastDistance(new Coordinate(v.lon, v.lat), coord);
+
+                                        if (distance < radius) {
+                                        	return true;
+                                        } else {
+                                        	return false;
+                                        }
+                        			}else {
+                        				return true;
+                        			}
+                        			
+                        		}
+                        		))
+                        .collect(Collectors.toList());
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("trip")
                 .description("Get a single trip based on its id (format is Agency:TripId)")
                 .type(tripType)
@@ -2951,6 +3077,38 @@ public class IndexGraphQLSchema {
                         )
                 )
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("clustersByBbox")
+                    .description("Get all clusters for the specified graph in a bounding box")
+                    .type(new GraphQLList(clusterType))
+                    .argument(GraphQLArgument.newArgument()
+                        .name("minLat")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("minLon")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("maxLat")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("maxLon")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .dataFetcher(environment -> {
+                    	Envelope envelope = new Envelope(
+                            new Coordinate(environment.getArgument("minLon"), environment.getArgument("minLat")),
+                            new Coordinate(environment.getArgument("maxLon"), environment.getArgument("maxLat")));
+                    	return new ArrayList<>(
+                        index.stopClusterForId.values()
+                            .stream()
+                            .filter(c -> envelope.contains(new Coordinate(c.lon,c.lat)))
+                            .collect(Collectors.toList())
+                        );
+                    })
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("cluster")
                 .description("Get a single cluster based on its id")

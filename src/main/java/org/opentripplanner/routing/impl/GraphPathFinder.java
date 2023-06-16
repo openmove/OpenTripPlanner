@@ -53,7 +53,7 @@ public class GraphPathFinder {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphPathFinder.class);
     private static final double DEFAULT_MAX_WALK = 2000;
-    private static final double CLAMP_MAX_WALK = 15000;
+    private static final double CLAMP_MAX_WALK = 150000;
 
     Router router;
 

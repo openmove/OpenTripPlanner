@@ -241,12 +241,13 @@ public abstract class GraphPathToTripPlanConverter {
 
         State[][] legsStates = sliceStates(states);
 
-        if (fareService != null) {
-            itinerary.fare = fareService.getCost(path);
-        }
-
         for (State[] legStates : legsStates) {
             itinerary.addLeg(generateLeg(graph, legStates, showIntermediateStops, disableAlertFiltering, requestedLocale));
+        }
+
+        // getCost() needs legs to be generated first, for fare-by-leg support.
+        if (fareService != null) {
+            itinerary.fare = fareService.getCost(path, itinerary.legs);
         }
 
         addWalkSteps(graph, itinerary.legs, legsStates, requestedLocale);

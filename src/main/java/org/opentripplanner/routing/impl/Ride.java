@@ -3,8 +3,12 @@ package org.opentripplanner.routing.impl;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.routing.core.Fare;
+import org.opentripplanner.routing.core.FareComponent;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /** A set of edges on a single route, with associated information for calculating fares */
@@ -38,8 +42,11 @@ public class Ride {
 
     public Stop lastStop;
 
+    public Map<Fare.FareType, FareComponent> fareComponents;
+
     public Ride() {
         zones = new HashSet<>();
+        fareComponents = new HashMap<>();
     }
 
     public String toString() {

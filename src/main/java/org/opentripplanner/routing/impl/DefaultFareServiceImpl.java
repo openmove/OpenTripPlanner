@@ -11,6 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.opentripplanner.model.*;
 import org.opentripplanner.routing.core.Fare;
@@ -143,8 +145,12 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
     }
 
     @Override
-    public Fare getCost(GraphPath path) {
+    public Fare getCost(GraphPath graph) {
+        return getCost(graph, null);
+    }
 
+    @Override
+    public Fare getCost(GraphPath path, List<Leg> legs) {
         List<Ride> rides = createRides(path);
         // If there are no rides, there's no fare.
         if (rides.size() == 0) {
@@ -162,8 +168,44 @@ public class DefaultFareServiceImpl implements FareService, Serializable {
                 currency = Currency.getInstance(fareRules.iterator().next().getFareAttribute().getCurrencyType());
             }
             hasFare = populateFare(fare, currency, fareType, rides, fareRules);
+
+            if (hasFare && legs != null) {
+                populateFareDetails(fare, legs, rides, fareType);
+            }
         }
         return hasFare ? fare : null;
+    }
+
+    /**
+     * Add fare components from each Ride to the Fare object for a given fare type.
+     * This approach is temporary and will be improved in OTP2.
+     * @param fare Fare object receiving components
+     * @param legs Legs of trip
+     * @param rides Rides of trip (with fare components)
+     * @param fareType Fare type to process
+     */
+    private void populateFareDetails(Fare fare, List<Leg> legs, List<Ride> rides, FareType fareType) {
+        int rideIndex = 0;
+        int legIndex = 0;
+        // List of components for this fareType.
+        List<FareComponent> fareComponents = new ArrayList<>();
+        if (legs != null) {
+            for (Leg leg : legs) {
+                // Match transit legs to the rides this way. Is there a better way?
+                if (leg.isTransitLeg()) {
+                    Ride ride = rides.get(rideIndex);
+                    if (ride.fareComponents.containsKey(fareType)) {
+                        FareComponent fareComponent = ride.fareComponents.get(fareType);
+                        fareComponent.legIndex = legIndex;
+                        fareComponents.add(fareComponent);
+                    }
+                    // Sometimes rides are split into multiple legs, so ensure the end times match.
+                    if (leg.endTime.getTimeInMillis() / 1000 == ride.endTime) rideIndex++;
+                }
+                legIndex++;
+            }
+            fare.addFareDetails(fareType, fareComponents);
+        }
     }
 
     protected static Money getMoney(Currency currency, float cost) {

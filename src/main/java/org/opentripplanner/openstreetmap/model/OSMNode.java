@@ -48,6 +48,7 @@ public class OSMNode extends OSMWithTags {
                 || "tram_stop".equals(getTag("railway"))
                 || "station".equals(getTag("railway"))
                 || "halt".equals(getTag("railway"))
+                || "stop".equals(getTag("railway"))
                 || "bus_station".equals(getTag("amenity"));
     }
 

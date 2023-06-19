@@ -36,26 +36,63 @@ import java.util.List;
 public class UberTransportationNetworkCompanyDataSource extends TransportationNetworkCompanyDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(UberTransportationNetworkCompanyDataSource.class);
-
     private static final String UBER_API_URL = "https://api.uber.com/v1.2/";
+    private static final String UBER_AUTHENTICATION_URL = "https://login.uber.com/";
+    private static final ObjectMapper mapper;
 
-    private String serverToken;
-    private String baseUrl;
+    private final String baseUrl;
+    private final String authenticationUrl;
+    private final String clientId;
+    private final String clientSecret;
+
+    static {
+        mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     public UberTransportationNetworkCompanyDataSource(JsonNode config) {
-        this.serverToken = config.path("serverToken").asText();
         this.baseUrl = UBER_API_URL;
+        this.authenticationUrl = UBER_AUTHENTICATION_URL;
+        this.clientId = config.path("clientId").asText();
+        this.clientSecret = config.path("clientSecret").asText();
         this.wheelChairAccessibleRideType = config.path("wheelChairAccessibleRideType").asText();
     }
 
-    public UberTransportationNetworkCompanyDataSource (String serverToken, String baseUrl) {
-        this.serverToken = serverToken;
+    /**
+     * This constructor is for testing purposes.
+     */
+    public UberTransportationNetworkCompanyDataSource (
+        String baseUrl,
+        String authenticationUrl,
+        String clientId, String clientSecret) {
         this.baseUrl = baseUrl;
+        this.authenticationUrl = authenticationUrl;
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
     }
 
     @Override
     public TransportationNetworkCompany getTransportationNetworkCompanyType() {
         return TransportationNetworkCompany.UBER;
+    }
+
+    @Override
+    protected HttpURLConnection buildOAuthConnection() throws IOException {
+        UriBuilder uriBuilder = UriBuilder.fromUri(authenticationUrl + "oauth/v2/token");
+        URL url = new URL(uriBuilder.toString());
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+        // set request body
+        UberAuthenticationRequestBody authRequest = new UberAuthenticationRequestBody(
+            clientId,
+            clientSecret
+        );
+        connection.setDoOutput(true);
+        connection.getOutputStream().write(authRequest.toRequestParamString().getBytes());
+        connection.getOutputStream().close();
+        return connection;
     }
 
     @Override
@@ -67,7 +104,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         String requestUrl = uriBuilder.toString();
         URL uberUrl = new URL(requestUrl);
         HttpURLConnection connection = (HttpURLConnection) uberUrl.openConnection();
-        connection.setRequestProperty("Authorization", "Token " + serverToken);
+        connection.setRequestProperty("Authorization", "Bearer " + getToken().value);
         connection.setRequestProperty("Accept-Language", "en_US");
         connection.setRequestProperty("Content-Type", "application/json");
 
@@ -75,8 +112,6 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
 
         // Make request, parse response
         InputStream responseStream = connection.getInputStream();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         UberArrivalEstimateResponse response = mapper.readValue(responseStream, UberArrivalEstimateResponse.class);
 
         // serialize into Arrival Time objects
@@ -96,7 +131,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             );
         }
 
-        if (arrivalTimes.size() == 0) {
+        if (arrivalTimes.isEmpty()) {
             LOG.warn(
                 "No Uber service available at {}, {}",
                 position.latitude,
@@ -120,16 +155,14 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
         String requestUrl = uriBuilder.toString();
         URL uberUrl = new URL(requestUrl);
         HttpURLConnection connection = (HttpURLConnection) uberUrl.openConnection();
-        connection.setRequestProperty("Authorization", "Token " + serverToken);
+        connection.setRequestProperty("Authorization", "Bearer " + getToken().value);
         connection.setRequestProperty("Accept-Language", "en_US");
         connection.setRequestProperty("Content-Type", "application/json");
 
-        LOG.info("Made price estimate request to Uber API at following URL: " + requestUrl);
+        LOG.info("Made price estimate request to Uber API at following URL: {}", requestUrl);
 
         // Make request, parse response
         InputStream responseStream = connection.getInputStream();
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         UberTripTimeEstimateResponse response = mapper.readValue(responseStream, UberTripTimeEstimateResponse.class);
 
         if (response.prices == null) {
@@ -152,7 +185,7 @@ public class UberTransportationNetworkCompanyDataSource extends TransportationNe
             ));
         }
 
-        if (estimates.size() == 0) {
+        if (estimates.isEmpty()) {
             LOG.warn(
                 "No Uber service available for trip from {}, {} to {}, {}",
                 request.startPosition.latitude,

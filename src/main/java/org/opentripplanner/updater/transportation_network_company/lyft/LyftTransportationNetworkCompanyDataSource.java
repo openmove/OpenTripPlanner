@@ -32,20 +32,22 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 public class LyftTransportationNetworkCompanyDataSource extends TransportationNetworkCompanyDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(LyftTransportationNetworkCompanyDataSource.class);
-
     private static final String LYFT_API_URL = "https://api.lyft.com/";
+    private static final ObjectMapper mapper;
 
-    private String accessToken;
-    private String baseUrl;  // for testing purposes
-    private String clientId;
-    private String clientSecret;
-    private Date tokenExpirationTime;
+    private final String baseUrl;  // for testing purposes
+    private final String clientId;
+    private final String clientSecret;
+
+    static {
+        mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     public LyftTransportationNetworkCompanyDataSource(JsonNode config) {
         this.baseUrl = LYFT_API_URL;
@@ -61,49 +63,30 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
         this.clientSecret = clientSecret;
     }
 
-    private String getAccessToken() throws IOException {
-        // check if token needs to be obtained
-        Date now = new Date();
-        if (tokenExpirationTime == null || now.after(tokenExpirationTime)) {
-            // token needs to be obtained
-            LOG.info("Requesting new lyft access token");
-
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-            // prepare request to get token
-            UriBuilder uriBuilder = UriBuilder.fromUri(baseUrl + "oauth/token");
-            URL url = new URL(uriBuilder.toString());
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            String userpass = clientId + ":" + clientSecret;
-            String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
-            connection.setRequestProperty("Authorization", basicAuth);
-            connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-
-            // set request body
-            LyftAuthenticationRequestBody authRequest = new LyftAuthenticationRequestBody(
-                "client_credentials",
-                "public"
-            );
-            connection.setDoOutput(true);
-            mapper.writeValue(connection.getOutputStream(), authRequest);
-
-            // send request and parse repsonse
-            InputStream responseStream = connection.getInputStream();
-            LyftAuthenticationResponse response = mapper.readValue(responseStream, LyftAuthenticationResponse.class);
-            accessToken = response.access_token;
-            tokenExpirationTime = new Date();
-            tokenExpirationTime.setTime(tokenExpirationTime.getTime() + (response.expires_in - 60) * 1000);
-
-            LOG.info("Received new lyft access token");
-        }
-
-        return accessToken;
-    }
-
     @Override
     public TransportationNetworkCompany getTransportationNetworkCompanyType() {
         return TransportationNetworkCompany.LYFT;
+    }
+
+    @Override
+    protected HttpURLConnection buildOAuthConnection() throws IOException {
+        // prepare request to get token
+        UriBuilder uriBuilder = UriBuilder.fromUri(baseUrl + "oauth/token");
+        URL url = new URL(uriBuilder.toString());
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        String userpass = clientId + ":" + clientSecret;
+        String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
+        connection.setRequestProperty("Authorization", basicAuth);
+        connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+
+        // set request body
+        LyftAuthenticationRequestBody authRequest = new LyftAuthenticationRequestBody(
+            "client_credentials",
+            "public"
+        );
+        connection.setDoOutput(true);
+        mapper.writeValue(connection.getOutputStream(), authRequest);
+        return connection;
     }
 
     @Override
@@ -115,14 +98,12 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
         String requestUrl = uriBuilder.toString();
         URL url = new URL(requestUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestProperty("Authorization", "Bearer " + getAccessToken());
+        connection.setRequestProperty("Authorization", "Bearer " + getToken().value);
         connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
 
         LOG.info("Made request to lyft API at following URL: " + requestUrl);
 
-        // make request, parse repsonse
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // make request, parse response
         if (connection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
             LyftArrivalEstimateResponse response = mapper.readValue(
                 connection.getInputStream(),
@@ -183,24 +164,21 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
         String requestUrl = uriBuilder.toString();
         URL url = new URL(requestUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestProperty("Authorization", "Bearer " + getAccessToken());
+        connection.setRequestProperty("Authorization", "Bearer " + getToken().value);
         connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
 
         LOG.info("Made request to lyft API at following URL: " + requestUrl);
 
-        // make request, parse repsonse
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
+        // make request, parse response
         if (connection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
             InputStream responseStream = connection.getInputStream();
             LyftRideEstimateResponse response = mapper.readValue(responseStream, LyftRideEstimateResponse.class);
 
             if (response.cost_estimates == null) {
-                throw new IOException("Unrecocginzed response format");
+                throw new IOException("Unrecognized response format");
             }
 
-            LOG.info("Recieved " + response.cost_estimates.size() + " lyft price/time estimates");
+            LOG.info("Received " + response.cost_estimates.size() + " lyft price/time estimates");
 
             List<RideEstimate> estimates = new ArrayList<RideEstimate>();
 
@@ -209,7 +187,7 @@ public class LyftTransportationNetworkCompanyDataSource extends TransportationNe
                     TransportationNetworkCompany.LYFT,
                     estimate.currency,
                     estimate.estimated_duration_seconds,
-                    // Lyft's esimated cost is in the "minor" unit, so the following
+                    // Lyft's estimated cost is in the "minor" unit, so the following
                     // may not work in countries that don't have 100 minor units per major unit
                     // see https://en.wikipedia.org/wiki/ISO_4217#Treatment_of_minor_currency_units_(the_"exponent")
                     estimate.estimated_cost_cents_max / 100.0,

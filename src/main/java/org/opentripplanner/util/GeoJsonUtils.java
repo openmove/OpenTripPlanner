@@ -8,6 +8,7 @@ import org.geojson.GeoJsonObject;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.precision.GeometryPrecisionReducer;
@@ -52,9 +53,13 @@ public class GeoJsonUtils {
                 geometries.add(GeometryUtils.convertGeoJsonToJtsGeometry(feature.getGeometry()));
             }
 
-            // if there is just one geometry item, return that immediately, otherwise a ClassCastException will occur
+            // If there is just one geometry item, return that immediately, otherwise a ClassCastException will occur,
+            // except if that is a MultiPolygon, which has nested geometries that we still want to union.
             if (geometries.size() == 1) {
-                return geometries.get(0);
+                Geometry firstGeometry = geometries.get(0);
+                if (!(firstGeometry instanceof MultiPolygon)) {
+                    return firstGeometry;
+                }
             }
 
             // union all geometries into a single geometry

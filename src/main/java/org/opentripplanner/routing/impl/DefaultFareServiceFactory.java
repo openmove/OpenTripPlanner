@@ -169,6 +169,9 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
         case "composite:additive":
             retval = new MultipleFareServiceFactory.AddingMultipleFareServiceFactory();
             break;
+        case "atlanta":
+            retval = new ATLFareServiceFactory();
+            break;
         case "bike-rental-time-based":
             retval = new TimeBasedBikeRentalFareServiceFactory();
             break;

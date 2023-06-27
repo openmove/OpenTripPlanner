@@ -675,7 +675,7 @@ public class IndexAPI {
     @Path("/patterns/{patternId}/geometry")
     public Response getGeometryForPattern (@PathParam("patternId") String patternIdString) {
         TripPattern pattern = index.patternForId.get(patternIdString);
-        if (pattern != null) {
+        if (pattern != null && pattern.geometry != null) {
             EncodedPolylineBean geometry = PolylineEncoder.createEncodings(pattern.geometry);
             return Response.status(Status.OK).entity(geometry).build();
         } else {

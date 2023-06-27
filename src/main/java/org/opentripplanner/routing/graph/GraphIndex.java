@@ -625,11 +625,19 @@ public class GraphIndex {
         } else {
             tt = pattern.scheduledTimetable;
         }
+        
         for (TripTimes t : tt.tripTimes) {
             if (sd.serviceRunning(t.serviceCode)) {
                 return TripTimeShort.fromTripTimes(tt, trip, sd);
             }
         }
+        
+        for (FrequencyEntry fe : tt.frequencyEntries) {
+            if (sd.serviceRunning(fe.tripTimes.serviceCode)) {
+                return TripTimeShort.fromTripTimes(tt, trip, sd);
+            }
+        }
+        
 
         return null;
     }

@@ -7,6 +7,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
+import org.opentripplanner.routing.trippattern.FrequencyEntry;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
 
@@ -78,7 +79,20 @@ public class TripTimeShort {
      * must pass in both table and trip, because tripTimes do not have stops.
      */
     public static List<TripTimeShort> fromTripTimes (Timetable table, Trip trip) {
-        TripTimes times = table.getTripTimes(table.getTripIndex(trip.getId()));        
+    	int index = table.getTripIndex(trip.getId());
+    	TripTimes times = null;
+    	if(index > -1) {
+    		times = table.getTripTimes(index);       
+    	}else if(!table.frequencyEntries.isEmpty()){
+    		for (FrequencyEntry freq : table.frequencyEntries) {
+    			if(freq.tripTimes.trip.getId().equals(trip.getId())) {
+    				times = freq.tripTimes;
+    				break;
+    			}
+            }
+    	} else {
+    		return null;
+    	}
         List<TripTimeShort> out = Lists.newArrayList();
         // one per stop, not one per hop, thus the <= operator
         for (int i = 0; i < times.getNumStops(); ++i) {
@@ -88,7 +102,19 @@ public class TripTimeShort {
     }
 
     public static List<TripTimeShort> fromTripTimes (Timetable table, Trip trip, ServiceDay sd) {
-        TripTimes times = table.getTripTimes(table.getTripIndex(trip.getId()));
+    	int index = table.getTripIndex(trip.getId());
+    	TripTimes times = null;
+    	if(index > -1) {
+    		times = table.getTripTimes(index);
+    	}else if(!table.frequencyEntries.isEmpty()){
+    		for (FrequencyEntry freq : table.frequencyEntries) {
+    			if(freq.tripTimes.trip.getId().equals(trip.getId())) {
+    				times = freq.tripTimes;
+    				break;
+    			}
+            }
+    	}else {return null;}
+    	
         List<TripTimeShort> out = Lists.newArrayList();
         // one per stop, not one per hop, thus the <= operator
         for (int i = 0; i < times.getNumStops(); ++i) {

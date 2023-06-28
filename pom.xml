@@ -8,7 +8,7 @@
 
     <groupId>org.opentripplanner</groupId>
     <artifactId>otp</artifactId>
-	<version>1.5.21-SNAPSHOT</version>
+	<version>1.5.22-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <licenses>

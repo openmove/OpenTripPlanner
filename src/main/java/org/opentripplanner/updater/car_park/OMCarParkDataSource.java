@@ -117,7 +117,7 @@ public class OMCarParkDataSource extends GenericJsonCarParkDataSource{
             	MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
             	MathTransform transform2 = CRS.findMathTransform(targetCRS, sourceCRS);
             	Geometry targetGeometry = JTS.transform( sourceGeometry, transform);
-            	Geometry bufferedTargetGeometry = targetGeometry.buffer(50);
+            	Geometry bufferedTargetGeometry = targetGeometry.buffer(200);
 				return JTS.transform( bufferedTargetGeometry, transform2);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

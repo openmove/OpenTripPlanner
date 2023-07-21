@@ -1,8 +1,6 @@
 package org.opentripplanner.updater.stoptime;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.updater.*;
 import org.opentripplanner.routing.graph.Graph;
@@ -78,6 +76,10 @@ public class PollingStoptimeUpdater extends PollingGraphUpdater {
                 updateSource = new GtfsRealtimeHttpTripUpdateSource();
             } else if (sourceType.equals("gtfs-file")) {
                 updateSource = new GtfsRealtimeFileTripUpdateSource();
+            } else if (sourceType.equals("gtfs-ftp")) {
+                updateSource = new GtfsRealtimeFTPTripUpdateSource();
+            } else if (sourceType.equals("gtfs-s3")) {
+                updateSource = new GtfsRealtimeS3TripUpdateSource();
             }
         }
 

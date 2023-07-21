@@ -1,6 +1,6 @@
 {
   "name": "opentripplanner",
-  "version": "1.5.22",
+  "version": "1.5.23",
   "description": "OpenTripPlanner (OTP) is an open source multi-modal trip planner. It depends on open data in open standard file formats (GTFS and OpenStreetMap), and includes a REST API for journey planning as well as a map-based Javascript client. OpenTripPlanner can also create travel time contour visualizations and compute accessibility indicators for planning and research applications.",
   "main": "index.js",
   "directories": {
@@ -18,7 +18,7 @@
   "scripts": {
     "deploy": "mvn deploy:deploy-file -s openmove-settings.xml -DgroupId=org.opentripplanner -DartifactId=otp -Dversion=${npm_package_version}-SNAPSHOT -Dclassifier=shaded -Dpackaging=jar -Dfile=target/otp-${npm_package_version}-SNAPSHOT-shaded.jar -Durl=https://maven.pkg.github.com/openmove/OpenTripPlanner -DrepositoryId=otp",
     "build": "mvn clean package -DskipTests -s openmove-settings.xml",
-    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-${npm_package_version}-SNAPSHOT-shaded.jar --build ../otp/otp/campiglio/ --inMemory "
+    "debug": "java -Xmx5G -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:32935,suspend=y,server=y -jar target/otp-${npm_package_version}-SNAPSHOT-shaded.jar --build ../otp/otp/campania/ --inMemory "
   },
   "homepage": "https://github.com/openmove/OpenTripPlanner#readme"
 }

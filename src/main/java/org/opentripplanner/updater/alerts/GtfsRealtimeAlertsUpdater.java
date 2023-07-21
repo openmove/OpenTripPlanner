@@ -1,8 +1,21 @@
 package org.opentripplanner.updater.alerts;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URI;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.jets3t.service.S3Service;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.model.S3Object;
+import org.jets3t.service.security.AWSCredentials;
+import org.jets3t.service.security.GSCredentials;
+import org.jets3t.service.security.ProviderCredentials;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.AlertPatchServiceImpl;
 import org.opentripplanner.routing.services.AlertPatchService;
@@ -84,11 +97,70 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
 
     @Override
     protected void runPolling() {
+    	FTPClient ftpClient = new FTPClient();
+    	InputStream data = null;
         try {
-            InputStream data = HttpUtils.getData(
-                    url,
-                    "Accept",
-                    "application/x-google-protobuf, application/x-protobuf, application/protobuf, application/octet-stream, */*");
+        	URI aURL = new URI(this.url);
+        	
+        	String protocol = aURL.getScheme();
+        	
+        	if(protocol.equals("ftp")) {
+        		String server =  aURL.getHost();
+                int port = aURL.getPort();
+                
+                if(port == -1) {
+                	port = 21;
+                }
+                
+                String[] userAndPassword = aURL.getUserInfo().split(":");
+                
+                String user = userAndPassword[0];
+                String pass = userAndPassword[1];
+                
+                String remoteFile = aURL.getPath();
+                
+                ftpClient.connect(server, port);
+                ftpClient.login(user, pass);
+                ftpClient.enterLocalPassiveMode();
+                ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            	
+                data = ftpClient.retrieveFileStream(remoteFile);
+        	}else if(protocol.equals("s3")){
+        		String bucketName = aURL.getHost();
+        		String key = aURL.getPath();
+        		String[] userAndPassword = aURL.getUserInfo().split(":");
+                
+                String accessKey = userAndPassword[0];
+                String secretKey = userAndPassword[1];
+                AWSCredentials credentials = new AWSCredentials(accessKey, secretKey);
+        		
+        		S3Service s3Service = new RestS3Service(credentials);
+                S3Object object = s3Service.getObject(bucketName, key);
+
+                data = object.getDataInputStream();
+                
+        	}else if(protocol.equals("gs")){
+        		String bucketName = aURL.getHost();
+        		String key = aURL.getPath();
+        		String[] userAndPassword = aURL.getUserInfo().split(":");
+                
+                String accessKey = userAndPassword[0];
+                String secretKey = userAndPassword[1];
+                GSCredentials credentials = new GSCredentials(accessKey, secretKey);
+        		
+        		S3Service s3Service = new RestS3Service(credentials);
+                S3Object object = s3Service.getObject(bucketName, key);
+
+                data = object.getDataInputStream();
+                
+        	}else{
+        		data = HttpUtils.getData(
+	                url,
+	                "Accept",
+	                "application/x-google-protobuf, application/x-protobuf, application/protobuf, application/octet-stream, */*");
+        	}
+        	
+            
             if (data == null) {
                 throw new RuntimeException("Failed to get data from url " + url);
             }
@@ -112,6 +184,23 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
             lastTimestamp = feedTimestamp;
         } catch (Exception e) {
             LOG.error("Error reading gtfs-realtime feed from " + url, e);
+        } finally {
+			 try {
+				 if(data != null) {
+					 try {
+						 data.close();
+					 }catch(IOException ex1) {
+						 ex1.printStackTrace(); 
+					 }
+					 
+				 }
+			     if (ftpClient.isConnected()) {
+			         ftpClient.logout();
+			         ftpClient.disconnect();
+			     }
+			 } catch (IOException ex) {
+			     ex.printStackTrace();
+			 }
         }
     }
 

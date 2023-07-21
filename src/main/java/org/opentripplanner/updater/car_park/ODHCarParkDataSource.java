@@ -3,12 +3,22 @@ package org.opentripplanner.updater.car_park;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.NoSuchAuthorityCodeException;
+import org.opengis.referencing.crs.CRSAuthorityFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.util.HttpUtils;
@@ -95,7 +105,38 @@ public class ODHCarParkDataSource extends GenericJsonCarParkDataSource{
     private Geometry parseGeometry(JsonNode root) {
         String typeName = root.get("type").asText();
         if(typeName.equals("Point")) {
-            return this.gf.createPoint(this.parseCoordinate(root.get("coordinates")));
+        	Geometry point = this.gf.createPoint(this.parseCoordinate(root.get("coordinates")));
+        	
+        	CoordinateReferenceSystem sourceCRS;
+        	CoordinateReferenceSystem targetCRS;
+        	MathTransform transform;
+        	MathTransform reverseTransform;
+			try {
+				sourceCRS = CRS.decode("EPSG:4326", true);
+				targetCRS = CRS.decode("EPSG:2037", true);
+				transform = CRS.findMathTransform(sourceCRS, targetCRS);
+				reverseTransform = CRS.findMathTransform(targetCRS,sourceCRS);
+				Geometry transformPoint = JTS.transform(point, transform);
+	        	Geometry bufferedPoint = transformPoint.buffer(100); //100 meters of buffer
+				
+				return JTS.transform(bufferedPoint, reverseTransform);
+			} catch (NoSuchAuthorityCodeException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				return point;
+			} catch (FactoryException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				return point;
+			} catch (MismatchedDimensionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return point;
+			} catch (TransformException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return point;
+			}       
         } else if(typeName.equals("MultiPoint")) {
             return this.gf.createMultiPoint(this.parseLineString(root.get("coordinates")));
         } else if(typeName.equals("LineString")) {

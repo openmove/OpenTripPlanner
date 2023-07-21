@@ -58,6 +58,10 @@ public class PollingVehiclePositionUpdater extends PollingGraphUpdater {
                 vehiclePositionSource = new GtfsRealtimeHttpVehiclePositionSource();
             } else if (sourceType.equals("gtfs-file")) {
                 vehiclePositionSource = new GtfsRealtimeFileVehiclePositionSource();
+            } else if (sourceType.equals("gtfs-ftp")) {
+                vehiclePositionSource = new GtfsRealtimeFTPVehiclePositionSource();
+            } else if (sourceType.equals("gtfs-s3")) {
+                vehiclePositionSource = new GtfsRealtimeS3VehiclePositionSource();
             }
         }
 

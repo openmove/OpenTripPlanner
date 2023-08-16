@@ -132,6 +132,15 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     private DrtTravelTime avgTravelTime;
 
     private double advanceBookMin = 0;
+    
+    /** Custom extension for OpenMove to specify the seat/bike capacity of a trip */
+    /** TODO: 
+     * travelers/bikes capacities should be and array, and store the number of travelers on each stoptimes, 
+     * so I can check if the trip at the pickup stop has seat available.
+     */
+    private int[] travelersCapacity;
+    private int[] bikesCapacity;
+   
 
     /**
      * The provided stopTimes are assumed to be pre-filtered, valid, and monotonically increasing.
@@ -215,6 +224,15 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             this.avgTravelTime = DrtTravelTime.fromSpec(trip.getDrtAvgTravelTime());
         }
         this.advanceBookMin = trip.getDrtAdvanceBookMin();
+        
+        this.travelersCapacity = new int[nStops];
+        this.bikesCapacity = new int[nStops];
+        
+        for(int idx = 0; idx < nStops; idx++) {
+        	this.travelersCapacity[idx] = Integer.MAX_VALUE;
+        	this.bikesCapacity[idx]= Integer.MAX_VALUE;
+        }
+        
         LOG.trace("trip {} has timepoint at indexes {}", trip, timepoints);
     }
 
@@ -239,6 +257,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.advanceBookMin = object.advanceBookMin;
         this.pickupType = object.pickupType;
         this.dropOffType = object.dropOffType;
+        this.travelersCapacity = object.travelersCapacity;
+        this.bikesCapacity = object.bikesCapacity;
     }
 
     /**
@@ -494,6 +514,22 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         if (bicycle && BikeAccess.fromTrip(trip) != BikeAccess.ALLOWED) {
             return false;
         }
+        
+        // Establish if there are seats/bikes spaces available on this trip.
+        boolean hasSeatAvailable = travelersCapacity[stopIndex] >= options.getTravelers();
+    	if(!hasSeatAvailable) { //if there are no seats available you cannot use this trip.
+    		return false;
+    	}
+    	
+    	if(bicycle) { //we already confirmed that bikes are allowed on this trip.
+    		int bikes = options.getBikes();
+    		if(bikes == 0) { //you don't set the number of bikes but you required a travel with bike support.
+    			bikes = 1; //XXX: if you use the bike, the bike space must be occupied, 
+    					   //but bikes value cannot be the same of travelers (i.e. : tandem bike), so we set this to 1.
+    		}
+    		return bikesCapacity[stopIndex] >= bikes;
+        }
+       
         return true;
     }
 
@@ -662,4 +698,25 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         }
         return hasher.hash();
     }
+    
+    public int[] getBikesCapacity() {
+		return bikesCapacity;
+	}
+
+	public void setBikesCapacity(int bikesCapacity) {
+		for(int i = 0; i < this.bikesCapacity.length; i++) {
+			this.bikesCapacity[i] = bikesCapacity;
+		}
+		
+	}
+
+	public int[] getTravelersCapacity() {
+		return travelersCapacity;
+	}
+
+	public void setTravelersCapacity(int travelersCapacity) {
+		for(int i = 0; i < this.travelersCapacity.length; i++) {
+			this.travelersCapacity[i] = travelersCapacity;
+		}
+	}
 }

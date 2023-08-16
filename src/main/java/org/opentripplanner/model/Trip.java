@@ -48,7 +48,7 @@ public final class Trip extends IdentityBean<FeedScopedId> {
     private String continuousPickupMessage;
 
     private String continuousDropOffMessage;
-
+    
     public Trip() {
     }
 
@@ -246,5 +246,6 @@ public final class Trip extends IdentityBean<FeedScopedId> {
     public void setContinuousDropOffMessage(String continuousDropOffMessage) {
         this.continuousDropOffMessage = continuousDropOffMessage;
     }
+
 
 }

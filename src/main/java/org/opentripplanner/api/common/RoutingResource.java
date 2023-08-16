@@ -548,6 +548,11 @@ public abstract class RoutingResource {
     @QueryParam("maximumMicromobilitySpeed")
     private Double maximumMicromobilitySpeed;
 
+    
+    //how many travelers for this journey: this will use in case some of the trips have limited number of seats or bike spaces availables.
+    @QueryParam("travelers")
+    private Integer travelers;
+
     /*
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones.
      * this should ideally be done when setting the routing context, but at present departure/
@@ -927,6 +932,10 @@ public abstract class RoutingResource {
 
         if (maximumMicromobilitySpeed != null)
             request.maximumMicromobilitySpeed = maximumMicromobilitySpeed;
+        
+        if(travelers != null) {
+        	request.travelers = travelers;
+        }
 
         //getLocale function returns defaultLocale if locale is null
         request.locale = ResourceBundleSingleton.INSTANCE.getLocale(locale);

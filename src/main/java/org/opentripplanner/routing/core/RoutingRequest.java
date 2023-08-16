@@ -813,6 +813,12 @@ public class RoutingRequest implements Cloneable, Serializable {
      * is usable is 2:00pm.
      */
     public long clockTimeSec;
+    
+    /**
+     * How many travelers for the journey. This is used in case trips have limited seats.
+     * */
+    public int travelers = 1;
+    public int bikes = 0;
 
     /* CONSTRUCTORS */
 
@@ -1430,7 +1436,9 @@ public class RoutingRequest implements Cloneable, Serializable {
             && flexIgnoreDrtAdvanceBookMin == other.flexIgnoreDrtAdvanceBookMin
             && flexMinPartialHopLength == other.flexMinPartialHopLength
             && clockTimeSec == other.clockTimeSec
-            && serviceDayLookout == other.serviceDayLookout;
+            && serviceDayLookout == other.serviceDayLookout
+            && bikes == other.bikes
+            && travelers == other.travelers;
     }
 
     /**
@@ -1475,7 +1483,9 @@ public class RoutingRequest implements Cloneable, Serializable {
             + Long.hashCode(clockTimeSec) * 833389
             + new Boolean(disableRemainingWeightHeuristic).hashCode() * 193939
             + new Boolean(useTraffic).hashCode() * 10169
-            + Integer.hashCode(serviceDayLookout) * 31558519;
+            + Integer.hashCode(serviceDayLookout) * 31558519
+            + Integer.hashCode(travelers) * 179992387
+            + Integer.hashCode(bikes) * 15485863;
 
         if (batch) {
             hashCode *= -1;
@@ -1763,4 +1773,20 @@ public class RoutingRequest implements Cloneable, Serializable {
         }
         return new PathComparator(compareStartTimes);
     }
+
+	public int getTravelers() {
+		return travelers;
+	}
+
+	public void setTravelers(int travelers) {
+		this.travelers = travelers;
+	}
+	
+	public int getBikes() {
+		return bikes;
+	}
+
+	public void setBikes(int bikes) {
+		this.bikes = bikes;
+	}
 }

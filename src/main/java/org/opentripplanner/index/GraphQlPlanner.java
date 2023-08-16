@@ -251,6 +251,7 @@ public class GraphQlPlanner {
         callWith.argument("nonpreferredTransferPenalty", (Integer v) -> request.nonpreferredTransferPenalty = v);
 
         callWith.argument("maxTransfers", (Integer v) -> request.maxTransfers = v);
+        callWith.argument("travelers", (Integer v) -> request.travelers = v);
 
         final long NOW_THRESHOLD_MILLIS = 15 * 60 * 60 * 1000;
         boolean tripPlannedForNow = Math.abs(request.getDateTime().getTime() - new Date().getTime()) < NOW_THRESHOLD_MILLIS;

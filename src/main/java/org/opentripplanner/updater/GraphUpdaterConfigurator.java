@@ -16,6 +16,7 @@ import org.opentripplanner.updater.stoptime.PollingStoptimeUpdater;
 import org.opentripplanner.updater.stoptime.WebsocketGtfsRealtimeUpdater;
 import org.opentripplanner.updater.street_notes.WinkkiPollingGraphUpdater;
 import org.opentripplanner.updater.transportation_network_company.TransportationNetworkCompanyUpdater;
+import org.opentripplanner.updater.trip_capacity.PollingTripCapacityUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,6 +112,9 @@ public abstract class GraphUpdaterConfigurator {
                 }
                 else if (type.equals("vehicle-position-updater")) {
                     updater = new PollingVehiclePositionUpdater();
+                }
+                else if (type.equals("trip-capacity-updater")) {
+                    updater = new PollingTripCapacityUpdater();
                 }
             }
 

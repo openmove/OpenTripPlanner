@@ -8,17 +8,32 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
-
+import org.opentripplanner.api.common.Message;
+import org.opentripplanner.api.common.ParameterException;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.TripPlan;
+import org.opentripplanner.api.model.error.PlannerError;
+import org.opentripplanner.api.parameter.QualifiedModeSet;
+import org.opentripplanner.api.resource.DebugOutput;
+import org.opentripplanner.api.resource.GraphPathToTripPlanConverter;
+import org.opentripplanner.common.model.GenericLocation;
+import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.model.Agency;
@@ -27,9 +42,19 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
+import org.opentripplanner.routing.core.OptimizeType;
+import org.opentripplanner.routing.core.RouteMatcher;
+import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.StopMatcher;
+import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.graph.GraphIndex;
+import org.opentripplanner.routing.impl.GraphPathFinder;
+import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.standalone.Router;
+import org.opentripplanner.util.ResourceBundleSingleton;
 
 import com.bliksemlabs.ojp.model.ErrorDescriptionStructure;
+import com.bliksemlabs.ojp.model.LineDirectionStructure;
 import com.bliksemlabs.ojp.model.LineRefStructure;
 import com.bliksemlabs.ojp.model.LocationStructure;
 import com.bliksemlabs.ojp.model.NaturalLanguageStringStructure;
@@ -41,40 +66,58 @@ import com.bliksemlabs.ojp.model.VehicleModesOfTransportEnumeration;
 import de.vdv.ojp.AbstractResponseContextStructure.Places;
 import de.vdv.ojp.CallAtNearStopStructure;
 import de.vdv.ojp.CallAtStopStructure;
-import de.vdv.ojp.CallAtStopStructure.ServiceArrival;
-import de.vdv.ojp.CallAtStopStructure.ServiceDeparture;
 import de.vdv.ojp.DatedJourneyStructure;
 import de.vdv.ojp.InternationalTextStructure;
 import de.vdv.ojp.JourneyRefStructure;
+import de.vdv.ojp.LegAlightStructure;
+import de.vdv.ojp.LegBoardStructure;
+import de.vdv.ojp.LegIntermediateStructure;
 import de.vdv.ojp.ModeStructure;
+import de.vdv.ojp.NotViaStructure;
 import de.vdv.ojp.OJPStopEventDeliveryStructure;
 import de.vdv.ojp.OJPStopEventRequestStructure;
 import de.vdv.ojp.OJPTripDeliveryStructure;
 import de.vdv.ojp.OJPTripInfoDeliveryStructure;
 import de.vdv.ojp.OJPTripInfoRequestStructure;
 import de.vdv.ojp.OJPTripRequestStructure;
+import de.vdv.ojp.ObjectFactory;
 import de.vdv.ojp.OperatingDayRefStructure;
 import de.vdv.ojp.PlaceContextStructure;
+import de.vdv.ojp.PlaceRefStructure;
 import de.vdv.ojp.PlaceStructure;
 import de.vdv.ojp.StopEventResponseContextStructure;
 import de.vdv.ojp.StopEventResultStructure;
 import de.vdv.ojp.StopEventStructure;
 import de.vdv.ojp.StopEventTypeEnumeration;
 import de.vdv.ojp.StopPointStructure;
+import de.vdv.ojp.TimedLegStructure;
+import de.vdv.ojp.TransferLegStructure;
+import de.vdv.ojp.TransferModesEnumeration;
 import de.vdv.ojp.TripInfoResponseContextStructure;
 import de.vdv.ojp.TripInfoResultStructure;
+import de.vdv.ojp.TripLegStructure;
+import de.vdv.ojp.TripResultStructure;
+import de.vdv.ojp.TripStructure;
+import de.vdv.ojp.TripViaStructure;
 
 public class OJPTripFactory {
 	
 	private final OJPTripRequestStructure request;
 	private final GraphIndex graphIndex;
 	private List<VehicleModesOfTransportEnumeration> modeList = new ArrayList<>();
+	private List<LineDirectionStructure> filteredLines = new ArrayList<>();
+	private List<OperatorRefStructure> filteredOperators = new ArrayList<>();
 	private boolean excludeModes = false;
-	private List<String> filteredLines = new ArrayList<>();
+	
 	
 	private List<String> requestModes = new ArrayList<>();
+	private List<String> requestBannedLines = new ArrayList<>();
+	private List<String> requestWhitelistLines = new ArrayList<>();
+	private HashSet<String> requestBannedOperators = new HashSet<String>();
+	private HashSet<String> requestWhitelistOperators = new HashSet<String>();
 	
-	private List<String> filteredOperators = new ArrayList<>();
+	private List<String> requestBannedStops = new ArrayList<>();
+	private List<GenericLocation> viaStops = new ArrayList<>();
 	
 	private boolean includeAccessibility = false;
 	private boolean includeIntermediateStops = false;		
@@ -84,11 +127,14 @@ public class OJPTripFactory {
 	long transferLimit = Integer.MAX_VALUE;
 	long maxResults = Integer.MAX_VALUE;
 	
+	private ObjectFactory factory;
+	
 	List<String> allOTPModes = Arrays.asList("TRAM","SUBWAY","RAIL","BUS","FERRY","GONDOLA","FUNICULAR");
 	
-	public OJPTripFactory(GraphIndex graphIndex, OJPTripRequestStructure request) {
+	public OJPTripFactory(GraphIndex graphIndex, OJPTripRequestStructure request, ObjectFactory factory) {
 		this.graphIndex = graphIndex;
 		this.request = request;
+		this.factory = factory;
 	}
 	
 	private static String convertOTPModes(VehicleModesOfTransportEnumeration ojpMode) {
@@ -105,10 +151,8 @@ public class OJPTripFactory {
 		default: return null;
 		}
 	}
-	
-    private static VehicleModesOfTransportEnumeration getTraverseMode(Route route) {
-        int routeType = route.getType();
-        if (routeType >= 100 && routeType < 200) { // Railway Service
+	private static VehicleModesOfTransportEnumeration convertOJPModes(int routeType) {
+		if (routeType >= 100 && routeType < 200) { // Railway Service
             return VehicleModesOfTransportEnumeration.RAIL;
         } else if (routeType >= 200 && routeType < 300) { //Coach Service
             return VehicleModesOfTransportEnumeration.BUS;
@@ -156,6 +200,12 @@ public class OJPTripFactory {
         default:
         	return VehicleModesOfTransportEnumeration.UNKNOWN;
         }
+	}
+	
+	
+    private static VehicleModesOfTransportEnumeration getTraverseMode(Route route) {
+        int routeType = route.getType();
+        return convertOJPModes(routeType);
     }
     
     private static List<VehicleModesOfTransportEnumeration> getTraverseModes(Set<Route> routes) {
@@ -190,8 +240,8 @@ public class OJPTripFactory {
 		BigDecimal destinationLng = null;
 		
 		
-		LocalDateTime departureTime;
-		LocalDateTime arrivalTime;
+		LocalDateTime departureTime = LocalDateTime.now();
+		LocalDateTime arrivalTime = LocalDateTime.now();
 		
 		requestModes.add("WALK");
 		
@@ -217,9 +267,35 @@ public class OJPTripFactory {
 				requestModes.addAll(allOTPModes);
 			}
 			
+			if(request.getParams().getLineFilter() != null) {
+				filteredLines = request.getParams().getLineFilter().getLine();
+				boolean excludeLines = request.getParams().getLineFilter().isExclude();
+				for(LineDirectionStructure l : filteredLines) {
+					if(excludeLines) {
+						requestBannedLines.add(l.getLineRef().getValue());
+					}else {
+						requestWhitelistLines.add(l.getLineRef().getValue());
+					}
+					
+				}
+			}
+			
+			if(request.getParams().getOperatorFilter() != null) {
+				filteredOperators = request.getParams().getOperatorFilter().getOperatorRef();
+				boolean excludeOperators = request.getParams().getOperatorFilter().isExclude();
+				for(OperatorRefStructure o : filteredOperators) {
+					if(excludeOperators) {
+						requestBannedOperators.add(o.getValue());
+					}else {
+						requestWhitelistOperators.add(o.getValue());
+					}
+				}
+			}
+			
 			maxResults = request.getParams().getNumberOfResults().longValue();
 			includeAccessibility = request.getParams().isIncludeAccessibility();
 			includeIntermediateStops = request.getParams().isIncludeIntermediateStops();
+			
 			
 		}
 		
@@ -260,7 +336,7 @@ public class OJPTripFactory {
 			destination = request.getDestination().get(0);
 			if(destination.getPlaceRef().getStopPlaceRef() != null) {
 				destinationStop = destination.getPlaceRef().getStopPlaceRef().getValue();
-			}else if(origin.getPlaceRef().getStopPointRef() != null) {
+			}else if(destination.getPlaceRef().getStopPointRef() != null) {
 				destinationStop = destination.getPlaceRef().getStopPointRef().getValue();
 			}
 			
@@ -283,7 +359,55 @@ public class OJPTripFactory {
 			
 		}
 		
-		if(originStop == null || (originLat == null || originLng == null)) {
+		if(request.getVia() != null) {
+			for(TripViaStructure viapoint : request.getVia()) {
+				String viapointStop = null;
+				String viapointStopName = "";
+				BigDecimal viapointStopLat = null;
+				BigDecimal viapointStopLng = null;
+				
+				if(viapoint.getViaPoint().getStopPlaceRef() != null) {
+					viapointStop = viapoint.getViaPoint().getStopPlaceRef().getValue();
+				}else if(viapoint.getViaPoint().getStopPointRef() != null) {
+					viapointStop = viapoint.getViaPoint().getStopPointRef().getValue();
+				}
+				
+				if(viapoint.getViaPoint().getLocationName() != null) {
+					viapointStopName = viapoint.getViaPoint().getLocationName().getText().getValue();
+				}
+				if(viapoint.getViaPoint().getGeoPosition() != null) {
+					
+					if(viapoint.getViaPoint().getGeoPosition().getCoordinates() != null) {
+						viapointStopLat = BigDecimal.valueOf(Long.valueOf(viapoint.getViaPoint().getGeoPosition().getCoordinates().getValue().get(1)));
+						viapointStopLng = BigDecimal.valueOf(Long.valueOf(viapoint.getViaPoint().getGeoPosition().getCoordinates().getValue().get(0)));
+					}else {
+						viapointStopLat = viapoint.getViaPoint().getGeoPosition().getLatitude();
+						viapointStopLng = viapoint.getViaPoint().getGeoPosition().getLongitude();
+					}
+				}	
+				
+				if(viapointStop != null) {
+					viaStops.add(new GenericLocation(viapointStopName,viapointStop));
+				}else if(viapointStopLat != null && viapointStopLng != null){
+					viaStops.add(toGenericLocation(viapointStopLng.doubleValue(), viapointStopLat.doubleValue(), viapointStopName));
+				}
+			}
+			
+		}
+		
+		if(request.getNotVia() != null) {
+			for(NotViaStructure notviapoint : request.getNotVia()) {
+				if(notviapoint.getStopPlaceRef()!=null) {
+					requestBannedStops.add(notviapoint.getStopPlaceRef().getValue());
+				}else if(notviapoint.getStopPointRef()!= null) {
+					requestBannedStops.add(notviapoint.getStopPointRef().getValue());
+				}
+				
+			}
+			
+		}
+		
+		if(originStop == null && (originLat == null || originLng == null)) {
 			trip.setStatus(false);
 			ServiceDeliveryErrorConditionStructure error = new ServiceDeliveryErrorConditionStructure();
 			ErrorDescriptionStructure descr = new ErrorDescriptionStructure();
@@ -294,7 +418,7 @@ public class OJPTripFactory {
 			return trip;
 		}
 		
-		if(destinationStop == null || (destinationLat == null || destinationLng == null)) {
+		if(destinationStop == null && (destinationLat == null || destinationLng == null)) {
 			trip.setStatus(false);
 			ServiceDeliveryErrorConditionStructure error = new ServiceDeliveryErrorConditionStructure();
 			ErrorDescriptionStructure descr = new ErrorDescriptionStructure();
@@ -305,11 +429,589 @@ public class OJPTripFactory {
 			return trip;
 		}
 		
+		Map<String,Object> requestMap = new HashMap<String,Object>();
+		
+		
+		
+		if(originStop != null) {
+			requestMap.put("originPlace",new GenericLocation("",originStop));		
+		}
+		else {
+			requestMap.put("originPlace", toGenericLocation(originLng.doubleValue(), originLat.doubleValue(), originName));
+		}
+		if(destinationStop != null) {
+			requestMap.put("destinatioPlace", new GenericLocation("",destinationStop));
+		}else {
+			requestMap.put("destinatioPlace", toGenericLocation(destinationLng.doubleValue(), destinationLat.doubleValue(), destinationName));
+		}
+		
+		
+		requestMap.put("departureTime", departureTime);
+		requestMap.put("arrivalTime", arrivalTime);
+		requestMap.put("maxResults", maxResults);
+		requestMap.put("maxTransfers", transferLimit);
+		requestMap.put("includeAccessibility", includeAccessibility);
+		requestMap.put("includeIntermediateStops", includeIntermediateStops);
+		requestMap.put("modes", requestModes);
+		
+		if(!requestBannedStops.isEmpty()) {
+			requestMap.put("bannedStops", requestBannedStops);
+		}
+		
+		
+		if(!viaStops.isEmpty()) {
+			requestMap.put("intemediatePlaces", viaStops);
+		}
+		
+		
+		
+		if(!requestBannedLines.isEmpty()) {
+			requestMap.put("bannedRoutes", requestBannedLines);
+		}
+		
+		if(!requestWhitelistLines.isEmpty()) {
+			requestMap.put("whitelistRoutes", requestWhitelistLines);
+		}
+		
+		if(!requestBannedOperators.isEmpty()) {
+			requestMap.put("bannedAgencies", requestBannedOperators);
+		}
+		
+		if(!requestWhitelistOperators.isEmpty()) {
+			requestMap.put("whitelistAgencies", requestWhitelistOperators);
+		}
+		
+		
+		
+		Router router = new Router(graphIndex.graph.routerId, graphIndex.graph);
+        RoutingRequest request = createRequest(requestMap);
+
+        GraphPathFinder gpFinder = new GraphPathFinder(router);
+
+        TripPlan plan = new TripPlan(
+                new Place(request.from.lng, request.from.lat, request.getFromPlace().name),
+                new Place(request.to.lng, request.to.lat, request.getToPlace().name),
+                request.getDateTime());
+        List<Message> messages = new ArrayList<>();
+        DebugOutput debugOutput = new DebugOutput();
+
+        try {
+            List<GraphPath> paths = gpFinder.graphPathFinderEntryPoint(request);
+            plan = GraphPathToTripPlanConverter.generatePlan(paths, request);
+            // Add timeout message even if paths are found and no exception thrown
+            if (request.rctx.debugOutput.timedOut) {
+                messages.add(Message.REQUEST_TIMEOUT);
+            }
+            trip.setStatus(true);
+            Places allPlaces = new Places();
+            HashSet<PlaceStructure> allMyPlaces = new HashSet<PlaceStructure>();
+           //TODO: create XML of plan object.
+            for(Itinerary itinerary : plan.itinerary) {
+            	TripResultStructure tripResult = new TripResultStructure();
+            	long tripDistance = 0;
+            	tripResult.setResultId(randomUUID());
+            	TripStructure tripStructure = new TripStructure();
+            	tripStructure.setTripId(randomUUID());
+				tripStructure.setDuration(Duration.ofSeconds(itinerary.duration));
+            	tripStructure.setStartTime(toLocalDateTime(itinerary.startTime));
+            	tripStructure.setEndTime(toLocalDateTime(itinerary.endTime));
+            	tripStructure.setTransfers(BigInteger.valueOf(itinerary.transfers));
+            	for(Leg leg : itinerary.legs) {
+            		TripLegStructure legStructure = new TripLegStructure();
+                	tripDistance += leg.distance;
+                	if(!leg.isTransitLeg()) {
+                		TransferLegStructure transferLeg = new TransferLegStructure();
+                		if(leg.mode.equals("WALK")) {
+                			transferLeg.setTransferMode(TransferModesEnumeration.WALK);
+                		} //TODO: fix this if when BICYCLES/MICROMOBILITIES will be allowed in the request
+
+                		PlaceRefStructure start = new PlaceRefStructure();
+                		PlaceRefStructure end = new PlaceRefStructure();
+                		
+                		Place from = leg.from;
+                		Place to = leg.to;
+                		
+                		if(from.stopId != null) {
+                			start.setStopPointRef(new StopPointRefStructure().withValue(from.stopId.toString()));
+                			allMyPlaces.add(
+                					new PlaceStructure()
+                					.withLocationName(getInternationName(from.name))
+                					.withStopPoint(new StopPointStructure()
+                							.withStopPointRef(
+                									new StopPointRefStructure().withValue(from.stopId.toString())
+                									)
+                							.withStopPointName(getInternationName(from.name))
+                							)
+                					.withGeoPosition(
+                							new LocationStructure()
+                							.withLatitude(BigDecimal.valueOf(from.lat))
+                							.withLongitude(BigDecimal.valueOf(from.lon))));
+                		}else {
+                			start.setGeoPosition(new LocationStructure().withLatitude(BigDecimal.valueOf(from.lat)).withLongitude(BigDecimal.valueOf(from.lon)));
+                		}
+                		
+						start.setLocationName(getInternationName(from.name) );
+                		
+                		if(to.stopId != null) {
+                			end.setStopPointRef(new StopPointRefStructure().withValue(to.stopId.toString()));
+                			allMyPlaces.add(
+                					new PlaceStructure()
+                					.withLocationName(getInternationName(to.name))
+                					.withStopPoint(new StopPointStructure()
+                							.withStopPointRef(
+                									new StopPointRefStructure().withValue(to.stopId.toString())
+                									)
+                							.withStopPointName(getInternationName(to.name))
+                							)
+                					.withGeoPosition(
+                							new LocationStructure()
+                							.withLatitude(BigDecimal.valueOf(to.lat))
+                							.withLongitude(BigDecimal.valueOf(to.lon))));
+                		} else {
+                			end.setGeoPosition(new LocationStructure().withLatitude(BigDecimal.valueOf(to.lat)).withLongitude(BigDecimal.valueOf(to.lon)));
+                		}
+                		
+						end.setLocationName(getInternationName(to.name) );
+                		
+						transferLeg.setLegStart(start);
+						transferLeg.setLegEnd(end );
+						
+						
+						transferLeg.setDuration(Duration.ofSeconds((long) leg.getDuration()));
+						transferLeg.setWalkDuration(Duration.ofSeconds((long) leg.getDuration()));
+						
+						transferLeg.setTimeWindowStart(toLocalDateTime(leg.startTime));
+						transferLeg.setTimeWindowEnd(toLocalDateTime(leg.endTime));
+						
+                		legStructure.setTransferLeg(transferLeg);
+                	}else {
+                		TimedLegStructure timedLeg = new TimedLegStructure();
+                		LegBoardStructure board = new LegBoardStructure();
+                		LegAlightStructure alight = new LegAlightStructure();
+                		
+                		Place from = leg.from;
+                		Place to = leg.to;
+                		
+                		int sequence = 1;
+                		
+                		board.setStopPointRef(new StopPointRefStructure().withValue(from.stopId.toString()));
+                		
+						board.setStopPointName(getInternationName(from.name) );
+						board.setOrder(BigInteger.valueOf(sequence));
+						
+						
+						board.setServiceArrival(
+								new LegBoardStructure.ServiceArrival()
+									.withTimetabledTime(toLocalDateTime(from.arrival))
+									.withEstimatedTime(toLocalDateTime(from.arrival).plusSeconds(leg.arrivalDelay))
+								);
+						board.setServiceDeparture(
+								new LegBoardStructure.ServiceDeparture()
+									.withTimetabledTime(toLocalDateTime(from.departure))
+									.withEstimatedTime(toLocalDateTime(from.departure).plusSeconds(leg.departureDelay))
+								);
+						
+						allMyPlaces.add(
+            					new PlaceStructure()
+            					.withLocationName(getInternationName(from.name))
+            					.withStopPoint(new StopPointStructure()
+            							.withStopPointRef(
+            									new StopPointRefStructure().withValue(from.stopId.toString())
+            									)
+            							.withStopPointName(getInternationName(from.name))
+            							)
+            					.withGeoPosition(
+            							new LocationStructure()
+            							.withLatitude(BigDecimal.valueOf(from.lat))
+            							.withLongitude(BigDecimal.valueOf(from.lon))));
+						
+												
+						for(Place stop: leg.stop) {
+							sequence += 1;
+							if(includeIntermediateStops) {
+								LegIntermediateStructure intermediateStop = new LegIntermediateStructure();
+								intermediateStop.setOrder(BigInteger.valueOf(sequence));
+								intermediateStop.setStopPointRef(new StopPointRefStructure().withValue(stop.stopId.toString()));
+								
+								
+		                		intermediateStop.setStopPointName(getInternationName(stop.name));
+		                		
+		                		intermediateStop.setServiceArrival(
+		                				new LegIntermediateStructure.ServiceArrival()
+		                				.withTimetabledTime(toLocalDateTime(stop.arrival))
+		                				.withEstimatedTime(toLocalDateTime(stop.arrival).plusSeconds(leg.arrivalDelay))
+		                				);
+		                		intermediateStop.setServiceDeparture(
+		                				new LegIntermediateStructure.ServiceDeparture()
+		                				.withTimetabledTime(toLocalDateTime(stop.departure))
+		                				.withEstimatedTime(toLocalDateTime(stop.departure).plusSeconds(leg.departureDelay))
+		                				);
+								
+								timedLeg.getLegIntermediates().add(intermediateStop );
+								allMyPlaces.add(
+	                					new PlaceStructure()
+	                					.withLocationName(getInternationName(stop.name))
+	                					.withStopPoint(new StopPointStructure()
+	                							.withStopPointRef(
+	                									new StopPointRefStructure().withValue(stop.stopId.toString())
+	                									)
+	                							.withStopPointName(getInternationName(stop.name))
+	                							)
+	                					.withGeoPosition(
+	                							new LocationStructure()
+	                							.withLatitude(BigDecimal.valueOf(stop.lat))
+	                							.withLongitude(BigDecimal.valueOf(stop.lon))));
+							}
+						}
+                		
+						alight.setStopPointRef(new StopPointRefStructure().withValue(to.stopId.toString()));
+						
+                		alight.setStopPointName(getInternationName(to.name) );
+                		alight.setOrder(BigInteger.valueOf(sequence+1));
+                		
+                		alight.setServiceArrival(new LegAlightStructure.ServiceArrival()
+                				.withTimetabledTime(toLocalDateTime(to.arrival))
+                				.withEstimatedTime(toLocalDateTime(to.arrival).plusSeconds(leg.arrivalDelay))
+                				);
+                		alight.setServiceDeparture(new LegAlightStructure.ServiceDeparture()
+                				.withTimetabledTime(toLocalDateTime(to.departure))
+                				.withEstimatedTime(toLocalDateTime(to.departure).plusSeconds(leg.departureDelay))
+                				);
+                		
+                		allMyPlaces.add(
+            					new PlaceStructure()
+            					.withLocationName(getInternationName(to.name))
+            					.withStopPoint(new StopPointStructure()
+            							.withStopPointRef(
+            									new StopPointRefStructure().withValue(to.stopId.toString())
+            									)
+            							.withStopPointName(getInternationName(to.name))
+            							)
+            					
+            					.withGeoPosition(
+            							new LocationStructure()
+            							.withLatitude(BigDecimal.valueOf(to.lat))
+            							.withLongitude(BigDecimal.valueOf(to.lon))));
+                		
+						timedLeg.setLegBoard(board);
+						timedLeg.setLegAlight(alight );
+                		
+						DatedJourneyStructure dj = factory.createDatedJourneyStructure();
+																	
+						dj.getContent().add(factory.createOperatorRef(new OperatorRefStructure().withValue(leg.agencyId)));
+						dj.getContent().add(factory.createDatedJourneyStructureLineRef(new LineRefStructure().withValue(leg.routeId.toString())));
+						
+						List<Stop> allStops = graphIndex.patternForTrip.get(graphIndex.tripForId.get(leg.tripId)).getStops();
+						
+						Stop originTripStop = allStops.get(0);
+						Stop destinationTripStop = allStops.get(allStops.size()-1);
+						
+						
+						dj.getContent().add(factory.createDatedJourneyStructureOriginStopPointRef(
+								new StopPointRefStructure()
+									.withValue(
+											originTripStop.getId().toString()
+											)
+									)
+								);
+						
+						allMyPlaces.add(
+            					new PlaceStructure()
+            					.withLocationName(getInternationName(originTripStop.getName()))
+            					.withStopPoint(new StopPointStructure()
+            							.withStopPointRef(
+            									new StopPointRefStructure().withValue(originTripStop.getId().toString())
+            									)
+            							.withStopPointName(getInternationName(originTripStop.getName()))
+            							)
+            					.withGeoPosition(
+            							new LocationStructure()
+            							.withLatitude(BigDecimal.valueOf(originTripStop.getLat()))
+            							.withLongitude(BigDecimal.valueOf(originTripStop.getLon()))));
+						
+						dj.getContent().add(factory.createDatedJourneyStructureDestinationStopPointRef(
+								new StopPointRefStructure()
+									.withValue(
+											destinationTripStop.getId().toString()
+											)
+									)
+								);
+						
+						allMyPlaces.add(
+            					new PlaceStructure()
+            					.withLocationName(getInternationName(destinationTripStop.getName()))
+            					.withStopPoint(new StopPointStructure()
+            							.withStopPointRef(
+            									new StopPointRefStructure().withValue(destinationTripStop.getId().toString())
+            									)
+            							.withStopPointName(getInternationName(destinationTripStop.getName()))
+            							)
+            					.withGeoPosition(
+            							new LocationStructure()
+            							.withLatitude(BigDecimal.valueOf(destinationTripStop.getLat()))
+            							.withLongitude(BigDecimal.valueOf(destinationTripStop.getLon()))));
+						
+						dj.getContent().add(factory.createDatedJourneyStructureOriginText(getInternationName(allStops.get(0).getName())));
+						dj.getContent().add(factory.createDatedJourneyStructureDestinationText(getInternationName(allStops.get(allStops.size()-1).getName())));
+						
+						dj.getContent().add(factory.createJourneyRef(new JourneyRefStructure().withValue(leg.tripId.toString())));
+						dj.getContent().add(factory.createDatedJourneyStructurePublishedLineName(getInternationName(leg.route)));
+						dj.getContent().add(factory.createOperatingDayRef(new OperatingDayRefStructure().withValue(leg.serviceDate)));
+						
+						dj.getContent().add(factory.createDatedJourneyStructureMode(new ModeStructure().withPtMode(convertOJPModes(leg.routeType))));
+						
+						
+						timedLeg.setService(dj );
+                		
+                		legStructure.setTimedLeg(timedLeg);
+                	}
+                	legStructure.setLegId(randomUUID());
+                	
+    				tripStructure.getTripLeg().add(legStructure);
+            	}
+            	
+            	tripStructure.setDistance(BigInteger.valueOf(tripDistance));
+				tripResult.setTrip(tripStructure);
+				trip.getTripResult().add(tripResult);
+				
+            }
+            
+            allPlaces.getLocation().addAll(new ArrayList<PlaceStructure>(allMyPlaces));
+			trip.getTripResponseContext().setPlaces(allPlaces );
+           
+        } catch (Exception e) {
+            PlannerError error = new PlannerError(request, e);
+            if (!PlannerError.isPlanningError(e.getClass())) {
+                messages.add(error.message);
+                
+            }
+            ServiceDeliveryErrorConditionStructure errorS = new ServiceDeliveryErrorConditionStructure();
+			ErrorDescriptionStructure descr = new ErrorDescriptionStructure();
+			descr.setValue(error.message.get());
+			trip.setErrorCondition(errorS.withDescription(descr ));
+        } catch (Throwable t) {
+            System.out.printf("Unchecked error while planning path: ", t);
+            trip.setStatus(false);
+			ServiceDeliveryErrorConditionStructure error = new ServiceDeliveryErrorConditionStructure();
+			ErrorDescriptionStructure descr = new ErrorDescriptionStructure();
+			descr.setValue("Unchecked error while planning path.");
+			trip.setErrorCondition(error.withDescription(descr ));
+        } finally {
+            if (request != null) {
+                if (request.rctx != null) {
+                    debugOutput = request.rctx.debugOutput;
+
+                }
+                request.cleanup();
+            }
+        }
+        
 		
 		
 		long timeEnd = System.currentTimeMillis();
 		trip.setCalcTime(BigInteger.valueOf(timeEnd - timeStart));
 		return trip;
+	}
+	
+	private InternationalTextStructure getInternationName(String text) {
+		InternationalTextStructure name = new InternationalTextStructure();
+		NaturalLanguageStringStructure tmpName = new NaturalLanguageStringStructure();
+		tmpName.setValue(text);
+		name.setText(tmpName );
+		return name;
+	}
+	
+	private String randomUUID() {
+		UUID uuid = UUID.randomUUID();
+        String uuidAsString = uuid.toString();
+        return uuidAsString;
+	}
+	
+	private static LocalDateTime toLocalDateTime(Calendar calendar) {
+        return LocalDateTime.ofInstant(calendar.toInstant(), ZoneId.systemDefault());
+    }
+	
+	private GenericLocation toGenericLocation(double lng, double lat, String address) {
+
+        if (address != null) {
+            return new GenericLocation(address, Double.toString(lat) + "," + Double.toString(lng));
+        }
+
+        return new GenericLocation(lat, lng);
+    }
+
+	private RoutingRequest createRequest(Map<String, Object> requestMap) {
+		Router router = new Router(graphIndex.graph.routerId, graphIndex.graph);
+		RoutingRequest request = new RoutingRequest();
+        request.routerId =  router.id;
+                
+        
+        request.from = (GenericLocation) requestMap.get("originPlace");
+        request.to = (GenericLocation) requestMap.get("destinationPlace");
+        
+        Date date = Date.from(
+        		((LocalDateTime)requestMap.get("departureTime"))
+        	      .atZone(router.graph.getTimeZone().toZoneId())
+        	      .toInstant());
+        
+        request.setDateTime(date);
+        request.numItineraries = (int) requestMap.get("maxResults");
+        request.maxTransfers = (int) requestMap.get("maxTransfers");
+        
+        request.showIntermediateStops = true;//(boolean) requestMap.get("includeIntermediateStops");
+        @SuppressWarnings("unchecked")
+		List<String> modes = (List<String>) requestMap.get("modes");
+        request.modes = new TraverseModeSet(String.join(",", modes));
+        
+        if(requestMap.containsKey("bannedRoutes")) {
+        	@SuppressWarnings("unchecked")
+			List<String> routes = (List<String>) requestMap.get("bannedRoutes");
+        	request.bannedRoutes = RouteMatcher.parse(String.join(",",routes));
+        }
+        
+        if(requestMap.containsKey("whitelistRoutes")) {
+        	@SuppressWarnings("unchecked")
+			List<String> routes = (List<String>) requestMap.get("whitelistRoutes");
+        	request.whiteListedRoutes  = RouteMatcher.parse(String.join(",",routes));
+        }
+        
+        if(requestMap.containsKey("bannedAgencies")) {
+        	@SuppressWarnings("unchecked")
+        	HashSet<String> agencies = (HashSet<String>) requestMap.get("bannedAgencies");
+        	request.bannedAgencies = agencies;
+        }
+        
+        if(requestMap.containsKey("whitelistAgencies")) {
+        	@SuppressWarnings("unchecked")
+        	HashSet<String> agencies = (HashSet<String>) requestMap.get("whitelistAgencies");
+        	request.whiteListedAgencies  = agencies;
+        }
+        
+        if(requestMap.containsKey("bannedStops")) {
+        	@SuppressWarnings("unchecked")
+        	List<String> stops = (List<String>) requestMap.get("bannedStops");
+        	request.bannedStopsHard = StopMatcher.parse(String.join(",", stops));
+        }
+        
+        if(requestMap.containsKey("intermediatePlaces")) {
+        	@SuppressWarnings("unchecked")
+        	List<GenericLocation> stops = (List<GenericLocation>) requestMap.get("intermediatePlaces");
+        	request.intermediatePlaces = stops;
+        }
+        
+        
+//
+//        CallerWithEnvironment callWith = new CallerWithEnvironment(environment);
+//
+//        callWith.argument("fromPlace", request::setFromString);
+//        callWith.argument("toPlace", request::setToString);
+//
+//        callWith.argument("from", (Map<String, Object> v) -> request.from = toGenericLocation(v));
+//        callWith.argument("to", (Map<String, Object> v) -> request.to = toGenericLocation(v));
+//
+//        request.setDateTime(environment.getArgument("date"), environment.getArgument("time"), router.graph.getTimeZone());
+//
+//        callWith.argument("wheelchair", request::setWheelchairAccessible);
+//        callWith.argument("numItineraries", request::setNumItineraries);
+//        callWith.argument("maxWalkDistance", request::setMaxWalkDistance);
+//        callWith.argument("maxPreTransitTime", request::setMaxPreTransitTime);
+//        callWith.argument("walkReluctance", request::setWalkReluctance);
+//        callWith.argument("waitReluctance", request::setWaitReluctance);
+//        callWith.argument("waitAtBeginningFactor", request::setWaitAtBeginningFactor);
+//        callWith.argument("walkSpeed", (Double v) -> request.walkSpeed = v);
+//        callWith.argument("bikeSpeed", (Double v) -> request.bikeSpeed = v);
+//        callWith.argument("bikeSwitchTime", (Integer v) -> request.bikeSwitchTime = v);
+//        callWith.argument("bikeSwitchCost", (Integer v) -> request.bikeSwitchCost = v);
+//
+//        OptimizeType optimize = environment.getArgument("optimize");
+//
+//        if (optimize == OptimizeType.TRIANGLE) {
+//            callWith.argument("triangle.safetyFactor", request::setTriangleSafetyFactor);
+//            callWith.argument("triangle.slopeFactor", request::setTriangleSlopeFactor);
+//            callWith.argument("triangle.timeFactor", request::setTriangleTimeFactor);
+//            try {
+//                if (Math.abs(request.triangleSafetyFactor+ request.triangleSlopeFactor + request.triangleTimeFactor - 1) > Math.ulp(1) * 3) {
+//                    throw new ParameterException(Message.TRIANGLE_NOT_AFFINE);
+//                }
+//            } catch (ParameterException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//
+//        callWith.argument("arriveBy", request::setArriveBy);
+//        request.showIntermediateStops = true;
+//        callWith.argument("intermediatePlaces", (List<Map<String, Object>> v) -> request.intermediatePlaces = v.stream().map(this::toGenericLocation).collect(Collectors.toList()));
+//        callWith.argument("preferred.routes", request::setPreferredRoutes);
+//        callWith.argument("preferred.otherThanPreferredRoutesPenalty", request::setOtherThanPreferredRoutesPenalty);
+//        callWith.argument("preferred.agencies", request::setPreferredAgencies);
+//        callWith.argument("unpreferred.routes", request::setUnpreferredRoutes);
+//        callWith.argument("unpreferred.agencies", request::setUnpreferredAgencies);
+//        callWith.argument("walkBoardCost", request::setWalkBoardCost);
+//        callWith.argument("bikeBoardCost", request::setBikeBoardCost);
+//        callWith.argument("banned.routes", request::setBannedRoutes);
+//        callWith.argument("banned.agencies", request::setBannedAgencies);
+//        callWith.argument("banned.stops", request::setBannedStops);
+//        callWith.argument("banned.stopsHard", request::setBannedStopsHard);
+//        callWith.argument("transferPenalty", (Integer v) -> request.transferPenalty = v);
+//        callWith.argument("compactLegsByReversedSearch", (Boolean v) -> request.compactLegsByReversedSearch = v);
+//        if (optimize == OptimizeType.TRANSFERS) {
+//            optimize = OptimizeType.QUICK;
+//            request.transferPenalty += 1800;
+//        }
+//
+//        //Set argument 'batch' to false, as it causes timeouts and is not useful for point-to-point itinerary planning
+//        callWith.argument("batch", (Boolean v) -> /*request.batch = v*/ request.batch = false);
+//
+//        if (optimize != null) {
+//            request.optimize = optimize;
+//        }
+//
+//        if (hasArgument(environment, "modes")) {
+//            new QualifiedModeSet((String)environment.getArgument("modes")).applyToRoutingRequest(request);
+//            request.setModes(request.modes);
+//        }
+//        
+//        if(hasArgument(environment, "transportModes")) {
+//        	List<String> transportModes = environment.getArgument("transportModes");
+//        	new QualifiedModeSet(transportModes).applyToRoutingRequest(request);
+//            request.setModes(request.modes);
+//        }
+//
+//        if (request.allowBikeRental && !hasArgument(environment, "bikeSpeed")) {
+//            //slower bike speed for bike sharing, based on empirical evidence from DC.
+//            request.bikeSpeed = 4.3;
+//        }
+//
+//        callWith.argument("boardSlack", (Integer v) -> request.boardSlack = v);
+//        callWith.argument("alightSlack", (Integer v) -> request.alightSlack = v);
+//        callWith.argument("minTransferTime", (Integer v) -> request.transferSlack = v); // TODO RoutingRequest field should be renamed
+//        callWith.argument("nonpreferredTransferPenalty", (Integer v) -> request.nonpreferredTransferPenalty = v);
+//
+//        callWith.argument("maxTransfers", (Integer v) -> request.maxTransfers = v);
+//
+//        final long NOW_THRESHOLD_MILLIS = 15 * 60 * 60 * 1000;
+//        boolean tripPlannedForNow = Math.abs(request.getDateTime().getTime() - new Date().getTime()) < NOW_THRESHOLD_MILLIS;
+//        request.useBikeRentalAvailabilityInformation = (tripPlannedForNow); // TODO the same thing for GTFS-RT
+//
+//        callWith.argument("startTransitStopId", (String v) -> request.startingTransitStopId = GtfsLibrary.convertIdFromString(v));
+//        callWith.argument("startTransitTripId", (String v) -> request.startingTransitTripId = GtfsLibrary.convertIdFromString(v));
+//        callWith.argument("clamInitialWait", (Long v) -> request.clampInitialWait = v);
+//        callWith.argument("reverseOptimizeOnTheFly", (Boolean v) -> request.reverseOptimizeOnTheFly = v);
+//        callWith.argument("ignoreRealtimeUpdates", (Boolean v) -> request.ignoreRealtimeUpdates = v);
+//        callWith.argument("disableRemainingWeightHeuristic", (Boolean v) -> request.disableRemainingWeightHeuristic = v);
+//
+//        callWith.argument("locale", (String v) -> request.locale = ResourceBundleSingleton.INSTANCE.getLocale(v));
+
+//        request.setMaxWalkDistance(2500.0);
+//        request.setWalkReluctance(2.0);
+//        request.walkSpeed = 1.2;
+//        request.setArriveBy(false);
+//        request.showIntermediateStops = true;
+//        request.setIntermediatePlacesFromStrings(Collections.emptyList());
+//        request.setWalkBoardCost(600);
+//        request.transferSlack = 180;
+//        request.disableRemainingWeightHeuristic = false;
+        return request;
 	}
 	
 }

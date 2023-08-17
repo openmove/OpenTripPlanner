@@ -15,10 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
-
-import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.FeedScopedId;
@@ -50,6 +46,7 @@ import de.vdv.ojp.OJPStopEventDeliveryStructure;
 import de.vdv.ojp.OJPStopEventRequestStructure;
 import de.vdv.ojp.OJPTripInfoDeliveryStructure;
 import de.vdv.ojp.OJPTripInfoRequestStructure;
+import de.vdv.ojp.ObjectFactory;
 import de.vdv.ojp.OperatingDayRefStructure;
 import de.vdv.ojp.PlaceStructure;
 import de.vdv.ojp.StopEventResponseContextStructure;
@@ -76,10 +73,12 @@ public class OJPTripInfoFactory {
 	private boolean excludeOperators = false;
 	long maxResults = Integer.MAX_VALUE;
 	StopEventTypeEnumeration stopEventType = StopEventTypeEnumeration.BOTH;
+	private ObjectFactory factory;
 	
-	public OJPTripInfoFactory(GraphIndex graphIndex, OJPTripInfoRequestStructure request) {
+	public OJPTripInfoFactory(GraphIndex graphIndex, OJPTripInfoRequestStructure request, ObjectFactory factory) {
 		this.graphIndex = graphIndex;
 		this.request = request;
+		this.factory = factory;
 	}
 	
     private static VehicleModesOfTransportEnumeration getTraverseMode(Route route) {
@@ -311,81 +310,39 @@ public class OJPTripInfoFactory {
 				op.setValue(simpleDateFormat.format(dateTmp));
 				//op.setValue(graphIndex.tripForId.get(tts.tripId).getServiceId().toString());
 				
-				JAXBElement<OperatingDayRefStructure> opElem = 
-						new JAXBElement<OperatingDayRefStructure>(
-								new QName("http://www.vdv.de/ojp","OperatingDayRef"), 
-								OperatingDayRefStructure.class, 
-								op
-								);
-				js.getContent().add(opElem);
+				js.getContent().add(factory.createOperatingDayRef(op));
 				
 				JourneyRefStructure jr = new JourneyRefStructure();
 				jr.setValue(tripId);
 				
-				JAXBElement<JourneyRefStructure> jrElem = 
-						new JAXBElement<JourneyRefStructure>(
-								new QName("http://www.vdv.de/ojp","JourneyRef"), 
-								JourneyRefStructure.class, 
-								jr
-								);
-				js.getContent().add(jrElem);
+				js.getContent().add(factory.createJourneyRef(jr));
 				
 				LineRefStructure line = new LineRefStructure();
 				Route route = trip.getRoute();
 				line.setValue(
 						route.getId().toString());
 				
-				JAXBElement<LineRefStructure> lineElem = 
-						new JAXBElement<LineRefStructure>(
-								new QName("http://www.vdv.de/ojp","LineRef"), 
-								LineRefStructure.class, 
-								line
-								);
-				js.getContent().add(lineElem);
+				js.getContent().add(factory.createDatedJourneyStructureLineRef(line));
 				
 				ModeStructure mode = new ModeStructure();
 				mode.setPtMode(getTraverseMode(route));
 				
-				JAXBElement<ModeStructure> modeElem = 
-						new JAXBElement<ModeStructure>(
-								new QName("http://www.vdv.de/ojp","Mode"), 
-								ModeStructure.class, 
-								mode
-								);
-				js.getContent().add(modeElem);
+				js.getContent().add(factory.createDatedJourneyStructureMode(mode));
 				
 				OperatorRefStructure operator = new OperatorRefStructure();
 				
 				operator.setValue(route.getAgency().getId().toString());
 				
-				JAXBElement<OperatorRefStructure> operatorElem = 
-						new JAXBElement<OperatorRefStructure>(
-								new QName("http://www.vdv.de/ojp","OperatorRef"), 
-								OperatorRefStructure.class, 
-								operator
-								);
-				js.getContent().add(operatorElem);
+				js.getContent().add(factory.createOperatorRef(operator));
 				
 				StopPointRefStructure origin = new StopPointRefStructure();
 				StopPointRefStructure destination = new StopPointRefStructure();
 				origin.setValue(stoptimes.get(0).stopId.toString());
 				destination.setValue(stoptimes.get(stoptimes.size()-1).stopId.toString());
 				
-				JAXBElement<StopPointRefStructure> originElem = 
-						new JAXBElement<StopPointRefStructure>(
-								new QName("http://www.vdv.de/ojp","OriginStopPointRef"), 
-								StopPointRefStructure.class, 
-								origin
-								);
-				
-				JAXBElement<StopPointRefStructure> destinationElem = 
-						new JAXBElement<StopPointRefStructure>(
-								new QName("http://www.vdv.de/ojp","DestinationStopPointRef"), 
-								StopPointRefStructure.class, 
-								destination
-								);
-				js.getContent().add(originElem);
-				js.getContent().add(destinationElem);
+
+				js.getContent().add(factory.createDatedJourneyStructureOriginStopPointRef(origin));
+				js.getContent().add(factory.createDatedJourneyStructureDestinationStopPointRef(destination));
 				
 				String langDefault = graphIndex.agenciesForFeedId.get(route.getId().getAgencyId()).values().iterator().next().getLang();
 				
@@ -396,13 +353,7 @@ public class OJPTripInfoFactory {
 				valueLineLang.setValue(route.getLongName() != null ? route.getLongName() : route.getShortName());
 				lineName.setText(valueLineLang);
 				
-				JAXBElement<InternationalTextStructure> lineNameElem = 
-						new JAXBElement<InternationalTextStructure>(
-								new QName("http://www.vdv.de/ojp","PublishedLineName"), 
-								InternationalTextStructure.class, 
-								lineName
-								);
-				js.getContent().add(lineNameElem);
+				js.getContent().add(factory.createDatedJourneyStructurePublishedLineName(lineName));
 				
 				InternationalTextStructure originName = new InternationalTextStructure();
 				NaturalLanguageStringStructure valueOriginLang = new NaturalLanguageStringStructure();
@@ -411,13 +362,8 @@ public class OJPTripInfoFactory {
 				valueOriginLang.setValue(graphIndex.stopForId.get(stoptimes.get(0).stopId).getName());
 				originName.setText(valueOriginLang);
 				
-				JAXBElement<InternationalTextStructure> originNameElem = 
-						new JAXBElement<InternationalTextStructure>(
-								new QName("http://www.vdv.de/ojp","OriginText"), 
-								InternationalTextStructure.class, 
-								originName
-								);
-				js.getContent().add(originNameElem);
+				
+				js.getContent().add(factory.createDatedJourneyStructureOriginText(originName));
 				
 				InternationalTextStructure destinationName = new InternationalTextStructure();
 				NaturalLanguageStringStructure valueDestinationLang = new NaturalLanguageStringStructure();
@@ -426,13 +372,7 @@ public class OJPTripInfoFactory {
 				valueDestinationLang.setValue(graphIndex.stopForId.get(stoptimes.get(stoptimes.size()-1).stopId).getName());
 				destinationName.setText(valueDestinationLang);
 				
-				JAXBElement<InternationalTextStructure> destinationNameElem = 
-						new JAXBElement<InternationalTextStructure>(
-								new QName("http://www.vdv.de/ojp","DestinationText"), 
-								InternationalTextStructure.class, 
-								destinationName
-								);
-				js.getContent().add(destinationNameElem);	
+				js.getContent().add(factory.createDatedJourneyStructureDestinationText(destinationName));	
 				
 				
 				result.setService(js);

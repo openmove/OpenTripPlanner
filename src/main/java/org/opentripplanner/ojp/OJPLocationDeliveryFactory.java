@@ -36,6 +36,7 @@ import de.vdv.ojp.InternationalTextStructure;
 import de.vdv.ojp.ModeStructure;
 import de.vdv.ojp.OJPLocationInformationDeliveryStructure;
 import de.vdv.ojp.OJPLocationInformationRequestStructure;
+import de.vdv.ojp.ObjectFactory;
 import de.vdv.ojp.PlaceResultStructure;
 import de.vdv.ojp.PlaceStructure;
 import de.vdv.ojp.PlaceTypeEnumeration;
@@ -47,10 +48,12 @@ public class OJPLocationDeliveryFactory {
 	private final GraphIndex graphIndex;
 	private List<VehicleModesOfTransportEnumeration> restrictionModes;
 	private String searchByName;
+	private ObjectFactory factory;
 	
-	public OJPLocationDeliveryFactory(GraphIndex graphIndex, OJPLocationInformationRequestStructure informationRequest) {
+	public OJPLocationDeliveryFactory(GraphIndex graphIndex, OJPLocationInformationRequestStructure informationRequest, ObjectFactory factory) {
 		this.graphIndex = graphIndex;
 		this.informationRequest = informationRequest;
+		this.factory = factory;
 	}
 	
     private static VehicleModesOfTransportEnumeration getTraverseMode(Route route) {

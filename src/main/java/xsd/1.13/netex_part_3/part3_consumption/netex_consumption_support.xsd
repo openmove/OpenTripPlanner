@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="http://www.netex.org.uk/netex" xmlns:netex="http://www.netex.org.uk/netex" xmlns:siri="http://www.siri.org.uk/siri" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.1" id="netex_customerPurchasePackage_support">
+  <xsd:include schemaLocation="../part3_fares/netex_accessRightParameter_support.xsd"/>
+  <!-- =============================================================== -->
+  <!-- ====ELEMENT CONSUMPTION POLICY.======================================================== -->
+  <xsd:simpleType name="ElementConsumptionPolicyIdType">
+    <xsd:restriction base="ObjectIdType"/>
+  </xsd:simpleType>
+  <!-- ====CONSUMPTION REQUIREMENT.======================================================== -->
+  <xsd:simpleType name="ConsumptionRequirementIdType">
+    <xsd:restriction base="ObjectIdType"/>
+  </xsd:simpleType>
+  <!-- ====MARKED AS TEMPORAL VALIDITY.======================================================== -->
+  <xsd:simpleType name="MarkedAsTemporalValidityEnumeration">
+    <xsd:restriction base="xsd:normalizedString">
+      <xsd:enumeration value="any"/>
+      <xsd:enumeration value="current"/>
+      <xsd:enumeration value="future"/>
+      <xsd:enumeration value="currentFuture"/>
+      <xsd:enumeration value="expired"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <!-- ====ELEMENT CONSUMPTION======================================================== -->
+  <xsd:simpleType name="ElementConsumptionIdType">
+    <xsd:restriction base="ObjectIdType"/>
+  </xsd:simpleType>
+  <!-- ====CROSS CONSTRAINT.======================================================== -->
+  <xsd:simpleType name="CrossConstraintIdType">
+    <xsd:restriction base="ObjectIdType"/>
+  </xsd:simpleType>
+  <!-- ====CONSUMPTION TRANSITION POLICY.======================================================== -->
+  <xsd:simpleType name="ConsumptionTriggerTypeEnumeration">
+    <xsd:restriction base="xsd:normalizedString">
+      <xsd:enumeration value="manual"/>
+      <xsd:enumeration value="automatic"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <!-- ====MAXIMUM NUMBER OF ACCESSES.======================================================== -->
+  <xsd:simpleType name="MaximumNumberOfAccessesEnumeration">
+    <xsd:restriction base="xsd:normalizedString">
+      <xsd:enumeration value="limited"/>
+      <xsd:enumeration value="unlimited"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <!-- =============================================================== -->
+</xsd:schema>

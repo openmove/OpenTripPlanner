@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2008 (http://www.altova.com) by Nicholas Knowles Knowles (Kizoom Ltd) -->
+<xsd:schema xmlns="http://www.netex.org.uk/netex" xmlns:netex="http://www.netex.org.uk/netex" xmlns:siri="http://www.siri.org.uk/siri" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.1" id="netex_salesTransaction_support">
+  <xsd:include schemaLocation="netex_salesContract_support.xsd"/>
+  <!-- =============================================================== -->
+  <!-- ====VALIDATION ENTRY.======================================================== -->
+  <xsd:simpleType name="ValidationEntryIdType">
+    <xsd:restriction base="FareContractEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="ValidationEntryRef" type="ValidationEntryRefStructure" abstract="false" substitutionGroup="FareContractEntryRef"/>
+  <xsd:complexType name="ValidationEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="FareContractEntryRefStructure">
+        <xsd:attribute name="ref" type="ValidationEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====PASSENGER TRAVEL ENTRY.======================================================== -->
+  <xsd:simpleType name="PassengerTravelEntryIdType">
+    <xsd:restriction base="FareContractEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="PassengerTravelEntryRef" type="PassengerTravelEntryRefStructure" abstract="false" substitutionGroup="FareContractEntryRef"/>
+  <xsd:complexType name="PassengerTravelEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="FareContractEntryRefStructure">
+        <xsd:attribute name="ref" type="PassengerTravelEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====PASSENGER VALIDATE TRAVEL ENTRY.======================================================== -->
+  <xsd:simpleType name="PassengerValidateTravelEntryIdType">
+    <xsd:restriction base="FareContractEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="PassengerValidateTravelEntryRef" type="PassengerValidateTravelEntryRefStructure" abstract="false" substitutionGroup="FareContractEntryRef"/>
+  <xsd:complexType name="PassengerValidateTravelEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="FareContractEntryRefStructure">
+        <xsd:attribute name="ref" type="PassengerValidateTravelEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====PASSENGER USED SAME STOP ENTRY.======================================================== -->
+  <xsd:simpleType name="PassengerUsedSameStopEntryIdType">
+    <xsd:restriction base="FareContractEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="PassengerUsedSameStopEntryRef" type="PassengerUsedSameStopEntryRefStructure" abstract="false" substitutionGroup="FareContractEntryRef"/>
+  <xsd:complexType name="PassengerUsedSameStopEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="FareContractEntryRefStructure">
+        <xsd:attribute name="ref" type="PassengerUsedSameStopEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====FULFILMENT ENTRY.======================================================== -->
+  <xsd:simpleType name="FulfilmentEntryIdType">
+    <xsd:restriction base="FareContractEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="FulfilmentEntryRef" type="FulfilmentEntryRefStructure" abstract="false" substitutionGroup="FareContractEntryRef"/>
+  <xsd:complexType name="FulfilmentEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="FareContractEntryRefStructure">
+        <xsd:attribute name="ref" type="FulfilmentEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====PURCHASE FULFILMENT ENTRY.======================================================== -->
+  <xsd:simpleType name="PurchaseFulfilmentEntryIdType">
+    <xsd:restriction base="FareContractEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="PurchaseFulfilmentEntryRef" type="PurchaseFulfilmentEntryRefStructure" abstract="false" substitutionGroup="FareContractEntryRef"/>
+  <xsd:complexType name="PurchaseFulfilmentEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="FareContractEntryRefStructure">
+        <xsd:attribute name="ref" type="PurchaseFulfilmentEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <!-- ====MAPPING FULFILMENT ENTRY.======================================================== -->
+  <xsd:simpleType name="MappingFulfilmentEntryIdType">
+    <xsd:restriction base="FareContractEntryIdType"/>
+  </xsd:simpleType>
+  <xsd:element name="MappingFulfilmentEntryRef" type="MappingFulfilmentEntryRefStructure" abstract="false" substitutionGroup="FareContractEntryRef"/>
+  <xsd:complexType name="MappingFulfilmentEntryRefStructure">
+    <xsd:simpleContent>
+      <xsd:restriction base="FareContractEntryRefStructure">
+        <xsd:attribute name="ref" type="MappingFulfilmentEntryIdType" use="required"/>
+      </xsd:restriction>
+    </xsd:simpleContent>
+  </xsd:complexType>
+</xsd:schema>

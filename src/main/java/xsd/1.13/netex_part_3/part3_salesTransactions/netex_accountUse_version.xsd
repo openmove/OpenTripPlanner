@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="http://www.netex.org.uk/netex" xmlns:netex="http://www.netex.org.uk/netex" xmlns:siri="http://www.siri.org.uk/siri" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.1" id="netex_accouuntUse_version">
+  <xsd:include schemaLocation="netex_accountUse_support.xsd"/>
+  <xsd:include schemaLocation="netex_customerPurchasePackage_version.xsd"/>
+  <!-- ======================================================================= -->
+  <xsd:group name="CustomerAccountEntryLocationGroup">
+    <xsd:sequence>
+      <xsd:element ref="StopPlaceRef"/>
+      <xsd:element ref="ServiceJourneyRef"/>
+      <xsd:element ref="DistanceMatrixElementRef"/>
+    </xsd:sequence>
+  </xsd:group>
+  <!-- ====CUSTOMER ACCOUNT ENTRY-->
+  <xsd:complexType name="customerAccountEntries_RelStructure">
+    <xsd:complexContent>
+      <xsd:extension base="containmentAggregationStructure">
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element ref="CustomerAccountEntryRef"/>
+          <xsd:element ref="CustomerAccountEntry_"/>
+        </xsd:choice>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="CustomerAccountEntry_" abstract="true" type="DataManagedObjectStructure" substitutionGroup="DataManagedObject"/>
+  <xsd:element name="CustomerAccountEntry" abstract="true" substitutionGroup="CustomerAccountEntry_">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="CustomerAccountEntry_VersionStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="EntityInVersionGroup" minOccurs="0"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="DataManagedObjectGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="LogEntryGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="CustomerAccountEntryGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="CustomerAccountEntryIdType" use="optional"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="CustomerAccountEntry_VersionStructure">
+    <xsd:complexContent>
+      <xsd:extension base="LogEntry_VersionStructure">
+        <xsd:sequence>
+          <xsd:group ref="CustomerAccountEntryGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="CustomerAccountEntryGroup">
+    <xsd:sequence>
+      <xsd:element name="IsValid" type="xsd:boolean" minOccurs="0"/>
+      <xsd:element ref="TypeOfCustomerAccountEntryRef" minOccurs="0"/>
+      <xsd:element ref="CustomerAccountRef" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:group>
+  <!-- ====CUSTOMER REGISTRATION ================================================ -->
+  <xsd:element name="CustomerRegistration" abstract="false" substitutionGroup="CustomerAccountEntry_">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="CustomerRegistration_VersionStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="DataManagedObjectGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="LogEntryGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="CustomerAccountEntryGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="CustomerRegistrationGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="CustomerRegistrationIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="CustomerRegistration_VersionStructure">
+    <xsd:complexContent>
+      <xsd:extension base="CustomerAccountEntry_VersionStructure">
+        <xsd:sequence>
+          <xsd:group ref="CustomerRegistrationGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="CustomerRegistrationGroup">
+    <xsd:sequence>
+      <!-- No specific content -->
+    </xsd:sequence>
+  </xsd:group>
+  <!-- ====CUSTOMER DEREGISTRATION ================================================ -->
+  <xsd:element name="CustomerDeregistration" abstract="false" substitutionGroup="CustomerAccountEntry_">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="CustomerDeregistration_VersionStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="DataManagedObjectGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="LogEntryGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="CustomerAccountEntryGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="CustomerDeregistrationGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="CustomerDeregistrationIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="CustomerDeregistration_VersionStructure">
+    <xsd:complexContent>
+      <xsd:extension base="CustomerAccountEntry_VersionStructure">
+        <xsd:sequence>
+          <xsd:group ref="CustomerDeregistrationGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="CustomerDeregistrationGroup">
+    <xsd:sequence>
+      <!-- No specific content -->
+    </xsd:sequence>
+  </xsd:group>
+  <!-- ==== NO ACCESS RIGHTS ON ACCOUNT ================================================ -->
+  <xsd:element name="NoAccessRightsOnAccount" abstract="false" substitutionGroup="CustomerAccountEntry_">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="NoAccessRightsOnAccount_VersionStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="DataManagedObjectGroup"/>
+              <xsd:group ref="LogEntryGroup"/>
+              <xsd:group ref="CustomerAccountEntryGroup"/>
+              <xsd:group ref="NoAccessRightsOnAccountGroup"/>
+              <xsd:group ref="CustomerAccountEntryLocationGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="NoAccessRightsOnAccountIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="NoAccessRightsOnAccount_VersionStructure">
+    <xsd:complexContent>
+      <xsd:extension base="CustomerAccountEntry_VersionStructure">
+        <xsd:sequence>
+          <xsd:group ref="NoAccessRightsOnAccountGroup"/>
+          <xsd:group ref="CustomerAccountEntryLocationGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="NoAccessRightsOnAccountGroup">
+    <xsd:sequence>
+      <!-- No specific content -->
+    </xsd:sequence>
+  </xsd:group>
+  <!-- ==== INSUFFICIENT ACCESS RIGHTS ON ACCOUNT ================================================ -->
+  <xsd:element name="InsufficientAccessRightsOnAccount" abstract="false" substitutionGroup="CustomerAccountEntry_">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="InsufficientAccessRightsOnAccount_VersionStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="DataManagedObjectGroup"/>
+              <xsd:group ref="LogEntryGroup"/>
+              <xsd:group ref="CustomerAccountEntryGroup"/>
+              <xsd:group ref="InsufficientAccessRightsOnAccountGroup"/>
+              <xsd:group ref="CustomerAccountEntryLocationGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="InsufficientAccessRightsOnAccountIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="InsufficientAccessRightsOnAccount_VersionStructure">
+    <xsd:complexContent>
+      <xsd:extension base="CustomerAccountEntry_VersionStructure">
+        <xsd:sequence>
+          <xsd:group ref="InsufficientAccessRightsOnAccountGroup"/>
+          <xsd:group ref="CustomerAccountEntryLocationGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="InsufficientAccessRightsOnAccountGroup">
+    <xsd:sequence>
+      <!-- No specific content -->
+    </xsd:sequence>
+  </xsd:group>
+</xsd:schema>

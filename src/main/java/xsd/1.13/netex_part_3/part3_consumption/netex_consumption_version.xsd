@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2008 (http://www.altova.com) by Nicholas Knowles Knowles (Kizoom Ltd) -->
+<xsd:schema xmlns="http://www.netex.org.uk/netex" xmlns:netex="http://www.netex.org.uk/netex" xmlns:siri="http://www.siri.org.uk/siri" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.1" id="netex_customerPurchasePackage_version">
+  <!-- ======================================================================= -->
+  <xsd:include schemaLocation="../../netex_framework/netex_responsibility/netex_responsibility_version.xsd"/>
+  <xsd:include schemaLocation="../../netex_part_3/part3_salesTransactions/netex_customerPurchasePackage_support.xsd"/>
+  <xsd:include schemaLocation="../../netex_part_3/part3_fares/netex_usageParameterEntitlement_version.xsd"/>
+  <xsd:include schemaLocation="netex_consumption_support.xsd"/>
+  <!-- ======================================================================= -->
+  <!-- ====ELEMENT CONSUMPTION POLICES================================================= -->
+  <xsd:complexType name="elementConsumptionPolicies_RelStructure">
+    <xsd:complexContent>
+      <xsd:extension base="strictContainmentAggregationStructure">
+        <xsd:sequence>
+          <xsd:element ref="ElementConsumptionPolicy" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="ElementConsumptionPolicy" abstract="false">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="ElementConsumptionPolicy_VersionedChildStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="VersionedChildGroup"/>
+            </xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="ElementConsumptionPolicyGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="ElementConsumptionPolicyIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ElementConsumptionPolicy_VersionedChildStructure">
+    <xsd:complexContent>
+      <xsd:extension base="VersionedChildStructure">
+        <xsd:sequence>
+          <xsd:group ref="ElementConsumptionPolicyGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="ElementConsumptionPolicyGroup">
+    <xsd:sequence>
+      <!-- TODO must be replaced with LogicalOperatorEnumeration when https://github.com/NeTEx-CEN/NeTEx/pull/126 is merged -->
+      <xsd:element name="ConsumptionRequirementGroupingType" type="LogicalOperationEnumeration" minOccurs="0" default="AND"/>
+      <xsd:element name="consumptionRequirements" type="consumptionRequirements_RelStructure" minOccurs="0"/>
+      <xsd:element name="ConsumptionTriggerType" type="ConsumptionTriggerTypeEnumeration"/>
+      <!-- TODO must be replaced with LogicalOperatorEnumeration when https://github.com/NeTEx-CEN/NeTEx/pull/126 is merged -->
+      <xsd:element name="ElementConsumptionGroupingType" type="LogicalOperationEnumeration" minOccurs="0" default="AND"/>
+      <xsd:element name="elementConsumptions" type="elementConsumptions_RelStructure" minOccurs="0"/>
+      <xsd:element name="crossConstraints" type="crossConstraints_RelStructure" minOccurs="0"/>
+      <xsd:element ref="MaximumNumberOfAccesses" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:group>
+  <xsd:complexType name="consumptionRequirements_RelStructure">
+    <xsd:complexContent>
+      <xsd:extension base="strictContainmentAggregationStructure">
+        <xsd:sequence>
+          <xsd:element ref="ConsumptionRequirement_" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="elementConsumptions_RelStructure">
+    <xsd:complexContent>
+      <xsd:extension base="containmentAggregationStructure">
+        <xsd:sequence>
+          <xsd:element ref="ElementConsumption_" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="crossConstraints_RelStructure">
+    <xsd:complexContent>
+      <xsd:extension base="containmentAggregationStructure">
+        <xsd:sequence>
+          <xsd:element ref="CrossConstraint" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <!-- === CONSUMPTION REQUIREMENT =========================================== -->
+  <xsd:element name="ConsumptionRequirement_" type="VersionedChildStructure" substitutionGroup="VersionedChild" abstract="true"/>
+  <xsd:element name="ConsumptionRequirement" abstract="true" substitutionGroup="ConsumptionRequirement_">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="ConsumptionRequirement_VersionedChildStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="ConsumptionRequirementGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="ConsumptionRequirementIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ConsumptionRequirement_VersionedChildStructure">
+    <xsd:complexContent>
+      <xsd:extension base="VersionedChildStructure">
+        <xsd:sequence>
+          <xsd:group ref="ConsumptionRequirementGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="ConsumptionRequirementGroup">
+    <xsd:sequence>
+      <xsd:element name="MarkedAs" type="MarkedAsEnumeration" maxOccurs="unbounded"/>
+      <xsd:element name="MarkedAsTemporalValidity" type="MarkedAsTemporalValidityEnumeration"/>
+    </xsd:sequence>
+  </xsd:group>
+  <!-- === CONSUMPTION =========================================== -->
+  <xsd:element name="ElementConsumption_" type="VersionedChildStructure" substitutionGroup="VersionedChild" abstract="true"/>
+  <xsd:element name="ElementConsumption" abstract="true" substitutionGroup="ElementConsumption_">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="ElementConsumption_VersionedChildStructure">
+          <xsd:sequence>
+            <xsd:sequence>
+              <xsd:group ref="VersionedChildGroup"/>
+              <xsd:group ref="ElementConsumptionGroup"/>
+            </xsd:sequence>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="ElementConsumptionIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="ElementConsumption_VersionedChildStructure">
+    <xsd:complexContent>
+      <xsd:extension base="VersionedChildStructure">
+        <xsd:sequence>
+          <xsd:group ref="ElementConsumptionGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="ElementConsumptionGroup">
+    <xsd:sequence>
+      <xsd:element name="FromMarkedAs" type="MarkedAsEnumeration" minOccurs="0"/>
+      <xsd:element name="ToMarkedAs" type="MarkedAsEnumeration" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:group>
+  <!-- === CROSS CONSTRAINT =========================================== -->
+  <xsd:element name="CrossConstraint" abstract="false">
+    <xsd:complexType>
+      <xsd:complexContent>
+        <xsd:restriction base="CrossConstraint_VersionedChildStructure">
+          <xsd:sequence>
+            <xsd:group ref="CrossConstraintGroup"/>
+          </xsd:sequence>
+          <xsd:attribute name="id" type="CrossConstraintIdType"/>
+        </xsd:restriction>
+      </xsd:complexContent>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="CrossConstraint_VersionedChildStructure">
+    <xsd:complexContent>
+      <xsd:extension base="VersionedChildStructure">
+        <xsd:sequence>
+          <xsd:group ref="CrossConstraintGroup"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:group name="CrossConstraintGroup">
+    <xsd:sequence>
+      <xsd:element name="Constraint" type="EntitlementConstraintStructure"/>
+      <xsd:element name="validityParameterAssignments" type="validityParameterAssignmentRefs_RelStructure"/>
+    </xsd:sequence>
+  </xsd:group>
+  <!-- ====MAXIMUM NUMBER OF ACCESSES.======================================================== -->
+  <xsd:element name="MaximumNumberOfAccesses">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="Type" type="MaximumNumberOfAccessesEnumeration"/>
+        <xsd:element name="Value" type="xsd:positiveInteger" minOccurs="0"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

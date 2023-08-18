@@ -14,6 +14,7 @@ import org.opentripplanner.api.model.JSONObjectMapperProvider;
 import org.opentripplanner.api.resource.*;
 import org.opentripplanner.index.GeocoderResource;
 import org.opentripplanner.index.IndexAPI;
+import org.opentripplanner.ojp.OJPResource;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.ws.rs.core.Application;
@@ -80,6 +81,7 @@ public class OTPApplication extends Application {
             VehicleRental.class,
             LIsochrone.class,
             ExternalGeocoderResource.class,
+            OJPResource.class,
             TimeGridWs.class,
             AlertPatcher.class,
             PlannerResource.class,

@@ -11,10 +11,12 @@ import com.bliksemlabs.ojp.model.ParticipantRefStructure;
 import com.bliksemlabs.ojp.model.ServiceDelivery;
 
 import de.vdv.ojp.ExchangePointsRequestStructure;
+import de.vdv.ojp.MultiPointTripResultStructure;
 import de.vdv.ojp.OJPExchangePointsDeliveryStructure;
 import de.vdv.ojp.OJPExchangePointsRequestStructure;
 import de.vdv.ojp.OJPLocationInformationDeliveryStructure;
 import de.vdv.ojp.OJPLocationInformationRequestStructure;
+import de.vdv.ojp.OJPMultiPointTripDeliveryStructure;
 import de.vdv.ojp.OJPMultiPointTripRequestStructure;
 import de.vdv.ojp.OJPStopEventDeliveryStructure;
 import de.vdv.ojp.OJPStopEventRequestStructure;
@@ -23,6 +25,7 @@ import de.vdv.ojp.OJPTripInfoDeliveryStructure;
 import de.vdv.ojp.OJPTripInfoRequestStructure;
 import de.vdv.ojp.OJPTripRequestStructure;
 import de.vdv.ojp.ObjectFactory;
+import de.vdv.ojp.PlaceContextStructure;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -118,6 +121,11 @@ public class OJPResource {
     		}
     		
     		if(elem.getDeclaredType().equals(OJPMultiPointTripRequestStructure.class)) {
+    			OJPMultiPointTripRequestStructure tripMultiRequest = (OJPMultiPointTripRequestStructure) elem.getValue();
+    			OJPMultiPointTripFactory multiTripFactory = new OJPMultiPointTripFactory(graphIndex,tripMultiRequest,factory);
+    			OJPMultiPointTripDeliveryStructure multiTrip = multiTripFactory.create();
+    			
+				s.getAbstractFunctionalServiceDelivery().add(factory.createOJPMultiPointTripDelivery(multiTrip ));
     			
     		}
     	}

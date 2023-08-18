@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.locationtech.jts.geom.Coordinate;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
 import org.opentripplanner.api.model.Itinerary;
@@ -51,7 +52,9 @@ import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.standalone.Router;
+import org.opentripplanner.util.PolylineEncoder;
 import org.opentripplanner.util.ResourceBundleSingleton;
+import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import com.bliksemlabs.ojp.model.ErrorDescriptionStructure;
 import com.bliksemlabs.ojp.model.LineDirectionStructure;
@@ -72,6 +75,7 @@ import de.vdv.ojp.JourneyRefStructure;
 import de.vdv.ojp.LegAlightStructure;
 import de.vdv.ojp.LegBoardStructure;
 import de.vdv.ojp.LegIntermediateStructure;
+import de.vdv.ojp.LegTrackStructure;
 import de.vdv.ojp.ModeStructure;
 import de.vdv.ojp.NotViaStructure;
 import de.vdv.ojp.OJPStopEventDeliveryStructure;
@@ -91,6 +95,8 @@ import de.vdv.ojp.StopEventStructure;
 import de.vdv.ojp.StopEventTypeEnumeration;
 import de.vdv.ojp.StopPointStructure;
 import de.vdv.ojp.TimedLegStructure;
+import de.vdv.ojp.TrackSectionStructure;
+import de.vdv.ojp.TrackSectionStructure.LinkProjection;
 import de.vdv.ojp.TransferLegStructure;
 import de.vdv.ojp.TransferModesEnumeration;
 import de.vdv.ojp.TripInfoResponseContextStructure;
@@ -121,7 +127,7 @@ public class OJPTripFactory {
 	
 	private boolean includeAccessibility = false;
 	private boolean includeIntermediateStops = false;		
-//	private boolean includeTrack = false;
+	private boolean includeTrack = false;
 //	private boolean includeProjection = false;
 	
 	long transferLimit = Integer.MAX_VALUE;
@@ -130,6 +136,7 @@ public class OJPTripFactory {
 	private ObjectFactory factory;
 	
 	List<String> allOTPModes = Arrays.asList("TRAM","SUBWAY","RAIL","BUS","FERRY","GONDOLA","FUNICULAR");
+	
 	
 	public OJPTripFactory(GraphIndex graphIndex, OJPTripRequestStructure request, ObjectFactory factory) {
 		this.graphIndex = graphIndex;
@@ -293,6 +300,7 @@ public class OJPTripFactory {
 			}
 			
 			maxResults = request.getParams().getNumberOfResults().longValue();
+			includeTrack = request.getParams().isIncludeTrackSections();
 			includeAccessibility = request.getParams().isIncludeAccessibility();
 			includeIntermediateStops = request.getParams().isIncludeIntermediateStops();
 			
@@ -517,6 +525,7 @@ public class OJPTripFactory {
             	tripStructure.setEndTime(toLocalDateTime(itinerary.endTime));
             	tripStructure.setTransfers(BigInteger.valueOf(itinerary.transfers));
             	for(Leg leg : itinerary.legs) {
+            		String lang = graphIndex.agenciesForFeedId.get(leg.agencyId).values().iterator().next().getLang();
             		TripLegStructure legStructure = new TripLegStructure();
                 	tripDistance += leg.distance;
                 	if(!leg.isTransitLeg()) {
@@ -535,12 +544,12 @@ public class OJPTripFactory {
                 			start.setStopPointRef(new StopPointRefStructure().withValue(from.stopId.toString()));
                 			allMyPlaces.add(
                 					new PlaceStructure()
-                					.withLocationName(getInternationName(from.name))
+                					.withLocationName(getInternationName(from.name,lang))
                 					.withStopPoint(new StopPointStructure()
                 							.withStopPointRef(
                 									new StopPointRefStructure().withValue(from.stopId.toString())
                 									)
-                							.withStopPointName(getInternationName(from.name))
+                							.withStopPointName(getInternationName(from.name,lang))
                 							)
                 					.withGeoPosition(
                 							new LocationStructure()
@@ -550,18 +559,18 @@ public class OJPTripFactory {
                 			start.setGeoPosition(new LocationStructure().withLatitude(BigDecimal.valueOf(from.lat)).withLongitude(BigDecimal.valueOf(from.lon)));
                 		}
                 		
-						start.setLocationName(getInternationName(from.name) );
+						start.setLocationName(getInternationName(from.name,lang) );
                 		
                 		if(to.stopId != null) {
                 			end.setStopPointRef(new StopPointRefStructure().withValue(to.stopId.toString()));
                 			allMyPlaces.add(
                 					new PlaceStructure()
-                					.withLocationName(getInternationName(to.name))
+                					.withLocationName(getInternationName(to.name,lang))
                 					.withStopPoint(new StopPointStructure()
                 							.withStopPointRef(
                 									new StopPointRefStructure().withValue(to.stopId.toString())
                 									)
-                							.withStopPointName(getInternationName(to.name))
+                							.withStopPointName(getInternationName(to.name,lang))
                 							)
                 					.withGeoPosition(
                 							new LocationStructure()
@@ -571,7 +580,7 @@ public class OJPTripFactory {
                 			end.setGeoPosition(new LocationStructure().withLatitude(BigDecimal.valueOf(to.lat)).withLongitude(BigDecimal.valueOf(to.lon)));
                 		}
                 		
-						end.setLocationName(getInternationName(to.name) );
+						end.setLocationName(getInternationName(to.name,lang) );
                 		
 						transferLeg.setLegStart(start);
 						transferLeg.setLegEnd(end );
@@ -596,7 +605,7 @@ public class OJPTripFactory {
                 		
                 		board.setStopPointRef(new StopPointRefStructure().withValue(from.stopId.toString()));
                 		
-						board.setStopPointName(getInternationName(from.name) );
+						board.setStopPointName(getInternationName(from.name,lang) );
 						board.setOrder(BigInteger.valueOf(sequence));
 						
 						
@@ -613,12 +622,12 @@ public class OJPTripFactory {
 						
 						allMyPlaces.add(
             					new PlaceStructure()
-            					.withLocationName(getInternationName(from.name))
+            					.withLocationName(getInternationName(from.name,lang))
             					.withStopPoint(new StopPointStructure()
             							.withStopPointRef(
             									new StopPointRefStructure().withValue(from.stopId.toString())
             									)
-            							.withStopPointName(getInternationName(from.name))
+            							.withStopPointName(getInternationName(from.name,lang))
             							)
             					.withGeoPosition(
             							new LocationStructure()
@@ -634,7 +643,7 @@ public class OJPTripFactory {
 								intermediateStop.setStopPointRef(new StopPointRefStructure().withValue(stop.stopId.toString()));
 								
 								
-		                		intermediateStop.setStopPointName(getInternationName(stop.name));
+		                		intermediateStop.setStopPointName(getInternationName(stop.name,lang));
 		                		
 		                		intermediateStop.setServiceArrival(
 		                				new LegIntermediateStructure.ServiceArrival()
@@ -650,12 +659,12 @@ public class OJPTripFactory {
 								timedLeg.getLegIntermediates().add(intermediateStop );
 								allMyPlaces.add(
 	                					new PlaceStructure()
-	                					.withLocationName(getInternationName(stop.name))
+	                					.withLocationName(getInternationName(stop.name,lang))
 	                					.withStopPoint(new StopPointStructure()
 	                							.withStopPointRef(
 	                									new StopPointRefStructure().withValue(stop.stopId.toString())
 	                									)
-	                							.withStopPointName(getInternationName(stop.name))
+	                							.withStopPointName(getInternationName(stop.name,lang))
 	                							)
 	                					.withGeoPosition(
 	                							new LocationStructure()
@@ -666,7 +675,7 @@ public class OJPTripFactory {
                 		
 						alight.setStopPointRef(new StopPointRefStructure().withValue(to.stopId.toString()));
 						
-                		alight.setStopPointName(getInternationName(to.name) );
+                		alight.setStopPointName(getInternationName(to.name,lang) );
                 		alight.setOrder(BigInteger.valueOf(sequence+1));
                 		
                 		alight.setServiceArrival(new LegAlightStructure.ServiceArrival()
@@ -680,12 +689,12 @@ public class OJPTripFactory {
                 		
                 		allMyPlaces.add(
             					new PlaceStructure()
-            					.withLocationName(getInternationName(to.name))
+            					.withLocationName(getInternationName(to.name,lang))
             					.withStopPoint(new StopPointStructure()
             							.withStopPointRef(
             									new StopPointRefStructure().withValue(to.stopId.toString())
             									)
-            							.withStopPointName(getInternationName(to.name))
+            							.withStopPointName(getInternationName(to.name,lang))
             							)
             					
             					.withGeoPosition(
@@ -717,12 +726,12 @@ public class OJPTripFactory {
 						
 						allMyPlaces.add(
             					new PlaceStructure()
-            					.withLocationName(getInternationName(originTripStop.getName()))
+            					.withLocationName(getInternationName(originTripStop.getName(),lang))
             					.withStopPoint(new StopPointStructure()
             							.withStopPointRef(
             									new StopPointRefStructure().withValue(originTripStop.getId().toString())
             									)
-            							.withStopPointName(getInternationName(originTripStop.getName()))
+            							.withStopPointName(getInternationName(originTripStop.getName(),lang))
             							)
             					.withGeoPosition(
             							new LocationStructure()
@@ -739,29 +748,73 @@ public class OJPTripFactory {
 						
 						allMyPlaces.add(
             					new PlaceStructure()
-            					.withLocationName(getInternationName(destinationTripStop.getName()))
+            					.withLocationName(getInternationName(destinationTripStop.getName(),lang))
             					.withStopPoint(new StopPointStructure()
             							.withStopPointRef(
             									new StopPointRefStructure().withValue(destinationTripStop.getId().toString())
             									)
-            							.withStopPointName(getInternationName(destinationTripStop.getName()))
+            							.withStopPointName(getInternationName(destinationTripStop.getName(),lang))
             							)
             					.withGeoPosition(
             							new LocationStructure()
             							.withLatitude(BigDecimal.valueOf(destinationTripStop.getLat()))
             							.withLongitude(BigDecimal.valueOf(destinationTripStop.getLon()))));
 						
-						dj.getContent().add(factory.createDatedJourneyStructureOriginText(getInternationName(allStops.get(0).getName())));
-						dj.getContent().add(factory.createDatedJourneyStructureDestinationText(getInternationName(allStops.get(allStops.size()-1).getName())));
+						dj.getContent().add(factory.createDatedJourneyStructureOriginText(getInternationName(allStops.get(0).getName(),lang)));
+						dj.getContent().add(factory.createDatedJourneyStructureDestinationText(getInternationName(allStops.get(allStops.size()-1).getName(),lang)));
 						
 						dj.getContent().add(factory.createJourneyRef(new JourneyRefStructure().withValue(leg.tripId.toString())));
-						dj.getContent().add(factory.createDatedJourneyStructurePublishedLineName(getInternationName(leg.route)));
+						dj.getContent().add(factory.createDatedJourneyStructurePublishedLineName(getInternationName(leg.route,lang)));
 						dj.getContent().add(factory.createOperatingDayRef(new OperatingDayRefStructure().withValue(leg.serviceDate)));
 						
 						dj.getContent().add(factory.createDatedJourneyStructureMode(new ModeStructure().withPtMode(convertOJPModes(leg.routeType))));
 						
 						
 						timedLeg.setService(dj );
+						
+						if(includeTrack) {
+							LegTrackStructure track = new LegTrackStructure();
+							
+							TrackSectionStructure tss = new TrackSectionStructure();
+							LinkProjection projection = new LinkProjection();
+							
+							EncodedPolylineBean polyline = leg.legGeometry;
+							List<Coordinate> coordinates = PolylineEncoder.decode(polyline);
+									
+							for(Coordinate coor : coordinates) {
+								LocationStructure point = new LocationStructure();
+								point.setLatitude(BigDecimal.valueOf(coor.y));
+								point.setLongitude(BigDecimal.valueOf(coor.x));
+								projection.getPosition().add(point);
+							}				
+						
+							PlaceRefStructure pointStart = new PlaceRefStructure();
+							PlaceRefStructure pointEnd = new PlaceRefStructure();
+							
+							pointStart.setLocationName(getInternationName(leg.from.name,lang));
+							pointEnd.setLocationName(getInternationName(leg.to.name,lang));
+							
+							if(leg.from.stopId != null) {
+								pointStart.setStopPointRef(new StopPointRefStructure().withValue(leg.from.stopId.toString()));
+							}else {
+								pointStart.setGeoPosition(new LocationStructure().withLatitude(BigDecimal.valueOf(leg.from.lat)).withLongitude(BigDecimal.valueOf(leg.from.lon)));
+	                		}
+							
+							if(leg.to.stopId != null) {
+								pointEnd.setStopPointRef(new StopPointRefStructure().withValue(leg.to.stopId.toString()));
+							}else {
+								pointEnd.setGeoPosition(new LocationStructure().withLatitude(BigDecimal.valueOf(leg.to.lat)).withLongitude(BigDecimal.valueOf(leg.to.lon)));
+	                		}
+							
+							tss.setTrackStart(pointStart);
+							tss.setTrackEnd(pointEnd);
+							
+							
+							tss.setLinkProjection(projection );
+							track.getTrackSection().add(tss );
+							timedLeg.setLegTrack(track );
+							
+						}
                 		
                 		legStructure.setTimedLeg(timedLeg);
                 	}
@@ -813,11 +866,12 @@ public class OJPTripFactory {
 		return trip;
 	}
 	
-	private InternationalTextStructure getInternationName(String text) {
+	private InternationalTextStructure getInternationName(String text, String lang) {
 		InternationalTextStructure name = new InternationalTextStructure();
 		NaturalLanguageStringStructure tmpName = new NaturalLanguageStringStructure();
 		tmpName.setValue(text);
-		name.setText(tmpName );
+		tmpName.setLang(lang);
+		name.setText(tmpName );		
 		return name;
 	}
 	
@@ -850,9 +904,22 @@ public class OJPTripFactory {
         request.to = (GenericLocation) requestMap.get("destinationPlace");
         
         Date date = Date.from(
-        		((LocalDateTime)requestMap.get("departureTime"))
+        		(LocalDateTime.now())
         	      .atZone(router.graph.getTimeZone().toZoneId())
         	      .toInstant());
+        
+        if(requestMap.get("departureTime") != null) {
+        	date = Date.from(
+            		((LocalDateTime)requestMap.get("departureTime"))
+            	      .atZone(router.graph.getTimeZone().toZoneId())
+            	      .toInstant());
+        } else if (requestMap.get("arrivalTime") != null) {
+        	request.arriveBy=true;
+        	date = Date.from(
+            		((LocalDateTime)requestMap.get("arrivalTime"))
+            	      .atZone(router.graph.getTimeZone().toZoneId())
+            	      .toInstant());
+        }
         
         request.setDateTime(date);
         request.numItineraries = (int) requestMap.get("maxResults");

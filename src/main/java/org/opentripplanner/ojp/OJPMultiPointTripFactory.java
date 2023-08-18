@@ -105,6 +105,7 @@ import de.vdv.ojp.TransferModesEnumeration;
 import de.vdv.ojp.TripInfoResponseContextStructure;
 import de.vdv.ojp.TripInfoResultStructure;
 import de.vdv.ojp.TripLegStructure;
+import de.vdv.ojp.TripResponseContextStructure;
 import de.vdv.ojp.TripResultStructure;
 import de.vdv.ojp.TripStructure;
 import de.vdv.ojp.TripViaStructure;
@@ -297,10 +298,24 @@ public class OJPMultiPointTripFactory {
 				}
 			}
 			
-			maxResults = request.getParams().getNumberOfResults().longValue();
-			includeTrack = request.getParams().isIncludeTrackSections();
-			includeAccessibility = request.getParams().isIncludeAccessibility();
-			includeIntermediateStops = request.getParams().isIncludeIntermediateStops();
+			if(request.getParams().getNumberOfResults() != null) {
+				maxResults = request.getParams().getNumberOfResults().longValue();
+			}
+			if(request.getParams().isIncludeTrackSections() != null) {
+				includeTrack = request.getParams().isIncludeTrackSections();
+			}
+			
+			if(request.getParams().getTransferLimit() != null) {
+				transferLimit = request.getParams().getTransferLimit().longValue();
+			}
+			
+			if(request.getParams().isIncludeIntermediateStops() != null) {
+				includeIntermediateStops = request.getParams().isIncludeIntermediateStops();
+			}
+			
+			if(request.getParams().isIncludeAccessibility() != null) {
+				includeAccessibility = request.getParams().isIncludeAccessibility();
+			}
 			
 			
 		}
@@ -454,15 +469,15 @@ public class OJPMultiPointTripFactory {
 				
 				
 				if(originStop != null) {
-					requestMap.put("originPlace",new GenericLocation("",originStop));		
+					requestMap.put("originPlace",new GenericLocation("",originStop.replaceFirst("_", ":")));		
 				}
 				else {
 					requestMap.put("originPlace", toGenericLocation(originLng.doubleValue(), originLat.doubleValue(), originName));
 				}
 				if(destinationStop != null) {
-					requestMap.put("destinatioPlace", new GenericLocation("",destinationStop));
+					requestMap.put("destinationPlace", new GenericLocation("",destinationStop.replaceFirst("_", ":")));
 				}else {
-					requestMap.put("destinatioPlace", toGenericLocation(destinationLng.doubleValue(), destinationLat.doubleValue(), destinationName));
+					requestMap.put("destinationPlace", toGenericLocation(destinationLng.doubleValue(), destinationLat.doubleValue(), destinationName));
 				}
 				
 				
@@ -537,7 +552,7 @@ public class OJPMultiPointTripFactory {
 		            	tripStructure.setEndTime(toLocalDateTime(itinerary.endTime));
 		            	tripStructure.setTransfers(BigInteger.valueOf(itinerary.transfers));
 		            	for(Leg leg : itinerary.legs) {
-		            		String lang = graphIndex.agenciesForFeedId.get(leg.agencyId).values().iterator().next().getLang();
+		            		String lang = graphIndex.getAgencyWithoutFeedId(leg.agencyId).getLang();
 		            		TripLegStructure legStructure = new TripLegStructure();
 		                	tripDistance += leg.distance;
 		                	if(!leg.isTransitLeg()) {
@@ -621,11 +636,14 @@ public class OJPMultiPointTripFactory {
 								board.setOrder(BigInteger.valueOf(sequence));
 								
 								
-								board.setServiceArrival(
-										new LegBoardStructure.ServiceArrival()
-											.withTimetabledTime(toLocalDateTime(from.arrival))
-											.withEstimatedTime(toLocalDateTime(from.arrival).plusSeconds(leg.arrivalDelay))
-										);
+								if(from.arrival!=null) {
+									board.setServiceArrival(
+											new LegBoardStructure.ServiceArrival()
+												.withTimetabledTime(toLocalDateTime(from.arrival))
+												.withEstimatedTime(toLocalDateTime(from.arrival).plusSeconds(leg.arrivalDelay))
+											);
+								}
+								
 								board.setServiceDeparture(
 										new LegBoardStructure.ServiceDeparture()
 											.withTimetabledTime(toLocalDateTime(from.departure))
@@ -694,10 +712,14 @@ public class OJPMultiPointTripFactory {
 		                				.withTimetabledTime(toLocalDateTime(to.arrival))
 		                				.withEstimatedTime(toLocalDateTime(to.arrival).plusSeconds(leg.arrivalDelay))
 		                				);
-		                		alight.setServiceDeparture(new LegAlightStructure.ServiceDeparture()
-		                				.withTimetabledTime(toLocalDateTime(to.departure))
-		                				.withEstimatedTime(toLocalDateTime(to.departure).plusSeconds(leg.departureDelay))
-		                				);
+		                		
+		                		if(to.departure!=null) {
+		                			alight.setServiceDeparture(new LegAlightStructure.ServiceDeparture()
+			                				.withTimetabledTime(toLocalDateTime(to.departure))
+			                				.withEstimatedTime(toLocalDateTime(to.departure).plusSeconds(leg.departureDelay))
+			                				);
+		                		}
+		                		
 		                		
 		                		allMyPlaces.add(
 		            					new PlaceStructure()
@@ -842,7 +864,7 @@ public class OJPMultiPointTripFactory {
 		            }
 		            
 		            allPlaces.getLocation().addAll(new ArrayList<PlaceStructure>(allMyPlaces));
-					trip.getTripResponseContext().setPlaces(allPlaces );
+					trip.setTripResponseContext(new TripResponseContextStructure().withPlaces(allPlaces));
 		           
 		        } catch (Exception e) {
 		            PlannerError error = new PlannerError(request, e);
@@ -854,6 +876,7 @@ public class OJPMultiPointTripFactory {
 					ErrorDescriptionStructure descr = new ErrorDescriptionStructure();
 					descr.setValue(error.message.get());
 					trip.setErrorCondition(errorS.withDescription(descr ));
+					trip.setStatus(false);
 					break;
 		        } catch (Throwable t) {
 		            System.out.printf("Unchecked error while planning path: ", t);
@@ -937,8 +960,8 @@ public class OJPMultiPointTripFactory {
         }
         
         request.setDateTime(date);
-        request.numItineraries = (int) requestMap.get("maxResults");
-        request.maxTransfers = (int) requestMap.get("maxTransfers");
+        request.numItineraries = Long.valueOf((long)requestMap.get("maxResults")).intValue();
+        request.maxTransfers = Long.valueOf((long)requestMap.get("maxTransfers")).intValue();
         
         request.showIntermediateStops = true;//(boolean) requestMap.get("includeIntermediateStops");
         @SuppressWarnings("unchecked")

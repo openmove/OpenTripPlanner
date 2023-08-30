@@ -77,6 +77,7 @@ public class TransportationNetworkCompanyResource {
         @QueryParam("to") String to,
         @QueryParam("company") String company,
         @QueryParam("rideType") String rideType,
+        @QueryParam("distance") String distance,
         @PathParam("routerId") String routerId
     ) {
         LOG.info("Received ride_estimate request");
@@ -88,8 +89,16 @@ public class TransportationNetworkCompanyResource {
             requireParameter(rideType, "rideType");
             Place fromPlace = getPlace(from, "from");
             Place toPlace = getPlace(to, "to");
+            
+            double distanceValue = 0;
+            try {
+            	distanceValue = Double.valueOf(distance).doubleValue();
+            }catch(Exception e) {
+            	e.printStackTrace();
+            }
+            
             TransportationNetworkCompanyService service = getService(routerId);
-            List<RideEstimate> rideEstimates = service.getRideEstimates(company, fromPlace, toPlace);
+            List<RideEstimate> rideEstimates = service.getRideEstimates(company, fromPlace, toPlace, distanceValue);
             if (rideEstimates.size() == 0)
                 throw new Exception("Could not find any ride estimates for the specified company and ridetype");
             response.setRideEstimate(rideEstimates.get(0));

@@ -49,7 +49,8 @@ public class NoApiTransportationNetworkCompanyDataSourceTest {
             1.2,
             3.4,
             1.201,
-            3.401
+            3.401,
+            0
         );
 
         assertEquals(rideEstimates.size(), 1);

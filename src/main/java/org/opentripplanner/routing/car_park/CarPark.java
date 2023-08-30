@@ -62,7 +62,7 @@ public class CarPark implements Serializable {
      */
     @XmlAttribute
     @JsonSerialize
-    public boolean realTimeData = true;
+    public boolean realTimeData = false;
 
     public Geometry geometry;
 

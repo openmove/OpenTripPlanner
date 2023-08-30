@@ -93,13 +93,21 @@ public class ParkAndRide {
         private static final long serialVersionUID = 1L;
 
         public String name;
-
+        public Integer capacity;
+        public Integer free;
+        public Boolean realtime;
         public Double x, y;
 
         public ParkAndRideInfo(ParkAndRideVertex vertex) {
             this.name = vertex.getName();
             this.x = vertex.getX();
             this.y = vertex.getY();
+            if(vertex.getCarPark() != null && vertex.getCarPark().maxCapacity != Integer.MAX_VALUE) {
+            	this.capacity = vertex.getCarPark().maxCapacity;
+                this.free = vertex.getCarPark().spacesAvailable;
+                this.realtime = vertex.getCarPark().realTimeData;
+            }
+            
         }
     }
 

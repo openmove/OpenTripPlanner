@@ -61,10 +61,11 @@ public abstract class TransportationNetworkCompanyDataSource {
         double startLatitude,
         double startLongitude,
         double endLatitude,
-        double endLongitude
+        double endLongitude, 
+        double distance
     ) throws ExecutionException {
         // Truncate lat/lon values in order to reduce the number of API requests made.
-        RideEstimateRequest request = new RideEstimateRequest(startLatitude, startLongitude, endLatitude, endLongitude);
+        RideEstimateRequest request = new RideEstimateRequest(startLatitude, startLongitude, endLatitude, endLongitude, distance);
         return rideEstimateCache.get(request, () -> queryRideEstimates(request));
     }
 

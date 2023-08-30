@@ -144,13 +144,15 @@ public class State implements Cloneable {
         }
         // if allowed to hail a car, initialize state with CAR mode if the first seen StreetEdge allows cars and a TNC
         // stop would be allowed there
-        else if (options.useTransportationNetworkCompany) {
+        else if (options.modes.isTransit() && options.useTransportationNetworkCompany) {
             StreetEdge firstStreetEdge = getFirstSeenStreetEdge(vertex);
             if (firstStreetEdge.getPermission().allows(TraverseMode.CAR) && isTNCStopAllowed(firstStreetEdge)) {
                 boardHailedCar(0);
             } else {
                 stateData.nonTransitMode = TraverseMode.WALK;
             }
+        } else if (options.useTransportationNetworkCompany) {
+        	boardHailedCar(0);
         }
         // Initialize the non-transit mode when a car rental is possible.
         else if (options.allowCarRental) {
@@ -366,7 +368,7 @@ public class State implements Cloneable {
         boolean carRentingOk = false;
         boolean vehicleRentingOk;
         boolean tncOK = !stateData.opt.useTransportationNetworkCompany || (
-            isEverBoarded() &&
+            //isEverBoarded() &&
                 (!isUsingHailedCar() || isTNCStopAllowed())
         );
         if (stateData.opt.arriveBy) {

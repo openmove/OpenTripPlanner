@@ -19,10 +19,12 @@ public class RideEstimateRequest {
 
     public Position startPosition;
     public Position endPosition;
+    public double distance;
 
-    public RideEstimateRequest(double startLatitude, double startLongitude, double endLatitude, double endLongitude) {
+    public RideEstimateRequest(double startLatitude, double startLongitude, double endLatitude, double endLongitude, double distance) {
         this.startPosition = new Position(startLatitude, startLongitude);
         this.endPosition = new Position(endLatitude, endLongitude);
+        this.distance = distance;
     }
 
     @Override

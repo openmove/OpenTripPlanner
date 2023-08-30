@@ -586,7 +586,7 @@ public abstract class GraphPathToTripPlanConverter {
                 tncLegsAreFromOrigin.add(false);
             }
             Place finalFrom = from;
-            priceEstimateTasks.add(() -> service.getRideEstimates(companies, finalFrom, leg.to));
+            priceEstimateTasks.add(() -> service.getRideEstimates(companies, finalFrom, leg.to, leg.distance.doubleValue()));
             arrivalEstimateTasks.add(() -> service.getArrivalTimes(companies, finalFrom));
         }
 

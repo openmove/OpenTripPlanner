@@ -72,6 +72,10 @@ public class QualifiedMode implements Serializable {
                 req.onlyTransitTrips = true;
             }
             req.modes.setWalk(true); // need to walk after dropping the car off
+        } else if(this.mode == TraverseMode.CAR) {
+        	if (this.qualifiers.contains(Qualifier.HAIL)) {
+                req.useTransportationNetworkCompany = true;
+        	}
         }
     }
 

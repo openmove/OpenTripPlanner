@@ -800,7 +800,7 @@ public class StreetSplitter {
                     nonTransitMode = TraverseMode.WALK;
                 }
                 // tnc routing and car rental it would be possible to walk or drive
-                else if (options.useTransportationNetworkCompany || options.allowCarRental) {
+                else if (modes.isTransit() && (options.useTransportationNetworkCompany || options.allowCarRental)) {
                     linkWithSingleMode = false;
                     if(!linkToGraph(
                         closest,

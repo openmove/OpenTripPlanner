@@ -29,6 +29,9 @@ public class NoApiTransportationNetworkCompanyDataSource extends TransportationN
      * Whether or not the TNC service being modeled is wheelchair accessible. Defaults to false.
      */
     private boolean isWheelChairAccessible = false;
+    private String name = "no-api-tnc-service";
+    private String currency = "undefined";
+    private double priceAtKm = 0;
 
     /**
      * Configures the data source. At this point, the only values the config could contain are the following:
@@ -38,6 +41,13 @@ public class NoApiTransportationNetworkCompanyDataSource extends TransportationN
     public NoApiTransportationNetworkCompanyDataSource(JsonNode config) {
         defaultArrivalTimeSeconds = config.path("defaultArrivalTimeSeconds").asInt();
         isWheelChairAccessible = config.path("isWheelChairAccessible").asBoolean();
+        
+        if(config.path("data") != null && config.path("data").isContainerNode()) {
+        	name = config.path("data").get("name").asText();
+        	currency = config.path("data").get("currency").asText();
+        	priceAtKm = config.path("data").get("kmPrice").asDouble();
+        }
+        
     }
 
     /**
@@ -67,8 +77,8 @@ public class NoApiTransportationNetworkCompanyDataSource extends TransportationN
         List arrivalEstimates = new ArrayList();
         arrivalEstimates.add(new ArrivalTime(
             TransportationNetworkCompany.NOAPI,
-            "no-api-tnc-service",
-            "no-api-tnc-service",
+            name,
+            name,
             defaultArrivalTimeSeconds,
             isWheelChairAccessible
 
@@ -84,11 +94,11 @@ public class NoApiTransportationNetworkCompanyDataSource extends TransportationN
         List rideEstimates = new ArrayList();
         rideEstimates.add(new RideEstimate(
             TransportationNetworkCompany.NOAPI,
-            "undefined",
+            currency,
             0,
-            0,
-            0,
-            "no-api-tnc-service",
+            request.distance / 1000 * priceAtKm,
+            request.distance / 1000 * priceAtKm,
+            name,
             isWheelChairAccessible
         ));
         return rideEstimates;

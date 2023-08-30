@@ -102,7 +102,7 @@ public class TransportationNetworkCompanyService implements Serializable {
     public List<RideEstimate> getRideEstimates(
         String companies,
         Place fromPlace,
-        Place toPlace
+        Place toPlace, Double distance
     ) throws ExecutionException, InterruptedException {
         List<RideEstimate> rideEstimates = new ArrayList<>();
 
@@ -129,7 +129,8 @@ public class TransportationNetworkCompanyService implements Serializable {
                     fromPlace.lat,
                     fromPlace.lon,
                     toPlace.lat,
-                    toPlace.lon
+                    toPlace.lon,
+                    distance
                 );
             });
         }

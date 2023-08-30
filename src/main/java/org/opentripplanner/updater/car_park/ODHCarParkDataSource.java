@@ -58,7 +58,7 @@ public class ODHCarParkDataSource extends GenericJsonCarParkDataSource{
             station.geometry = parseGeometry(node.path("geometry"));
             station.y = station.geometry.getCentroid().getY();
             station.x = station.geometry.getCentroid().getX();
-            station.realTimeData = node.path("realtime").asBoolean();
+            station.realTimeData = node.hasNonNull("realtime") ? node.path("realtime").asBoolean() : true;
             station.maxCapacity = node.path("capacity").asInt();
             String stationStatus = node.path("status").asText();
             if (stationStatus.equals("INACTIVE") || stationStatus.equals("TEMPORARILY_CLOSED")) {

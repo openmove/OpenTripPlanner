@@ -63,7 +63,9 @@ public class WalkComfort {
             StreetEdge streetEdge = (StreetEdge) edge;
             if(streetEdge.getOsmTags() == null) continue;
 
-            streetEdge.setWalkComfortScore(gen.computeScore(streetEdge.getOsmTags()));
+            
+            //streetEdge.setWalkComfortScore(gen.computeScore(streetEdge.getOsmTags()));
+            streetEdge.setWalkComfortScore(gen.computeScore(streetEdge));
             edgeCount++;
         }
 

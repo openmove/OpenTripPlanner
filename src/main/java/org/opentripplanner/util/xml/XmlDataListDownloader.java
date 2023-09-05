@@ -2,6 +2,7 @@ package org.opentripplanner.util.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +13,11 @@ import java.util.zip.ZipInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -45,9 +51,14 @@ public class XmlDataListDownloader<T> {
 
     // if true, read attributes of elements, instead of the text of their child elements
     private boolean readAttributes = false;
+    private boolean rawAttributes = false;
 
     public void setReadAttributes(boolean readAttributes) {
         this.readAttributes = readAttributes;
+    }
+    
+    public void setRawAttributes(boolean rawAttributes) {
+        this.rawAttributes = rawAttributes;
     }
 
     public void setPath(String path) {
@@ -129,14 +140,30 @@ public class XmlDataListDownloader<T> {
                     Attr attr = (Attr) attrs.item(j);
                     attributes.put(attr.getNodeName(), attr.getNodeValue());
                 }
-            } else {
+            } 
+            else {
                 // read text of child nodes
                 while (child != null) {
                     if (!(child instanceof Element)) {
                         child = child.getNextSibling();
                         continue;
                     }
-                    attributes.put(child.getNodeName(), child.getTextContent());
+                    
+                    String elementAsString = child.getTextContent();
+                    
+                    if(rawAttributes) {
+                    	try {
+                        	StringWriter writer = new StringWriter();
+                        	Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    						transformer.transform(new DOMSource((Element)child), new StreamResult(writer));
+    						elementAsString = writer.toString();
+    					} catch (TransformerException e) {
+    						// TODO Auto-generated catch block
+    						e.printStackTrace();
+    					}
+                    }
+                    
+                    attributes.put(child.getNodeName(), elementAsString);
                     child = child.getNextSibling();
                 }
             }

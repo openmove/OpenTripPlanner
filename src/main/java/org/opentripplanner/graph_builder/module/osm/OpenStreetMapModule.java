@@ -827,7 +827,9 @@ public class OpenStreetMapModule implements GraphBuilderModule {
             WayProperties wayData, OSMWithTags way) {
 
             Set<T2<Alert, NoteMatcher>> notes = wayPropertySet.getNoteForWay(way);
-            float walkSafetyFactor = walkLTSGenerator.computeScore(way);
+            //float walkSafetyFactor = walkLTSGenerator.computeScore(way);
+            float walkSafetyFactor = walkLTSGenerator.computeScore(street);
+            
             boolean noThruTraffic = way.isThroughTrafficExplicitlyDisallowed();
             // if (noThruTraffic) LOG.info("Way {} does not allow through traffic.", way.getId());
             if (street != null) {

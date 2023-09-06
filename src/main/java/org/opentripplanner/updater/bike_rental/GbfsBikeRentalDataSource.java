@@ -287,10 +287,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         }
         this.setBaseUrl(url);
         
-        String language = jsonNode.path("language").asText();
-        if (language != null && language != "") {
-            this.language = language;
-        }
+        this.language = jsonNode.path("language").asText("en");
         
         this.headerName = jsonNode.path("headerName").asText();
         this.headerValue = jsonNode.path("headerValue").asText();

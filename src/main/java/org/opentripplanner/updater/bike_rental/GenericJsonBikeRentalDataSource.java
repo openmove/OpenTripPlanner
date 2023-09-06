@@ -214,6 +214,11 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
     public void setUrl(String url) {
     	this.url = url;
     }
+    
+    public void setHeader(String headerName, String headerValue) {
+    	this.headerName = headerName;
+    	this.headerValue = headerValue;
+    }
 
     public abstract BikeRentalStation makeStation(JsonNode rentalStationNode, Integer feedUpdateEpochSeconds);
 

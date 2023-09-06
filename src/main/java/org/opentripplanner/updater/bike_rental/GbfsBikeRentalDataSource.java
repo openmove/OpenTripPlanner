@@ -33,6 +33,8 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
     private GbfsFloatingBikeDataSource floatingBikeSource;   // free_bike_status.json declared OPTIONAL by GBFS spec
 
     private String baseUrl;
+    private String headerName;
+    private String headerValue;
     private String networkName;
     // The language id to use in the GBFS.json. Default is "en".
     private String language = "en";
@@ -112,8 +114,11 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         if (rootData == null) {
             // Root GBFS.json file not able to be fetched, set default endpoints.
             stationInformationSource.setUrl(makeGbfsEndpointUrl("station_information.json"));
+            stationInformationSource.setHeader(headerName,headerValue);
             stationStatusSource.setUrl(makeGbfsEndpointUrl("station_status.json"));
+            stationStatusSource.setHeader(headerName,headerValue);
             floatingBikeSource.setUrl(makeGbfsEndpointUrl("free_bike_status.json"));
+            floatingBikeSource.setHeader(headerName,headerValue);
         } else {
             // GBFS.json file is found. Parse data from response and set all of the corresponding URLs as they are
             // available in the response data.
@@ -163,12 +168,15 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
                     break;
                 case "station_information":
                     stationInformationSource.setUrl(feed.url);
+                    stationInformationSource.setHeader(headerName,headerValue);
                     break;
                 case "station_status":
                     stationStatusSource.setUrl(feed.url);
+                    stationStatusSource.setHeader(headerName,headerValue);
                     break;
                 case "free_bike_status":
                     floatingBikeSource.setUrl(feed.url);
+                    floatingBikeSource.setHeader(headerName,headerValue);
                     break;
                 case "system_hours":
                     // FIXME: not supported yet
@@ -214,7 +222,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
     private InputStream fetchFromUrl(String url, boolean fetchRequired) {
         InputStream data = null;
         try {
-            data = getDataFromUrlOrFile(url);
+            data = getDataFromUrlOrFile(url, headerName, headerValue);
         } catch (IOException e) {
             LOG.warn("Failed to fetch from url: {}. Error: {}", url, e);
         }
@@ -278,10 +286,15 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
             throw new IllegalArgumentException("Missing mandatory 'url' configuration.");
         }
         this.setBaseUrl(url);
+        
         String language = jsonNode.path("language").asText();
         if (language != null && language != "") {
             this.language = language;
         }
+        
+        this.headerName = jsonNode.path("headerName").asText();
+        this.headerValue = jsonNode.path("headerValue").asText();
+        
         this.routeAsCar = jsonNode.path("routeAsCar").asBoolean(false);
         if (routeAsCar) {
             LOG.info("This 'bike rental' system will be treated as a car rental system.");

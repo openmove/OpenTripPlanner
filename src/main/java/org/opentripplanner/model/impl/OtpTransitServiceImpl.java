@@ -62,6 +62,8 @@ class OtpTransitServiceImpl implements OtpTransitService {
     private Collection<FlexArea> flexAreas;
 
     private Collection<Zone> zones;
+    
+    private Collection<BookingRule> bookingRules;
 
     // Indexes
     private Map<FeedScopedId, List<String>> tripAgencyIdsByServiceId = null;
@@ -86,7 +88,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
             List<Pathway> pathways, List<Route> routes, List<ShapePoint> shapePoints,
             List<Stop> stops, List<StopTime> stopTimes, List<Transfer> transfers,
             List<Trip> trips, List<FlexArea> flexAreas,
-            List<Zone> zones) {
+            List<Zone> zones, List<BookingRule> bookingRules) {
         this.agencies = nullSafeUnmodifiableList(agencies);
         this.calendarDates = nullSafeUnmodifiableList(calendarDates);
         this.calendars = nullSafeUnmodifiableList(calendars);
@@ -103,6 +105,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.trips = nullSafeUnmodifiableList(trips);
         this.flexAreas = nullSafeUnmodifiableList(flexAreas);
         this.zones = nullSafeUnmodifiableList(zones);
+        this.bookingRules = nullSafeUnmodifiableList(bookingRules);
     }
 
     @Override
@@ -315,4 +318,9 @@ class OtpTransitServiceImpl implements OtpTransitService {
     private static <T> List<T> nullSafeUnmodifiableList(List<T> list) {
         return Collections.unmodifiableList(list == null ? Collections.emptyList() : list);
     }
+
+	@Override
+	public Collection<BookingRule> getAllBookingRules() {
+		return bookingRules;
+	}
 }

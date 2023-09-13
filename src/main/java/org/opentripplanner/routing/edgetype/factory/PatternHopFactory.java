@@ -244,6 +244,8 @@ public class PatternHopFactory {
     private Map<String, Geometry> flexAreasById = new HashMap<>();
 
     private Map<FeedScopedId, Zone> zonesById = new HashMap<>();
+    
+    private Map<FeedScopedId, BookingRule> bookingRulesById = new HashMap<>();
 
     private Map<FeedScopedId, Collection<FareRule>> fareRulesById = new HashMap<>();
 
@@ -294,9 +296,11 @@ public class PatternHopFactory {
         loadFlexAreaMap();
         loadFareRuleMap();
         loadZoneMap();
+        loadBookingRuleMap();
         loadFlexAreasIntoGraph(graph);
         loadFareRulesIntoGraph(graph);
         loadZonesIntoGraph(graph);
+        loadBookingRuleIntoGraph(graph);
 
         /* Assign 0-based numeric codes to all GTFS service IDs. */
         for (FeedScopedId serviceId : transitService.getAllServiceIds()) {
@@ -1023,6 +1027,7 @@ public class PatternHopFactory {
         flexAreasById.clear();
         fareRulesById.clear();
         zonesById.clear();
+        bookingRulesById.clear();
     }
 
     private void loadTransfers(Graph graph) {
@@ -1532,6 +1537,12 @@ public class PatternHopFactory {
             zonesById.put(zone.getId(), zone);
         }
     }
+    
+    private void loadBookingRuleMap() {
+        for (BookingRule br : transitService.getAllBookingRules()) {
+            bookingRulesById.put(br.getId(), br);
+        }
+    }
 
     private void loadFareRuleMap(){
         for(FareRule fareRule : transitService.getAllFareRules()){
@@ -1556,6 +1567,12 @@ public class PatternHopFactory {
     private void loadZonesIntoGraph(Graph graph) {
         for (Map.Entry<FeedScopedId, Zone> entry : zonesById.entrySet()) {
             graph.zonesById.put(entry.getKey(), entry.getValue());
+        }
+    }
+    
+    private void loadBookingRuleIntoGraph(Graph graph) {
+        for (Map.Entry<FeedScopedId, BookingRule> entry : bookingRulesById.entrySet()) {
+            graph.bookingRulesById.put(entry.getKey(), entry.getValue());
         }
     }
 

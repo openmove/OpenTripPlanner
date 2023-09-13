@@ -20,6 +20,9 @@ public final class Agency extends IdentityBean<String> {
     private String fareUrl;
 
     private String brandingUrl;
+    
+   
+    
 
     public Agency() {
     }

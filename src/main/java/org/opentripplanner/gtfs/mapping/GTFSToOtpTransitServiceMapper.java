@@ -49,6 +49,7 @@ public class GTFSToOtpTransitServiceMapper {
 
     private final AreaMapper areaMapper = new AreaMapper();
     private final ZoneMapper zoneMapper = new ZoneMapper();
+    private final BookingRuleMapper bookingRuleMapper = new BookingRuleMapper();
     private final NodeRulesMapper nodeRulesMapper = new NodeRulesMapper();
 
     /**
@@ -79,6 +80,9 @@ public class GTFSToOtpTransitServiceMapper {
         builder.getFlexAreas().addAll(areaMapper.map(data.getAllAreas()));
         builder.getZones().addAll(zoneMapper.map(data.getAllEntitiesForType(Zone.class), stopsMapped, data.getAllFareRules()));
 
+        builder.getBookingRule().addAll(bookingRuleMapper.map(data.getAllBookingRules()));
+        
+        
         return builder.build();
     }
 }

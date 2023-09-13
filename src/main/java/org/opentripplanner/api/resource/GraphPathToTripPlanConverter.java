@@ -19,6 +19,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.opentripplanner.api.model.BoardAlightType;
+import org.opentripplanner.api.model.BookingRuleSummary;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.api.model.Place;
@@ -33,6 +34,8 @@ import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.WheelchairAccess;
 import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.BookingRule;
+import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
@@ -495,7 +498,9 @@ public abstract class GraphPathToTripPlanConverter {
         TimeZone timeZone = leg.startTime.getTimeZone();
         leg.agencyTimeZoneOffset = timeZone.getOffset(leg.startTime.getTimeInMillis());
 
-        addTripFields(leg, states, requestedLocale);
+        
+        
+        addTripFields(leg, states, requestedLocale, graph);
 
         addPlaces(leg, states, edges, showIntermediateStops, requestedLocale);
 
@@ -539,7 +544,22 @@ public abstract class GraphPathToTripPlanConverter {
         return leg;
     }
 
-    /**
+    private static BookingRuleSummary addBookingRule(Graph graph, Trip trip, Agency agency) {
+		// TODO hammer: Tomorrow link trips to bookingRules with correct value in GTFS, not return the first one
+    	for(FeedScopedId f : graph.index.bookingRulesById.keySet()) {
+    		if(f.getAgencyId().equals(trip.getId().getAgencyId())) {
+    			BookingRule bookingRule = graph.index.bookingRulesById.get(f);
+    			if(bookingRule.getUrl() == null) {
+    				bookingRule.setUrl(agency.getFareUrl());
+    			}
+    			return new BookingRuleSummary(bookingRule);
+    		}
+    	}
+		return null;
+	}
+
+
+	/**
      * Adds TNC data to legs with {@link Leg#hailedCar}=true. This makes asynchronous, concurrent requests to the TNC
      * provider's API for price and ETA estimates and associates this data with its respective TNC leg.
      *
@@ -905,8 +925,11 @@ public abstract class GraphPathToTripPlanConverter {
      *
      * @param leg The leg to add the trip-related fields to
      * @param states The states that go with the leg
+     * @param graph 
      */
-    private static void addTripFields(Leg leg, State[] states, Locale requestedLocale) {
+     
+    
+    private static void addTripFields(Leg leg, State[] states, Locale requestedLocale, Graph graph) {
         Trip trip = states[states.length - 1].getBackTrip();
 
         if (trip != null) {
@@ -920,6 +943,11 @@ public abstract class GraphPathToTripPlanConverter {
             leg.agencyUrl = agency.getUrl();
             leg.agencyBrandingUrl = agency.getBrandingUrl();
             leg.agencyFareUrl = agency.getFareUrl();
+            
+            if(graph!= null) {
+            	leg.agencyBookingRule = addBookingRule(graph,trip, agency);
+            }
+            
             leg.headsign = states[1].getBackDirection();
             leg.route = lastOnboardTransitState.getBackEdge().getName(requestedLocale);
             leg.routeColor = route.getColor();

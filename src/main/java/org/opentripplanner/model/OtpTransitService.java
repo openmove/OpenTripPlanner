@@ -60,4 +60,5 @@ public interface OtpTransitService {
     Collection<FlexArea> getAllAreas();
 
     Collection<Zone> getAllZones();
+    Collection<BookingRule> getAllBookingRules();
 }

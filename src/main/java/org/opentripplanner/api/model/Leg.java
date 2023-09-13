@@ -98,6 +98,9 @@ public class Leg {
 
     @JsonSerialize
     public int agencyTimeZoneOffset;
+    
+    @JsonSerialize
+    public BookingRuleSummary agencyBookingRule;
 
     /**
      * For transit leg, the route's (background) color (if one exists). For non-transit legs, null.

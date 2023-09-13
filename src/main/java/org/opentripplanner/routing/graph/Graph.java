@@ -228,6 +228,9 @@ public class Graph implements Serializable {
 
     /** Zones*/
     public Map<FeedScopedId, Zone> zonesById = new HashMap<>();
+    
+    /** Zones*/
+    public Map<FeedScopedId, BookingRule> bookingRulesById = new HashMap<>();
 
     public Graph(Graph basedOn) {
         this();

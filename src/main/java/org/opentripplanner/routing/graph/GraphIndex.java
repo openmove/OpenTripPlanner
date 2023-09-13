@@ -99,6 +99,7 @@ public class GraphIndex {
     public final Map<FeedScopedId, Geometry> flexAreasById = Maps.newHashMap();
     public final Map<FeedScopedId, Collection<FareRule>> fareRulesById = Maps.newHashMap();
     public final Map<FeedScopedId, Zone> zonesById = Maps.newHashMap();
+    public final Map<FeedScopedId, BookingRule> bookingRulesById = Maps.newHashMap();
 
     /* Should eventually be replaced with new serviceId indexes. */
     private final CalendarService calendarService;
@@ -213,6 +214,12 @@ public class GraphIndex {
         if (graph.zonesById != null) {
             for (FeedScopedId id : graph.zonesById.keySet()) {
                 zonesById.put(id, graph.zonesById.get(id));
+            }
+        }
+        
+        if (graph.bookingRulesById != null) {
+            for (FeedScopedId id : graph.bookingRulesById.keySet()) {
+            	bookingRulesById.put(id, graph.bookingRulesById.get(id));
             }
         }
 

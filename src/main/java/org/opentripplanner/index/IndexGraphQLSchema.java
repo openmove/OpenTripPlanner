@@ -3232,6 +3232,38 @@ public class IndexGraphQLSchema {
                             .orElse(null))
                     .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("carParksByBbox")
+                    .description("Get all carParks for the specified graph in a bounding box")
+                    .type(new GraphQLList(carParkType))
+                    .argument(GraphQLArgument.newArgument()
+                        .name("minLat")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("minLon")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("maxLat")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("maxLon")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .dataFetcher(environment -> {
+                    	Envelope envelope = new Envelope(
+                            new Coordinate(environment.getArgument("minLon"), environment.getArgument("minLat")),
+                            new Coordinate(environment.getArgument("maxLon"), environment.getArgument("maxLat")));
+                        return new ArrayList<>(index.graph.getService(CarParkService.class) != null
+                            ? index.graph.getService(CarParkService.class).getCarParks()
+                                .stream()
+                                .filter(c -> envelope.contains(new Coordinate(c.x,c.y)))
+                                .collect(Collectors.toList())
+                            : Collections.EMPTY_LIST);
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("viewer")
                 .description(
                     "Needed until https://github.com/facebook/relay/issues/112 is resolved")

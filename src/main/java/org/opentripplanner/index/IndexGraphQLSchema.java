@@ -3164,6 +3164,38 @@ public class IndexGraphQLSchema {
                             .findFirst()
                             .orElse(null))
                     .build())
+                        .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("bikeRentalStationsByBbox")
+                    .description("Get all bikeRentalStations for the specified graph in a bounding box")
+                    .type(new GraphQLList(bikeRentalStationType))
+                    .argument(GraphQLArgument.newArgument()
+                        .name("minLat")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("minLon")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("maxLat")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .argument(GraphQLArgument.newArgument()
+                        .name("maxLon")
+                        .type(Scalars.GraphQLFloat)
+                        .build())
+                    .dataFetcher(environment -> {
+                    	Envelope envelope = new Envelope(
+                            new Coordinate(environment.getArgument("minLon"), environment.getArgument("minLat")),
+                            new Coordinate(environment.getArgument("maxLon"), environment.getArgument("maxLat")));
+                        return new ArrayList<>(index.graph.getService(BikeRentalStationService.class) != null
+                            ? index.graph.getService(BikeRentalStationService.class).getBikeRentalStations()
+                                .stream()
+                                .filter(station -> envelope.contains(new Coordinate(station.x,station.y)))
+                                .collect(Collectors.toList())
+                            : Collections.EMPTY_LIST);
+                    })
+                    .build())        
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("bikeParks")
                     .description("Get all bike parks")

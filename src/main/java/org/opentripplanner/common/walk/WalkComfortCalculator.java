@@ -112,8 +112,12 @@ public class WalkComfortCalculator {
                 	                String name = xpath.evaluate("/name/text()", documentName);
                 	                String description = xpath.evaluate("/description/text()", documentDescription);
                     		            	
-                    		        hikePath.name = description + " - "+ name;
+                    		        hikePath.name = name;
                 	                
+                    		        if(description != null && !description.equals("")) {
+                    		        	hikePath.name += " - "+description;
+                    		        }
+                    		        
                 	                String level = xpath.evaluate("/ExtendedData/SchemaData/SimpleData[@name=\"difficolta\"]/text()", documentExt);
                 	                
                 	                hikePath.type = level;

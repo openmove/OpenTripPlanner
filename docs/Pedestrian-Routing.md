@@ -152,3 +152,34 @@ Invoking this endpoint will reload the `walk-config.json` file (which must be lo
 ```
 
 Any subsequent routing requests will be performed on the updated graph, but note that the `Graph.obj` file is *not* rewritten on disk; to incorporate any updated walk rules into the graph file it must be rebuilt using the graph builder.
+
+## Preferred walking tracks
+
+You can define weight of hiking paths. The weight of this paths are based on the "track type": 
+
+T = simple track: everyone can do it 
+E = medium: a basic training and equipment is needed
+EE = difficult: a good training and equipment is needed
+EEA = very difficult: dedicated training and specialist equipment is required (i.e. crampons/ropes/...).
+
+These levels are based on CAI hiking tracks classification: 
+https://www.cai.it/wp-content/uploads/2021/12/allegato-circolare-22_2021-Classificazione-difficolt%C3%A0.pdf
+
+The easier track will be much favoured, the harder the less.
+You can define your tracks as polylines or use a KML files. The url protocol can be HTTP(S), S3, GS or local path (FILE).
+
+```JSON
+// walk-config.json
+{
+"streets": [
+    {
+      "url": "<protocol FILE/HTTP(S)/S3/GS>://<your_path>"
+    },
+    {
+      "name": "Favourite Hiking Path",
+      "type": "E",	
+      "path": "<Polyline>"
+    }
+  ]
+}
+```

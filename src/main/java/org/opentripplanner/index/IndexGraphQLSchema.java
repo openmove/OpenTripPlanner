@@ -1448,6 +1448,9 @@ public class IndexGraphQLSchema {
 
                                 ServiceDate serviceDate = ServiceDate.parseString(environment.getArgument("serviceDay"));
                                 List<TripTimeShort> res = index.getStopTimesForTrip(trip,serviceDate);
+                                if(res == null) {
+                                	return null;
+                                }
                                 res.sort(new Comparator<TripTimeShort>() {
                                     @Override
                                     public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
@@ -1459,6 +1462,9 @@ public class IndexGraphQLSchema {
                                 List<TripTimeShort> res = TripTimeShort.fromTripTimes(
                                         index.patternForTrip.get((Trip) environment.getSource()).scheduledTimetable,
                                         (Trip) environment.getSource());
+                                if(res == null) {
+                                	return null;
+                                }
                                 res.sort(new Comparator<TripTimeShort>() {
                                     @Override
                                     public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
@@ -1486,6 +1492,9 @@ public class IndexGraphQLSchema {
 
                             ServiceDate serviceDate = ServiceDate.parseString(environment.getArgument("serviceDay"));
                             List<TripTimeShort> res = index.getStopTimesForTrip(trip,serviceDate);
+                            if(res == null) {
+                            	return null;
+                            }
                             res.sort(new Comparator<TripTimeShort>() {
                                 @Override
                                 public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
@@ -1497,6 +1506,9 @@ public class IndexGraphQLSchema {
                             List<TripTimeShort> res = TripTimeShort.fromTripTimes(
                                     index.patternForTrip.get((Trip) environment.getSource()).scheduledTimetable,
                                     (Trip) environment.getSource());
+                            if(res == null) {
+                            	return null;
+                            }
                             res.sort(new Comparator<TripTimeShort>() {
                                 @Override
                                 public int compare(TripTimeShort tripTimeShort, TripTimeShort t1) {
@@ -2616,6 +2628,11 @@ public class IndexGraphQLSchema {
                         .name("feedId")
                         .type(Scalars.GraphQLString)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("sorting")
+                        .type(Scalars.GraphQLString)
+                        .defaultValue("DEFAULT")
+                        .build())
                 .dataFetcher(environment -> {
                     if (!(environment.getArgument("ids") instanceof List)) {
                         return new ArrayList<>(
@@ -2631,6 +2648,23 @@ public class IndexGraphQLSchema {
                                         }
                                         return true;
                                     })
+                                    .sorted(
+                                    	(r1,r2) -> {
+                                    		if(environment.getArgument("sorting").equals("DEFAULT")) {
+                                    			return r1.getSortOrder() > r2.getSortOrder() ?  1 : -1 ;
+                                        	}else if (environment.getArgument("sorting").equals("SHORT")){
+                                        		return r1.getShortName().compareTo(r2.getShortName());
+                                        	}else if (environment.getArgument("sorting").equals("LONG")){
+                                        		return r1.getLongName().compareTo(r2.getLongName());
+                                        	}
+                                        	else if (environment.getArgument("sorting").equals("ID")){
+                                        		return r1.getId().getId().compareTo(r2.getId().getId());
+                                        	}
+                                        	else {
+                                        		return r1.getSortOrder() > r2.getSortOrder() ?  1 : -1 ;
+                                        	}
+                                    	}
+                                    )
                                     .skip(environment.getArgument("skip"))
                                     .limit(environment.getArgument("limit"))
                                     .collect(Collectors.toList())

@@ -54,6 +54,10 @@ public class VehicleRentalUpdater extends PollingGraphUpdater {
     private StreetSplitter splitter;
 
     private String network;
+    
+    private String headerName;
+    private String headerValue;
+    private String language;
 
     private VehicleRentalStationService service;
 
@@ -77,11 +81,15 @@ public class VehicleRentalUpdater extends PollingGraphUpdater {
     @Override
     protected void configurePolling(Graph graph, JsonNode config) throws Exception {
         network = config.path("network").asText();
+        headerName = config.has("headerName") ? config.path("headerName").asText() : null;
+        headerValue = config.has("headerValue") ? config.path("headerValue").asText() : null;
+        language = config.has("language") ? config.path("language").asText() : "en";
+        
         VehicleRentalDataSource source = null;
         String sourceType = config.path("sourceType").asText();
         if (sourceType != null) {
             if (sourceType.equals("gbfs")) {
-                source = new GenericGbfsService();
+                source = new GenericGbfsService(headerName, headerValue, language);
             }
         }
 

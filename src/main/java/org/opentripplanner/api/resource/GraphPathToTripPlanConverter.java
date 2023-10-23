@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
+import org.onebusaway.gtfs.model.FeedInfo;
 import org.opentripplanner.api.model.BoardAlightType;
 import org.opentripplanner.api.model.BookingRuleSummary;
 import org.opentripplanner.api.model.Itinerary;
@@ -189,6 +190,17 @@ public abstract class GraphPathToTripPlanConverter {
                     LOG.warn("itinerary has no legs");
                     continue;
                 }
+                
+                Graph graph = exemplar.getRoutingContext().graph;
+                for (Leg leg : i.legs) {
+                    if (leg.isTransitLeg()) {
+                    	org.opentripplanner.model.FeedInfo feedInfo = graph.getFeedInfo(leg.routeId.getAgencyId());
+                    	if(feedInfo != null && feedInfo.getVersion() != null) {
+                    		request.rctx.debugOutput.feeds.add(leg.routeId.getAgencyId()+":"+feedInfo.getVersion() );
+                    	}
+                    }
+                }
+                
                 Leg firstLeg = i.legs.get(0);
                 firstLeg.from.orig = plan.from.orig;
                 Leg lastLeg = i.legs.get(i.legs.size() - 1);

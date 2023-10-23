@@ -1,6 +1,10 @@
 package org.opentripplanner.api.resource;
 
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -36,6 +40,7 @@ public class DebugOutput {
     public long renderingTime;
     public long totalTime;
     public boolean timedOut;
+    public Set<String> feeds = new LinkedHashSet<String>();
 
     /**
      * Record the time when we first began calculating a path for this request

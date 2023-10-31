@@ -53,6 +53,7 @@ public class StopNameNormalizer {
     };
 
     public static String normalize (String name) {
+    	if(name == null) name = "Stop";
         // Separate the two halves of an intersection. "AT" sometimes appears too.
         String[] parts = name.toUpperCase().split("[&@]", 2);
         List<String> normalizedParts = Lists.newArrayList();

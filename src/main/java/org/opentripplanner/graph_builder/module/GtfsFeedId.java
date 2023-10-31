@@ -106,8 +106,8 @@ public class GtfsFeedId {
             }
             // 1. Underscore is used as an separator by OBA.
             // 2. Colon is used as an separator in OTP.
-            return id.replaceAll("_", "")
-                    .replaceAll(":", "");
+            return id.replaceAll("_", "%5F")
+                    .replaceAll(":", "%3A");
         }
 
         /**

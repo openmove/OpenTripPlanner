@@ -86,6 +86,9 @@ public class Place {
      */
     @JsonSerialize
     public VertexType vertexType;
+    
+    @JsonSerialize
+    public String vertexSubType;
 
     /**
      * In case the vertex is of type Bike sharing station.

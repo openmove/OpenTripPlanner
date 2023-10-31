@@ -1097,6 +1097,10 @@ public abstract class GraphPathToTripPlanConverter {
         leg.to = makePlace(getLastOnboardTransitState(states), lastVertex, null, lastStop, tripTimes, requestedLocale);
         leg.to.departure = null;
 
+        if(leg.from.vertexSubType != null) {
+        	leg.vehicleType = leg.from.vertexSubType;
+        }
+        
         if (showIntermediateStops) {
             leg.stop = new ArrayList<Place>();
 
@@ -1210,6 +1214,8 @@ public abstract class GraphPathToTripPlanConverter {
         } else if (vertex instanceof VehicleRentalStationVertex) {
             place.networks = ((VehicleRentalStationVertex) vertex).getNetworks();
             place.vertexType = VertexType.VEHICLERENTAL;
+            place.vertexSubType = ((VehicleRentalStationVertex) vertex).getVehicleType();
+            
         } else if (vertex instanceof ParkAndRideVertex) {
             place.carParkId = ((ParkAndRideVertex) vertex).getId();
             place.vertexType = VertexType.CARPARK;

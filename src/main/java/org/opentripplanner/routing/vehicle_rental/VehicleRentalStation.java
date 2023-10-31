@@ -56,6 +56,10 @@ public class VehicleRentalStation extends RentalStation implements Serializable,
     @JsonSerialize
     public boolean isFloatingVehicle = false;
 
+    @XmlAttribute
+    @JsonSerialize
+    public String vehicleType = null;
+    
     /**
      * List of compatible network names. Null (default) to be compatible with all.
      */

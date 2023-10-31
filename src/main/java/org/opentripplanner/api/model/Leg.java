@@ -117,6 +117,8 @@ public class Leg {
     @JsonSerialize
     public Integer routeType = null;
 
+    
+    
     /**
      * For transit legs, the ID of the route.
      * For non-transit legs, null.
@@ -180,6 +182,9 @@ public class Leg {
     @JsonSerialize
     public String routeBrandingUrl = null;
 
+    @JsonSerialize
+    public String vehicleType = null;
+    
     /**
      * The Place where the leg originates.
      */

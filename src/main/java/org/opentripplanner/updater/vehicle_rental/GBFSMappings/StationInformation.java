@@ -30,13 +30,13 @@ public class StationInformation extends BaseGbfsResponse {
 
 
     public enum RentalMethod {
-        KEY,
-        CREDITCARD,
-        PAYPASS,
-        APPLEPAY,
-        ANDROIDPAY,
-        TRANSITCARD,
-        ACCOUNTNUMBER,
-        PHONE
+    	key,
+    	creditcard,
+    	paypass,
+    	applepay,
+    	androidpay,
+    	transitcard,
+    	accountnumber,
+    	phone
     }
 }

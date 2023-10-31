@@ -21,5 +21,8 @@ public class FreeBikeStatus extends BaseGbfsResponse {
         public Boolean is_disabled;
         /** This field is only available starting in GBFS 2.1-RC+ */
         public Long last_reported;
+        /** This fields are available starting in GBFS 2.2+ */
+        public String vehicle_type;
+        public String vehicle_type_id;
     }
 }

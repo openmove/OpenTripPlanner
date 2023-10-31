@@ -18,6 +18,7 @@ import org.opentripplanner.updater.vehicle_rental.GBFSMappings.GbfsResponse;
 import org.opentripplanner.updater.vehicle_rental.GBFSMappings.StationInformation;
 import org.opentripplanner.updater.vehicle_rental.GBFSMappings.StationStatus;
 import org.opentripplanner.updater.vehicle_rental.GBFSMappings.SystemInformation;
+import org.opentripplanner.updater.vehicle_rental.GBFSMappings.VehicleType;
 import org.opentripplanner.util.NonLocalizedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,7 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
     private List<VehicleRentalRegion> regions;
     private List<RentalUpdaterError> errors;
     private SystemInformation.SystemInformationData systemInformationData;
+    private List<VehicleType.VehicleData> vehicleTypes;
     private Date systemStartDate;
 
     public GenericGbfsService() {
@@ -231,6 +233,7 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
         String systemRegionsUrl = null;
         String systemPricingPlansUrl = null;
         String systemAlertsUrl = null;
+        String vehicleTypesUrl = null;
 
         // fetch data from root URL. This file/endpoint is actually not required per the GBFS spec
         // See https://github.com/NABSA/gbfs/blob/master/gbfs.md#files
@@ -253,6 +256,7 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
             systemRegionsUrl = makeGbfsEndpointUrl("system_regions.json");
             systemPricingPlansUrl = makeGbfsEndpointUrl("system_pricing_plans.json");
             systemAlertsUrl = makeGbfsEndpointUrl("system_alerts.json");
+            vehicleTypesUrl = makeGbfsEndpointUrl("vehicle_types.json");
         } else {
             // GBFS.json file is found. Parse data from response and set all of the corresponding URLs as they are
             // available in the response data.
@@ -322,6 +326,9 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
                     case "system_alerts":
                         systemAlertsUrl = feed.url;
                         break;
+                    case "vehicle_types":
+                    	vehicleTypesUrl = feed.url;
+                        break;
                 }
             }
         }
@@ -334,6 +341,9 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
         // get information related to docking stations
         updateDockedStationInformation(stationInformationUrl, stationStatusUrl);
 
+        // get information relative to vehicle types used
+        updateVehicleTypesInformation(vehicleTypesUrl);
+        
         // get information related to free-floating vehicles
         updateFreeFloatingVehicles(freeBikeStatusUrl);
 
@@ -386,6 +396,21 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
             return;
         }
         systemInformationData = data.data;
+    }
+    
+    private void updateVehicleTypesInformation(String url) {
+        if (url == null) {
+            return;
+        }
+        VehicleType data = fetchAndParseFromUrl(url, VehicleType.class, false);
+        if (data == null) {
+            addError(
+                RentalUpdaterError.Severity.SYSTEM_INFORMATION,
+                "failed to fetch or parse required data from vehicle type URL."
+            );
+            return;
+        }
+        vehicleTypes = data.data.vehicle_types;
     }
 
     /**
@@ -517,6 +542,19 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
                     bike.last_reported,
                     floatingBikes.last_updated
                 );
+                
+                if(vehicleTypes != null && bike.vehicle_type_id != null) {
+                	for(VehicleType.VehicleData type : vehicleTypes) {
+                		if(type.vehicle_type_id.equals(bike.vehicle_type_id)) {
+                			floatingVehicle.vehicleType = type.form_factor.toString().toUpperCase();
+                			if(type.form_factor.equals(VehicleType.FormFactor.bicycle) 
+                					&& type.propulsion_type.equals(VehicleType.PropulsionType.electric_assist)) {
+                				floatingVehicle.vehicleType = "E-BIKE";
+                			}
+                			break;
+                		}
+                	}
+                }
 
                 stations.add(floatingVehicle);
             }

@@ -42,6 +42,8 @@ public class VehicleRentalStationVertex extends RentalStationVertex {
     private String address;
 
     private Set<String> networks;
+    
+    private String vehicleType;
 
     public VehicleRentalStationVertex(Graph g, VehicleRentalStation station) {
         //FIXME: raw_name can be null if vehicle station is made from graph updater
@@ -51,6 +53,7 @@ public class VehicleRentalStationVertex extends RentalStationVertex {
         this.setVehiclesAvailable(station.vehiclesAvailable);
         this.setSpacesAvailable(station.spacesAvailable);
         this.setNetworks(station.networks);
+        this.setVehicleType(station.vehicleType);
     }
 
     public int getVehiclesAvailable() {
@@ -84,4 +87,12 @@ public class VehicleRentalStationVertex extends RentalStationVertex {
     public void setId(String id) {
         this.id = id;
     }
+
+	public String getVehicleType() {
+		return vehicleType;
+	}
+
+	public void setVehicleType(String vehicleType) {
+		this.vehicleType = vehicleType;
+	}
 }

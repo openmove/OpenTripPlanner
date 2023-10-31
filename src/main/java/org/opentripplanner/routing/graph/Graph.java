@@ -947,7 +947,7 @@ public class Graph implements Serializable {
     }
 
     public FeedInfo getFeedInfo(String feedId) {
-        return feedInfoForId.get(feedId);
+        return feedInfoForId.get(feedId.replaceAll("%5F", "_").replaceAll("%3A", ":"));
     }
 
     public void addAgency(String feedId, Agency agency) {

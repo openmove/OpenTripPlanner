@@ -101,7 +101,8 @@ public class IndexAPI {
     @GET
     @Path("/feeds/{feedId}")
     public Response getFeedInfo(@PathParam("feedId") String feedId) {
-        FeedInfo feedInfo = index.feedInfoForId.get(feedId);
+    	   	
+        FeedInfo feedInfo = index.feedInfoForId.get(feedId.replaceAll("_", "%5F").replaceAll(":", "%3A"));
         if (feedInfo == null) {
             return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
         } else {
@@ -114,14 +115,14 @@ public class IndexAPI {
    @Path("/agencies/{feedId}")
    public Response getAgencies (@PathParam("feedId") String feedId) {
        return Response.status(Status.OK).entity(
-               index.agenciesForFeedId.getOrDefault(feedId, new HashMap<>()).values()).build();
+               index.agenciesForFeedId.getOrDefault(feedId.replaceAll("_", "%5F").replaceAll(":", "%3A"), new HashMap<>()).values()).build();
    }
 
    /** Return specific agency in the graph, by ID. */
    @GET
    @Path("/agencies/{feedId}/{agencyId}")
    public Response getAgency (@PathParam("feedId") String feedId, @PathParam("agencyId") String agencyId) {
-       for (Agency agency : index.agenciesForFeedId.get(feedId).values()) {
+       for (Agency agency : index.agenciesForFeedId.get(feedId.replaceAll("_", "%5F").replaceAll(":", "%3A")).values()) {
            if (agency.getId().equals(agencyId)) {
                return Response.status(Status.OK).entity(agency).build();
            }
@@ -134,7 +135,7 @@ public class IndexAPI {
     @Path("/agencies/{feedId}/{agencyId}/routes")
     public Response getAgencyRoutes (@PathParam("feedId") String feedId, @PathParam("agencyId") String agencyId) {
         Collection<Route> routes = index.routeForId.values();
-        Agency agency = index.agenciesForFeedId.get(feedId).get(agencyId);
+        Agency agency = index.agenciesForFeedId.get(feedId.replaceAll("_", "%5F").replaceAll(":", "%3A")).get(agencyId);
         if (agency == null) return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
         Collection<Route> agencyRoutes = new ArrayList<>();
         for (Route route: routes) {

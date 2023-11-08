@@ -103,7 +103,8 @@ public class OTPApplication extends Application {
             CorsFilter.class,
             MultiPartFeature.class,
             WalkComfort.class,
-            ParkAndRide.class
+            ParkAndRide.class,
+            NetexParser.class
         ));
         
         if (this.secure) {

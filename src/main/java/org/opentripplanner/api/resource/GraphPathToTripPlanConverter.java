@@ -1214,7 +1214,7 @@ public abstract class GraphPathToTripPlanConverter {
         } else if (vertex instanceof VehicleRentalStationVertex) {
             place.networks = ((VehicleRentalStationVertex) vertex).getNetworks();
             place.vertexType = VertexType.VEHICLERENTAL;
-            place.vertexSubType = ((VehicleRentalStationVertex) vertex).getVehicleType();
+            place.vertexSubType = ((VehicleRentalStationVertex) vertex).getVehicleType() + '_' + ((VehicleRentalStationVertex) vertex).getVehiclePropulsionType() ;
             
         } else if (vertex instanceof ParkAndRideVertex) {
             place.carParkId = ((ParkAndRideVertex) vertex).getId();

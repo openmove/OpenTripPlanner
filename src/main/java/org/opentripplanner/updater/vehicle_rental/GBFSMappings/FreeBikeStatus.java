@@ -19,10 +19,14 @@ public class FreeBikeStatus extends BaseGbfsResponse {
         public Double lon;
         public Boolean is_reserved;
         public Boolean is_disabled;
-        /** This field is only available starting in GBFS 2.1-RC+ */
+        /** This fields are available starting in GBFS 2.1+ */
         public Long last_reported;
+        public String station_id;
         /** This fields are available starting in GBFS 2.2+ */
         public String vehicle_type;
         public String vehicle_type_id;
+        /** This fields are available starting in GBFS 2.3+ */
+        public Float current_fuel_percent; 
+        
     }
 }

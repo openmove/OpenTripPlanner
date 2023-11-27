@@ -538,6 +538,8 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
                 floatingVehicle.networks = Sets.newHashSet(networkName);
                 floatingVehicle.spacesAvailable = 0;
                 floatingVehicle.vehiclesAvailable = 1;
+                floatingVehicle.fuelPercentage = bike.current_fuel_percent == null ? -1 : bike.current_fuel_percent;
+                floatingVehicle.parentStationId = bike.station_id;
                 floatingVehicle.lastReportedEpochSeconds = RentalStation.getLastReportedTimeUsingFallbacks(
                     bike.last_reported,
                     floatingBikes.last_updated
@@ -547,10 +549,11 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
                 	for(VehicleType.VehicleData type : vehicleTypes) {
                 		if(type.vehicle_type_id.equals(bike.vehicle_type_id)) {
                 			floatingVehicle.vehicleType = type.form_factor.toString().toUpperCase();
-                			if(type.form_factor.equals(VehicleType.FormFactor.bicycle) 
-                					&& type.propulsion_type.equals(VehicleType.PropulsionType.electric_assist)) {
-                				floatingVehicle.vehicleType = "E-BIKE";
-                			}
+                			floatingVehicle.propulsionType = type.propulsion_type.toString().toUpperCase();
+//                			if(type.form_factor.equals(VehicleType.FormFactor.bicycle) 
+//                					&& type.propulsion_type.equals(VehicleType.PropulsionType.electric_assist)) {
+//                				floatingVehicle.vehicleType = "E-BIKE";
+//                			}
                 			break;
                 		}
                 	}

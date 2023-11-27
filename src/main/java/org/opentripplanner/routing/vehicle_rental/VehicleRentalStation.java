@@ -21,6 +21,8 @@ import org.opentripplanner.util.ResourceBundleSingleton;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -55,10 +57,20 @@ public class VehicleRentalStation extends RentalStation implements Serializable,
     @XmlAttribute
     @JsonSerialize
     public boolean isFloatingVehicle = false;
+    
+    @XmlAttribute
+    @JsonSerialize
+    public boolean isVirtual = false;
 
     @XmlAttribute
     @JsonSerialize
     public String vehicleType = null;
+    
+    public Float fuelPercentage = (float) -1;
+    public String parentStationId = null;
+    public String propulsionType = null;
+    
+    public List<VehicleRentalStation> vehicles = new ArrayList<>();
     
     /**
      * List of compatible network names. Null (default) to be compatible with all.

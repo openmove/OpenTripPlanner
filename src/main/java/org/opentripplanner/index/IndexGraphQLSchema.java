@@ -71,6 +71,9 @@ import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.graph.GraphIndex.StopAndDistance;
 import org.opentripplanner.routing.trippattern.RealTimeState;
+import org.opentripplanner.routing.vehicle_rental.VehicleParentRentalStation;
+import org.opentripplanner.routing.vehicle_rental.VehicleRentalStation;
+import org.opentripplanner.routing.vehicle_rental.VehicleRentalStationService;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.opentripplanner.util.PolylineEncoder;
@@ -267,6 +270,10 @@ public class IndexGraphQLSchema {
     public GraphQLOutputType agencyType = new GraphQLTypeReference("Agency");
 
     public GraphQLOutputType bikeRentalStationType = new GraphQLTypeReference("BikeRentalStation");
+    
+    public GraphQLOutputType vehicleRentalStationType = new GraphQLTypeReference("VehicleRentalStation");
+    
+    public GraphQLOutputType vehicleRentalType = new GraphQLTypeReference("VehicleRentalType");
 
     public GraphQLOutputType bikeParkType = new GraphQLTypeReference("BikePark");
 
@@ -322,6 +329,12 @@ public class IndexGraphQLSchema {
             }
             if (o instanceof BikeRentalStation) {
                 return (GraphQLObjectType) bikeRentalStationType;
+            }
+            if (o instanceof VehicleParentRentalStation) {
+                return (GraphQLObjectType) vehicleRentalStationType;
+            }
+            if (o instanceof VehicleRentalStation) {
+                return (GraphQLObjectType) vehicleRentalType;
             }
             if (o instanceof BikePark) {
                 return (GraphQLObjectType) bikeParkType;
@@ -1957,6 +1970,138 @@ public class IndexGraphQLSchema {
                         .dataFetcher(environment -> ((BikeRentalStation) environment.getSource()).y)
                         .build())
                 .build();
+        
+        
+        vehicleRentalType = GraphQLObjectType.newObject()
+                .name("VehicleRental")
+                .description("A vehicle to rent.")
+                .withInterface(nodeInterface)
+                .withInterface(placeInterface)
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("id")
+                        .description("Global object ID provided by Relay. This value can be used to refetch this object using **node** query.")
+                        .type(new GraphQLNonNull(Scalars.GraphQLID))
+                        .dataFetcher(environment -> relay
+                                .toGlobalId(bikeParkType.getName(), ((VehicleRentalStation) environment.getSource()).id))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("vehicleId")
+                        .description("ID of the vehicle")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((VehicleRentalStation) environment.getSource()).id)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("fuelPercentage")
+                        .description("fuel/battery percentage (0 - 1)")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((VehicleRentalStation) environment.getSource()).fuelPercentage)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("vehicleType")
+                        .description("vehicle type")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((VehicleRentalStation) environment.getSource()).vehicleType)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("propulsionType")
+                        .description("propulsion type")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((VehicleRentalStation) environment.getSource()).propulsionType)
+                        .build())
+                
+                .build(); 
+        
+        
+        vehicleRentalStationType = GraphQLObjectType.newObject()
+                .name("VehicleRentalStation")
+                .description("Vehicle rental station represents a location where users can rent bicycles/e-scooters/other for a fee.")
+                .withInterface(nodeInterface)
+                .withInterface(placeInterface)
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("id")
+                        .description("Global object ID provided by Relay. This value can be used to refetch this object using **node** query.")
+                        .type(new GraphQLNonNull(Scalars.GraphQLID))
+                        .dataFetcher(environment -> relay
+                                .toGlobalId(vehicleRentalStationType.getName(), ((VehicleParentRentalStation) environment.getSource()).id))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("stationId")
+                        .description("ID of the bike rental station")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).id)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("name")
+                        .description("Name of the vehicle rental station")
+                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).getName())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("vehiclesAvailable")
+                        .description("Number of bikes currently available on the rental station.")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).vehiclesAvailable)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("spacesAvailable")
+                        .description("Number of free spaces currently available on the rental station.  \n Note that this value being 0 does not necessarily indicate that bikes cannot be returned to this station, as it might be possible to leave the bike in the vicinity of the rental station, even if the bike racks don't have any spaces available (see field `allowDropoff`).")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).spacesAvailable)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("capacity")
+                        .description("Nominal capacity (number of racks) of the rental station.")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).spacesAvailable + ((VehicleParentRentalStation) environment.getSource()).vehiclesAvailable)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("vehiclesType")
+                        .description("Vehicle type of this rental station, e.g. \"Station on\"")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).vehicleType)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("allowDropoff")
+                        .description("If true, bikes can be returned to this station.")
+                        .type(Scalars.GraphQLBoolean)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).allowDropoff)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("allowPickup")
+                        .description("If true, bikes can be pick up at this station.")
+                        .type(Scalars.GraphQLBoolean)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).allowPickup)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("isVirtual")
+                        .description("If true, station is not a physical place")
+                        .type(Scalars.GraphQLBoolean)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).isVirtual)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("vehicles")
+                        .description("List of vehicles in this stations")
+                        .type(new GraphQLList(vehicleRentalType))
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).vehicles)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("networks")
+                        .type(new GraphQLList(Scalars.GraphQLString))
+                        .dataFetcher(environment -> new ArrayList<>(((VehicleParentRentalStation) environment.getSource()).networks))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("lon")
+                        .description("Longitude of the vehicle rental station (WGS 84)")
+                        .type(Scalars.GraphQLFloat)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).x)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("lat")
+                        .description("Latitude of the vehicle rental station (WGS 84)")
+                        .type(Scalars.GraphQLFloat)
+                        .dataFetcher(environment -> ((VehicleParentRentalStation) environment.getSource()).y)
+                        .build())
+                .build();
 
         bikeParkType = GraphQLObjectType.newObject()
                 .name("BikePark")
@@ -3198,7 +3343,7 @@ public class IndexGraphQLSchema {
                             .findFirst()
                             .orElse(null))
                     .build())
-                        .field(GraphQLFieldDefinition.newFieldDefinition()
+             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("bikeRentalStationsByBbox")
                     .description("Get all bikeRentalStations for the specified graph in a bounding box")
                     .type(new GraphQLList(bikeRentalStationType))
@@ -3229,7 +3374,169 @@ public class IndexGraphQLSchema {
                                 .collect(Collectors.toList())
                             : Collections.EMPTY_LIST);
                     })
-                    .build())        
+                    .build())      
+             .field(GraphQLFieldDefinition.newFieldDefinition()
+                     .name("vehicleRentalStations")
+                     .description("Get all vehicle rental stations")
+                     .type(new GraphQLList(vehicleRentalStationType))
+                     .argument(GraphQLArgument.newArgument()
+                             .name("ids")
+                             .description("Return vehicle rental stations with these ids.  \n **Note:** if an id is invalid (or the bike rental station service is unavailable) the returned list will contain `null` values.")
+                             .type(new GraphQLList(Scalars.GraphQLString))
+                             .build())
+                     .dataFetcher(environment -> {
+                    	 Map<String, VehicleRentalStation> rentalStationsTmp =
+                                 index.graph.getService(VehicleRentalStationService.class) != null
+                                         ? index.graph.getService(VehicleRentalStationService.class).getVehicleRentalStations()
+                                         .stream()
+                                         .collect(Collectors.toMap(station -> station.id, station ->  station))
+                                         : new HashMap<>();;
+                         
+                    	 
+                    	 if(rentalStationsTmp.isEmpty()) {
+                    		 return null;
+                    	 }
+                    	 
+                         Map<String, VehicleParentRentalStation> rentalStations = new HashMap<>();
+                         Map<String, List<VehicleRentalStation>> rentalStationsDictionary = new HashMap<>();
+
+                         for(VehicleRentalStation v : rentalStationsTmp.values()) {
+                        	 System.out.println(v.toString());
+                        	 if(v.parentStationId != null) {
+                        		 
+                        		 if(rentalStationsDictionary.containsKey(v.parentStationId )) {
+                        			 rentalStationsDictionary.get(v.parentStationId).add(v);
+                        		 }else {
+                        			 List<VehicleRentalStation> list = new ArrayList<>();
+                        			 list.add(v);
+                        			 rentalStationsDictionary.put(v.parentStationId, list);
+                        		 }
+                        	 }else {
+                        		 rentalStations.put(v.id, new VehicleParentRentalStation(v));
+                        	 }
+                         }
+                         for(String stationKey : rentalStations.keySet()) {
+                        	 rentalStations.get(stationKey).vehicles = rentalStationsDictionary.get(stationKey);
+                         }
+                    	 
+                         
+                         if ((environment.getArgument("ids") instanceof List)) {
+                             return ((List<String>) environment.getArgument("ids"))
+                                     .stream()
+                                     .map(rentalStations::get)
+                                     .collect(Collectors.toList());
+                         }
+                         System.out.println("5");
+                         return rentalStations.values();
+                     })
+                     .build())
+             .field(GraphQLFieldDefinition.newFieldDefinition()
+                     .name("vehicleRentalStation")
+                     .description("Get a single bike rental station based on its ID, i.e. value of field `stationId`")
+                     .type(vehicleRentalStationType)
+                     .argument(GraphQLArgument.newArgument()
+                             .name("id")
+                             .type(new GraphQLNonNull(Scalars.GraphQLString))
+                             .build())
+                     .dataFetcher(environment -> {
+                    	 
+                    	 
+                    	 Map<String, VehicleRentalStation> rentalStationsTmp =
+                                 index.graph.getService(VehicleRentalStationService.class) != null
+                                         ? index.graph.getService(VehicleRentalStationService.class).getVehicleRentalStations()
+                                         .stream()
+                                         .collect(Collectors.toMap(station -> station.id, station ->  station))
+                                         : Collections.EMPTY_MAP;
+                         
+                         Map<String, VehicleParentRentalStation> rentalStations = Collections.EMPTY_MAP;
+                         Map<String, List<VehicleRentalStation>> rentalStationsDictionary = Collections.EMPTY_MAP;
+                         for(VehicleRentalStation v : rentalStationsTmp.values()) {
+                        	 if(v.parentStationId != null) {
+                        		 if(rentalStationsTmp.containsKey(v.parentStationId )) {
+                        			 rentalStationsDictionary.get(v.parentStationId).add(v);
+                        		 }else {
+                        			 List<VehicleRentalStation> list = new ArrayList<>();
+                        			 list.add(v);
+                        			 rentalStationsDictionary.put(v.parentStationId, list);
+                        		 }
+                        	 }else {
+                        		 rentalStations.put(v.id, (VehicleParentRentalStation)v);
+                        	 }
+                         }
+                         
+                         for(VehicleParentRentalStation station : rentalStations.values()) {
+                        	 station.vehicles = rentalStationsDictionary.get(station.id);
+                         }
+                    	 
+                    	 return rentalStations.values()
+                             .stream()
+                             .filter(v -> v.id.equals(environment.getArgument("id")))
+                             .findFirst()
+                             .orElse(null);
+                     	}
+                     )
+                     
+                     .build())
+              .field(GraphQLFieldDefinition.newFieldDefinition()
+                     .name("vehicleRentalStationsByBbox")
+                     .description("Get all vehicleRentalStations for the specified graph in a bounding box")
+                     .type(new GraphQLList(vehicleRentalStationType))
+                     .argument(GraphQLArgument.newArgument()
+                         .name("minLat")
+                         .type(Scalars.GraphQLFloat)
+                         .build())
+                     .argument(GraphQLArgument.newArgument()
+                         .name("minLon")
+                         .type(Scalars.GraphQLFloat)
+                         .build())
+                     .argument(GraphQLArgument.newArgument()
+                         .name("maxLat")
+                         .type(Scalars.GraphQLFloat)
+                         .build())
+                     .argument(GraphQLArgument.newArgument()
+                         .name("maxLon")
+                         .type(Scalars.GraphQLFloat)
+                         .build())
+                     .dataFetcher(environment -> {
+                     	Envelope envelope = new Envelope(
+                             new Coordinate(environment.getArgument("minLon"), environment.getArgument("minLat")),
+                             new Coordinate(environment.getArgument("maxLon"), environment.getArgument("maxLat")));
+                     	
+                     	
+                     	Map<String, VehicleRentalStation> rentalStationsTmp =
+                                index.graph.getService(VehicleRentalStationService.class) != null
+                                        ? index.graph.getService(VehicleRentalStationService.class).getVehicleRentalStations()
+                                        .stream()
+                                        .collect(Collectors.toMap(station -> station.id, station ->  station))
+                                        : Collections.EMPTY_MAP;
+                        
+                        Map<String, VehicleParentRentalStation> rentalStations = Collections.EMPTY_MAP;
+                        Map<String, List<VehicleRentalStation>> rentalStationsDictionary = Collections.EMPTY_MAP;
+                        for(VehicleRentalStation v : rentalStationsTmp.values()) {
+                       	 if(v.parentStationId != null) {
+                       		 if(rentalStationsTmp.containsKey(v.parentStationId )) {
+                       			 rentalStationsDictionary.get(v.parentStationId).add(v);
+                       		 }else {
+                       			 List<VehicleRentalStation> list = new ArrayList<>();
+                       			 list.add(v);
+                       			 rentalStationsDictionary.put(v.parentStationId, list);
+                       		 }
+                       	 }else {
+                       		 rentalStations.put(v.id, (VehicleParentRentalStation)v);
+                       	 }
+                        }
+                        
+                        for(VehicleParentRentalStation station : rentalStations.values()) {
+                       	 station.vehicles = rentalStationsDictionary.get(station.id);
+                        }
+                   	 
+                   	                     	
+                         return rentalStations.values()
+                                 .stream()
+                                 .filter(station -> envelope.contains(new Coordinate(station.x,station.y)))
+                                 .collect(Collectors.toList());
+                     })
+                     .build())   
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("bikeParks")
                     .description("Get all bike parks")

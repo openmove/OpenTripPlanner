@@ -3446,13 +3446,21 @@ public class IndexGraphQLSchema {
                                          ? index.graph.getService(VehicleRentalStationService.class).getVehicleRentalStations()
                                          .stream()
                                          .collect(Collectors.toMap(station -> station.id, station ->  station))
-                                         : Collections.EMPTY_MAP;
+                                         : new HashMap<>();;
                          
-                         Map<String, VehicleParentRentalStation> rentalStations = Collections.EMPTY_MAP;
-                         Map<String, List<VehicleRentalStation>> rentalStationsDictionary = Collections.EMPTY_MAP;
+                    	 
+                    	 if(rentalStationsTmp.isEmpty()) {
+                    		 return null;
+                    	 }
+                    	 
+                         Map<String, VehicleParentRentalStation> rentalStations = new HashMap<>();
+                         Map<String, List<VehicleRentalStation>> rentalStationsDictionary = new HashMap<>();
+
                          for(VehicleRentalStation v : rentalStationsTmp.values()) {
+                        	 System.out.println(v.toString());
                         	 if(v.parentStationId != null) {
-                        		 if(rentalStationsTmp.containsKey(v.parentStationId )) {
+                        		 
+                        		 if(rentalStationsDictionary.containsKey(v.parentStationId )) {
                         			 rentalStationsDictionary.get(v.parentStationId).add(v);
                         		 }else {
                         			 List<VehicleRentalStation> list = new ArrayList<>();
@@ -3460,12 +3468,11 @@ public class IndexGraphQLSchema {
                         			 rentalStationsDictionary.put(v.parentStationId, list);
                         		 }
                         	 }else {
-                        		 rentalStations.put(v.id, (VehicleParentRentalStation)v);
+                        		 rentalStations.put(v.id, new VehicleParentRentalStation(v));
                         	 }
                          }
-                         
-                         for(VehicleParentRentalStation station : rentalStations.values()) {
-                        	 station.vehicles = rentalStationsDictionary.get(station.id);
+                         for(String stationKey : rentalStations.keySet()) {
+                        	 rentalStations.get(stationKey).vehicles = rentalStationsDictionary.get(stationKey);
                          }
                     	 
                     	 return rentalStations.values()
@@ -3503,18 +3510,26 @@ public class IndexGraphQLSchema {
                              new Coordinate(environment.getArgument("maxLon"), environment.getArgument("maxLat")));
                      	
                      	
-                     	Map<String, VehicleRentalStation> rentalStationsTmp =
-                                index.graph.getService(VehicleRentalStationService.class) != null
-                                        ? index.graph.getService(VehicleRentalStationService.class).getVehicleRentalStations()
-                                        .stream()
-                                        .collect(Collectors.toMap(station -> station.id, station ->  station))
-                                        : Collections.EMPTY_MAP;
-                        
-                        Map<String, VehicleParentRentalStation> rentalStations = Collections.EMPTY_MAP;
-                        Map<String, List<VehicleRentalStation>> rentalStationsDictionary = Collections.EMPTY_MAP;
+                 		Map<String, VehicleRentalStation> rentalStationsTmp =
+                            index.graph.getService(VehicleRentalStationService.class) != null
+                                    ? index.graph.getService(VehicleRentalStationService.class).getVehicleRentalStations()
+                                    .stream()
+                                    .collect(Collectors.toMap(station -> station.id, station ->  station))
+                                    : new HashMap<>();;
+                    
+               	 
+	                   	 if(rentalStationsTmp.isEmpty()) {
+	                   		 return null;
+	                   	 }
+	                   	 
+                        Map<String, VehicleParentRentalStation> rentalStations = new HashMap<>();
+                        Map<String, List<VehicleRentalStation>> rentalStationsDictionary = new HashMap<>();
+
                         for(VehicleRentalStation v : rentalStationsTmp.values()) {
+                       	 System.out.println(v.toString());
                        	 if(v.parentStationId != null) {
-                       		 if(rentalStationsTmp.containsKey(v.parentStationId )) {
+                       		 
+                       		 if(rentalStationsDictionary.containsKey(v.parentStationId )) {
                        			 rentalStationsDictionary.get(v.parentStationId).add(v);
                        		 }else {
                        			 List<VehicleRentalStation> list = new ArrayList<>();
@@ -3522,12 +3537,11 @@ public class IndexGraphQLSchema {
                        			 rentalStationsDictionary.put(v.parentStationId, list);
                        		 }
                        	 }else {
-                       		 rentalStations.put(v.id, (VehicleParentRentalStation)v);
+                       		 rentalStations.put(v.id, new VehicleParentRentalStation(v));
                        	 }
                         }
-                        
-                        for(VehicleParentRentalStation station : rentalStations.values()) {
-                       	 station.vehicles = rentalStationsDictionary.get(station.id);
+                        for(String stationKey : rentalStations.keySet()) {
+                       	 rentalStations.get(stationKey).vehicles = rentalStationsDictionary.get(stationKey);
                         }
                    	 
                    	                     	

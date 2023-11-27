@@ -538,7 +538,17 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
                 floatingVehicle.networks = Sets.newHashSet(networkName);
                 floatingVehicle.spacesAvailable = 0;
                 floatingVehicle.vehiclesAvailable = 1;
-                floatingVehicle.fuelPercentage = bike.current_fuel_percent == null ? -1 : bike.current_fuel_percent;
+                
+                float fuelPercentuage = -1;
+                if(bike.current_fuel_percent != null) {
+                	if(bike.current_fuel_percent > 1) {
+                		fuelPercentuage = bike.current_fuel_percent / 100;
+                	}else {
+                		fuelPercentuage = bike.current_fuel_percent;
+                	}
+                }
+                
+                floatingVehicle.fuelPercentage = fuelPercentuage;
                 floatingVehicle.parentStationId = bike.station_id;
                 floatingVehicle.lastReportedEpochSeconds = RentalStation.getLastReportedTimeUsingFallbacks(
                     bike.last_reported,

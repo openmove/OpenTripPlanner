@@ -1993,7 +1993,7 @@ public class IndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("fuelPercentage")
                         .description("fuel/battery percentage (0 - 1)")
-                        .type(Scalars.GraphQLString)
+                        .type(Scalars.GraphQLFloat)
                         .dataFetcher(environment -> ((VehicleRentalStation) environment.getSource()).fuelPercentage)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()

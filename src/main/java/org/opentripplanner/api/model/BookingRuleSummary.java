@@ -15,8 +15,8 @@ public class BookingRuleSummary {
 	public String phoneNumber;
 
     public BookingRuleSummary (BookingRule br) {
-        if (br.getType() != 99) {
-            this.infoUrl = br.getInfoUrl();
+    	this.infoUrl = br.getInfoUrl();
+        if (br.getType() != 99) {            
             this.url = br.getUrl();
             this.message = br.getMessage();
             this.phoneNumber = br.getPhoneNumber();

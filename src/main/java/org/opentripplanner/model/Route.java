@@ -37,6 +37,13 @@ public final class Route extends IdentityBean<FeedScopedId> {
     private String brandingUrl;
 
     private int eligibilityRestricted = MISSING_VALUE;
+    
+    /**
+     * 0 = unknown / unspecified, 1 = allowed, 2 = NOT allowed
+     */
+    private int regionalFareCardAccepted = 0;
+    
+    private BookingRule bookingRule;
 
     public FeedScopedId getId() {
         return id;
@@ -171,4 +178,21 @@ public final class Route extends IdentityBean<FeedScopedId> {
     public String toString() {
         return "<Route " + id + " " + shortName + ">";
     }
+
+	public void setRegionalFareCardAccepted(int regionalFareCardAccepted) {
+		this.regionalFareCardAccepted = regionalFareCardAccepted; 
+	}
+	
+	public int getRegionalFareCardAccepted() {
+		return this.regionalFareCardAccepted;
+	}
+
+	public void setBookingRule(BookingRule bookingRule) {
+		this.bookingRule = bookingRule;
+	}
+	
+	public BookingRule getBookingRule() {
+		return this.bookingRule;
+	}
+
 }

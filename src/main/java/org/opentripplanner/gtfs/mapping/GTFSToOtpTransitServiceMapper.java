@@ -30,8 +30,10 @@ public class GTFSToOtpTransitServiceMapper {
     private final ServiceCalendarMapper serviceCalendarMapper = new ServiceCalendarMapper();
 
     private final PathwayMapper pathwayMapper = new PathwayMapper(stopMapper);
+    
+    private final BookingRuleMapper bookingRuleMapper = new BookingRuleMapper();
 
-    private final RouteMapper routeMapper = new RouteMapper(agencyMapper);
+    private final RouteMapper routeMapper = new RouteMapper(agencyMapper,bookingRuleMapper);
 
     private final TripMapper tripMapper = new TripMapper(routeMapper);
 
@@ -49,7 +51,7 @@ public class GTFSToOtpTransitServiceMapper {
 
     private final AreaMapper areaMapper = new AreaMapper();
     private final ZoneMapper zoneMapper = new ZoneMapper();
-    private final BookingRuleMapper bookingRuleMapper = new BookingRuleMapper();
+    
     private final NodeRulesMapper nodeRulesMapper = new NodeRulesMapper();
 
     /**

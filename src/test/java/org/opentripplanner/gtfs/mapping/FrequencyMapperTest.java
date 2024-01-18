@@ -45,7 +45,7 @@ public class FrequencyMapperTest {
     }
 
     private FrequencyMapper subject = new FrequencyMapper(
-            new TripMapper(new RouteMapper(new AgencyMapper())));
+            new TripMapper(new RouteMapper(new AgencyMapper(), new BookingRuleMapper())));
 
     @Test
     public void testMapCollection() throws Exception {

@@ -62,7 +62,7 @@ public class RouteMapperTest {
         ROUTE.setRouteBikesAllowed(ROUTE_BIKES_ALLOWED);
     }
 
-    private RouteMapper subject = new RouteMapper(new AgencyMapper());
+    private RouteMapper subject = new RouteMapper(new AgencyMapper(), new BookingRuleMapper());
 
     @Test
     public void testMapCollection() throws Exception {

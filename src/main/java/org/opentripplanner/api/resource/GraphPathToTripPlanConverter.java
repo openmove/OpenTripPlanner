@@ -556,16 +556,9 @@ public abstract class GraphPathToTripPlanConverter {
         return leg;
     }
 
-    private static BookingRuleSummary addBookingRule(Graph graph, Trip trip, Agency agency) {
-		// TODO hammer: Tomorrow link trips to bookingRules with correct value in GTFS, not return the first one
-    	for(FeedScopedId f : graph.index.bookingRulesById.keySet()) {
-    		if(f.getAgencyId().equals(trip.getId().getAgencyId())) {
-    			BookingRule bookingRule = graph.index.bookingRulesById.get(f);
-    			if(bookingRule.getUrl() == null) {
-    				bookingRule.setUrl(agency.getFareUrl());
-    			}
-    			return new BookingRuleSummary(bookingRule);
-    		}
+    private static BookingRuleSummary addBookingRule(Graph graph, Trip trip, Agency agency) {    	
+    	if(trip.getRoute().getBookingRule() != null) {
+    		return new BookingRuleSummary(trip.getRoute().getBookingRule());
     	}
 		return null;
 	}

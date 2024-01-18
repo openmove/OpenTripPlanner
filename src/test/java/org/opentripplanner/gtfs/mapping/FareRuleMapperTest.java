@@ -45,7 +45,7 @@ public class FareRuleMapperTest {
         FARE_RULE.setRoutingId(ROUTING_ID);
     }
 
-    private FareRuleMapper subject = new FareRuleMapper(new RouteMapper(new AgencyMapper()),
+    private FareRuleMapper subject = new FareRuleMapper(new RouteMapper(new AgencyMapper(), new BookingRuleMapper()),
             new FareAttributeMapper());
 
     @Test

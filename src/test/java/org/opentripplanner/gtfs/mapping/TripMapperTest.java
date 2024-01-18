@@ -57,7 +57,7 @@ public class TripMapperTest {
         TRIP.setTripBikesAllowed(TRIP_BIKES_ALLOWED);
     }
 
-    private TripMapper subject = new TripMapper(new RouteMapper(new AgencyMapper()));
+    private TripMapper subject = new TripMapper(new RouteMapper(new AgencyMapper(), new BookingRuleMapper()));
 
     @Test
     public void testMapCollection() throws Exception {

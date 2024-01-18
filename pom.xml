@@ -82,7 +82,7 @@
         <geotools.wfs.version>16.5</geotools.wfs.version>
         <jackson.version>2.9.7</jackson.version>
         <jersey.version>2.18</jersey.version>
-        <onebusaway-openmove.version>1.3.112-openmove-3</onebusaway-openmove.version>
+        <onebusaway-openmove.version>1.4.15-openmove-5</onebusaway-openmove.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

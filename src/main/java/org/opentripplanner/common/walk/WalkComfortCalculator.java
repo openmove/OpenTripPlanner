@@ -98,7 +98,7 @@ public class WalkComfortCalculator {
             		            	
             		            	InputSource sourceExtData = new InputSource(new StringReader(attributes.get("ExtendedData")));
             		            	InputSource sourceName = new InputSource(new StringReader(attributes.get("name")));
-            		            	InputSource sourceDescription = new InputSource(new StringReader(attributes.get("description")));
+            		            	InputSource sourceDescription = new InputSource(new StringReader(attributes.getOrDefault("description","<description></description>")));
             		            	InputSource sourceLinestring = new InputSource(new StringReader(attributes.get("LineString")));
                 		            
             		            	

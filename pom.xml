@@ -8,7 +8,7 @@
 
     <groupId>org.opentripplanner</groupId>
     <artifactId>otp</artifactId>
-	<version>1.5.29-SNAPSHOT</version>
+	<version>1.6.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <licenses>
@@ -174,8 +174,8 @@
                 <version>3.1</version>
                 <configuration>
                     <!-- Target Java versions -->
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
             <plugin>

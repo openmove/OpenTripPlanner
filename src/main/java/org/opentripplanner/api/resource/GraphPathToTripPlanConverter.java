@@ -556,7 +556,7 @@ public abstract class GraphPathToTripPlanConverter {
         return leg;
     }
 
-    private static BookingRuleSummary addBookingRule(Graph graph, Trip trip, Agency agency) {    	
+    private static BookingRuleSummary addBookingRule(Graph graph, Trip trip, Agency agency) {
     	if(trip.getRoute().getBookingRule() != null) {
     		return new BookingRuleSummary(trip.getRoute().getBookingRule());
     	}
@@ -962,6 +962,7 @@ public abstract class GraphPathToTripPlanConverter {
             leg.routeTextColor = route.getTextColor();
             leg.routeType = route.getType();
             leg.routeBrandingUrl = route.getBrandingUrl();
+            leg.routeRegionalFareCardAccepted = route.getRegionalFareCardAccepted();
             leg.tripId = trip.getId();
             leg.tripShortName = trip.getTripShortName();
             leg.tripBlockId = trip.getBlockId();

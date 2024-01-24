@@ -103,7 +103,7 @@ public class Leg {
     public BookingRuleSummary agencyBookingRule;
     
     @JsonSerialize
-    public String routeRegionalFareCardAccepted;
+    public Integer routeRegionalFareCardAccepted;
 
     /**
      * For transit leg, the route's (background) color (if one exists). For non-transit legs, null.

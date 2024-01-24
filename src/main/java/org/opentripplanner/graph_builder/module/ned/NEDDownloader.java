@@ -527,7 +527,7 @@ public class NEDDownloader implements NEDTileSource {
  * @author novalis
  * 
  */
-class EDCNamespaceContext implements NamespaceContext {
+class EDCNamespaceContext implements javax.xml.namespace.NamespaceContext {
     public String getNamespaceURI(String prefix) {
         if (prefix.equals("ns1")) {
             return "http://edc.usgs.gov";
@@ -545,7 +545,8 @@ class EDCNamespaceContext implements NamespaceContext {
         }
     }
 
-    public Iterator<?> getPrefixes(String namespace) {
+    @Override
+    public Iterator<String> getPrefixes(String namespace) {
         return null;
     }
 }

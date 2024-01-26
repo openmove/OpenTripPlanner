@@ -300,6 +300,14 @@ public class IndexGraphQLSchema {
     public GraphQLOutputType stoptimesInPatternType = new GraphQLTypeReference("StoptimesInPattern");
     
     public GraphQLOutputType destinationType = new GraphQLTypeReference("DestinationType");
+    
+    public GraphQLOutputType zoneType = new GraphQLTypeReference("ZoneType");
+    
+    public GraphQLOutputType simpleZoneType = new GraphQLTypeReference("SimpleZoneType");
+    
+    public GraphQLOutputType fareRuleType = new GraphQLTypeReference("FareRuleType");
+    
+    public GraphQLOutputType fareAttributeType = new GraphQLTypeReference("FareAttributeType");
 
     public GraphQLObjectType queryType;
 
@@ -1976,7 +1984,6 @@ public class IndexGraphQLSchema {
                 .name("VehicleRental")
                 .description("A vehicle to rent.")
                 .withInterface(nodeInterface)
-                .withInterface(placeInterface)
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("id")
                         .description("Global object ID provided by Relay. This value can be used to refetch this object using **node** query.")
@@ -2007,8 +2014,7 @@ public class IndexGraphQLSchema {
                         .description("propulsion type")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(environment -> ((VehicleRentalStation) environment.getSource()).propulsionType)
-                        .build())
-                
+                        .build())                
                 .build(); 
         
         
@@ -2209,7 +2215,7 @@ public class IndexGraphQLSchema {
                         .build())
                 .build();
 
-        GraphQLObjectType fareAttributeType = GraphQLObjectType.newObject()
+        fareAttributeType = GraphQLObjectType.newObject()
                 .name("fareAttributes")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("name")
@@ -2250,7 +2256,7 @@ public class IndexGraphQLSchema {
                         .dataFetcher(new PropertyDataFetcher("transferDuration"))
                         .build())
                 .build();
-        GraphQLObjectType fareRuleType = GraphQLObjectType.newObject()
+        fareRuleType = GraphQLObjectType.newObject()
                 .name("fareRule")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("originId")
@@ -2323,7 +2329,7 @@ public class IndexGraphQLSchema {
                         .dataFetcher(new PropertyDataFetcher("fare"))
                         .build())
                 .build();
-        GraphQLObjectType simpleZoneType = GraphQLObjectType.newObject()
+        simpleZoneType = GraphQLObjectType.newObject()
                 .name("ZoneShort")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("gtfsId")
@@ -2343,7 +2349,7 @@ public class IndexGraphQLSchema {
                         .build())
                 .build();
 
-        GraphQLObjectType zoneType = GraphQLObjectType.newObject()
+        zoneType = GraphQLObjectType.newObject()
                 .name("Zone")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("gtfsId")

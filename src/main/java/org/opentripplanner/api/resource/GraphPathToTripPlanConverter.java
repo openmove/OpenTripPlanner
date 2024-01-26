@@ -168,9 +168,10 @@ public abstract class GraphPathToTripPlanConverter {
                     double pctTransit = transitDistance / totalDistance;
                     double minPct = Double.parseDouble(request.minTransitDistance.substring(0, request.minTransitDistance.length() - 1)) / 100;
                     if (pctTransit < minPct) continue;
+                } else {
+                	double minDistance = Double.parseDouble(request.minTransitDistance);
+                	if(transitDistance < minDistance) continue;
                 }
-
-                // TODO: handle explicit distance case
             }
 
             // Add TNC data after the filter stage so that OTP does not make requests to a

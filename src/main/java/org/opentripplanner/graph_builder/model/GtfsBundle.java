@@ -50,7 +50,7 @@ public class GtfsBundle {
 
     public int subwayAccessTime;
 
-    private double maxStopToShapeSnapDistance = 150;
+    private double maxStopToShapeSnapDistance = 200;
 
     public int maxInterlineDistance;
 

@@ -261,7 +261,7 @@ public class PatternHopFactory {
 
     public int subwayAccessTime = 0;
 
-    private double maxStopToShapeSnapDistance = 150;
+    private double maxStopToShapeSnapDistance = 200;
 
     public int maxInterlineDistance = 200;
 
@@ -646,7 +646,7 @@ public class PatternHopFactory {
                 }
             }
             if (stopSegments.size() == 0) {
-                //no segments within 150m
+                //no segments within 200m
                 //fall back to nearest segment
                 stopSegments.add(bestSegment);
                 minSegmentIndex = bestSegment.index;

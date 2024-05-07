@@ -1,83 +1,74 @@
 package org.opentripplanner.updater.car_park;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.Polygon;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
+import org.locationtech.jts.geom.*;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.util.HttpUtils;
 import org.opentripplanner.util.NonLocalizedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * Load car parks from the ODH Park API.
  *
  * @author fede
  */
-public class ODHCarParkDataSource extends GenericJsonCarParkDataSource{
+public class D2ParkLightDataSource extends GenericJsonCarParkDataSource{
 
     private static final Logger log = LoggerFactory.getLogger(ODHCarParkDataSource.class);
 
     private GeometryFactory gf = new GeometryFactory();
 
-    public ODHCarParkDataSource() {
-        super("results");
+    public D2ParkLightDataSource() {
+        super("parkingPublicationLight/parkingSite");
     }
 
     public CarPark makeCarPark(JsonNode node) {
-        if (node.path("id").isMissingNode()) return null;
+        if (node.path("_id").isMissingNode()) return null;
 
         CarPark station = new CarPark();
-        station.id = node.path("id").asText();
+        station.id = node.path("_id").asText();
         station.name = new NonLocalizedString(node.path("name").asText());
         try {
-            station.geometry = parseGeometry(node.path("geometry"));
-            station.y = station.geometry.getCentroid().getY();
-            station.x = station.geometry.getCentroid().getX();
-            station.realTimeData = node.hasNonNull("realtime") ? node.path("realtime").asBoolean() : true;
-            station.maxCapacity = node.path("capacity").asInt();
-            String stationStatus = node.path("status").asText();
-            if (stationStatus.equals("INACTIVE") || stationStatus.equals("TEMPORARILY_CLOSED")) {
+            JsonNode location = node.path("locationAndDimension");
+
+
+
+            String posList = location.path("gmlLinearRing").path("posList").asText();
+
+            String[] parts = posList.split(" ");
+            Coordinate[] coordinates = new Coordinate[parts.length / 2];
+            for (int i = 0, j = 0; i < parts.length; i += 2) {
+                double lat = Double.parseDouble(parts[i]);
+                double lon = Double.parseDouble(parts[i + 1]);
+                coordinates[j++] = new Coordinate(lon, lat);
+            }
+            GeometryFactory factory = new GeometryFactory();
+            LinearRing ring = factory.createLinearRing(coordinates);
+
+            station.geometry = factory.createPolygon(ring, null);
+            station.y = location.path("coordinatesForDisplay").path("latitude").asDouble();
+            station.x = location.path("coordinatesForDisplay").path("longitude").asDouble();
+            //station.realTimeData = node.path("realtime").asBoolean();
+            station.maxCapacity = node.path("numberOfSpaces").asInt();
+            boolean isOpenNow = node.path("isOpenNow").asBoolean();
+            if (!isOpenNow) {
                 return null;
-            } else if (station.realTimeData) {
-                station.spacesAvailable = node.path("free").asInt();
-                station.spacesForecast.put(0, station.spacesAvailable);
-            } else {
+            }
+            else {
                 station.spacesAvailable = station.maxCapacity;
                 station.spacesForecast.put(0, station.spacesAvailable);
             }
-
-            if(node.has("forecasts") && node.path("forecasts").isArray()){
-                int number = 15;
-                int counter = 1;
-                for(JsonNode forecast : node.path("forecasts")){
-                    int forecastInt = forecast.asInt();
-                    station.spacesForecast.put((counter * number), forecastInt);
-                }
+            if(node.path("availableSpaces").isNull()) {
+            	 station.spacesAvailable = station.maxCapacity;
+            	 station.spacesForecast.put(0, station.spacesAvailable);
+            }else {
+            	 station.spacesAvailable = node.path("availableSpaces").asInt();
+            	 station.spacesForecast.put(0, station.spacesAvailable);
             }
 
             return station;
@@ -105,38 +96,21 @@ public class ODHCarParkDataSource extends GenericJsonCarParkDataSource{
     private Geometry parseGeometry(JsonNode root) {
         String typeName = root.get("type").asText();
         if(typeName.equals("Point")) {
-        	Geometry point = this.gf.createPoint(this.parseCoordinate(root.get("coordinates")));
+            Geometry sourceGeometry = this.gf.createPoint(this.parseCoordinate(root.get("coordinates")));
         	
-        	CoordinateReferenceSystem sourceCRS;
-        	CoordinateReferenceSystem targetCRS;
-        	MathTransform transform;
-        	MathTransform reverseTransform;
-			try {
-				sourceCRS = CRS.decode("EPSG:4326", true);
-				targetCRS = CRS.decode("EPSG:2037", true);
-				transform = CRS.findMathTransform(sourceCRS, targetCRS);
-				reverseTransform = CRS.findMathTransform(targetCRS,sourceCRS);
-				Geometry transformPoint = JTS.transform(point, transform);
-	        	Geometry bufferedPoint = transformPoint.buffer(100); //100 meters of buffer
-				
-				return JTS.transform(bufferedPoint, reverseTransform);
-			} catch (NoSuchAuthorityCodeException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				return point;
-			} catch (FactoryException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				return point;
-			} catch (MismatchedDimensionException e) {
+            try {
+            	CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:4326");
+            	CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:3857");
+            	MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+            	MathTransform transform2 = CRS.findMathTransform(targetCRS, sourceCRS);
+            	Geometry targetGeometry = JTS.transform( sourceGeometry, transform);
+            	Geometry bufferedTargetGeometry = targetGeometry.buffer(200);
+				return JTS.transform( bufferedTargetGeometry, transform2);
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				return point;
-			} catch (TransformException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return point;
-			}       
+			}
+            return sourceGeometry;
         } else if(typeName.equals("MultiPoint")) {
             return this.gf.createMultiPointFromCoords(this.parseLineString(root.get("coordinates")));
         } else if(typeName.equals("LineString")) {

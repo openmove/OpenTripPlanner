@@ -95,6 +95,9 @@ public class CarParkUpdater extends PollingGraphUpdater {
             if (sourceType.equals("park-openmove")) {
                 source = new OMCarParkDataSource();
             }
+            if (sourceType.equals("d2park")) {
+                source = new D2ParkLightDataSource();
+            }
         }
 
         if (source == null) {

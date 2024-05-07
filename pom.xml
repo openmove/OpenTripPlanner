@@ -78,7 +78,8 @@
     </scm>
 
     <properties>
-        <geotools.version>20.1</geotools.version>
+        <geotools.version>29.5</geotools.version>
+        <geotools.gt-referencing3D>20.5</geotools.gt-referencing3D>
         <geotools.wfs.version>16.5</geotools.wfs.version>
         <jackson.version>2.9.7</jackson.version>
         <jersey.version>2.18</jersey.version>
@@ -448,7 +449,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.8</version>
+            <version>1.5.4</version>
         </dependency>
         <!-- Jersey uses java.util logging, redirect it to slf4j API (we use the Logback implementation) -->
         <dependency>
@@ -471,7 +472,7 @@
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-referencing3D</artifactId>
-            <version>${geotools.version}</version>
+            <version>${geotools.gt-referencing3D}</version>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>

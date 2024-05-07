@@ -2,6 +2,7 @@ package org.opentripplanner.ojp;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -317,7 +318,7 @@ public class OJPLocationDeliveryFactory {
 			 }
 			
 			BigDecimal bd = new BigDecimal(Float.toString((float)((double)((float) ((1/mDistance) / sumDistances)))));
-			bd = bd.setScale(4, BigDecimal.ROUND_HALF_UP);
+			bd = bd.setScale(4,  RoundingMode.HALF_UP);
 			 
 			place.setProbability(bd.floatValue());
 			location.getLocation().add(place);

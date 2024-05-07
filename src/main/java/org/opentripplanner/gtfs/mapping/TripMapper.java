@@ -39,7 +39,6 @@ class TripMapper {
         lhs.setBlockId(rhs.getBlockId());
         lhs.setShapeId(AgencyAndIdMapper.mapAgencyAndId(rhs.getShapeId()));
         lhs.setWheelchairAccessible(rhs.getWheelchairAccessible());
-        lhs.setTripBikesAllowed(rhs.getTripBikesAllowed());
         lhs.setBikesAllowed(rhs.getBikesAllowed());
         lhs.setFareId(rhs.getFareId());
         lhs.setDrtMaxTravelTime(rhs.getDrtMaxTravelTime());

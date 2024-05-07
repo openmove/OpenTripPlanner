@@ -59,7 +59,7 @@ public class RouteMapperTest {
         ROUTE.setBikesAllowed(BIKES_ALLOWED);
         ROUTE.setSortOrder(SORT_ORDER);
         ROUTE.setBrandingUrl(BRANDING_URL);
-        ROUTE.setRouteBikesAllowed(ROUTE_BIKES_ALLOWED);
+        ROUTE.setBikesAllowed(ROUTE_BIKES_ALLOWED);
     }
 
     private RouteMapper subject = new RouteMapper(new AgencyMapper(), new BookingRuleMapper());
@@ -87,7 +87,7 @@ public class RouteMapperTest {
         assertEquals(BIKES_ALLOWED, result.getBikesAllowed());
         assertEquals(SORT_ORDER, result.getSortOrder());
         assertEquals(BRANDING_URL, result.getBrandingUrl());
-        assertEquals(BIKES_ALLOWED, result.getRouteBikesAllowed());
+        assertEquals(BIKES_ALLOWED, result.getBikesAllowed());
     }
 
     @Test
@@ -109,11 +109,11 @@ public class RouteMapperTest {
         assertEquals(0, result.getBikesAllowed());
         assertFalse(result.isSortOrderSet());
         assertNull(result.getBrandingUrl());
-        assertEquals(0, result.getRouteBikesAllowed());
+        assertEquals(0, result.getBikesAllowed());
     }
 
     /**
-     * Mapping the same object twice, should return the the same instance.
+     * Mapping the same object twice, should return the same instance.
      */
     @Test
     public void testMapCache() throws Exception {

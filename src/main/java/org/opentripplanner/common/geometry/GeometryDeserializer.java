@@ -32,7 +32,7 @@ public class GeometryDeserializer extends JsonDeserializer<Geometry> {
 		if (typeName.equals("Point")) {
 			return gf.createPoint(parseCoordinate(root.get("coordinates")));
 		} else if(typeName.equals("MultiPoint")) {
-			return gf.createMultiPoint(parseLineString(root.get("coordinates")));
+			return gf.createMultiPointFromCoords(parseLineString(root.get("coordinates")));
 		} else if(typeName.equals("LineString")) {
 			return gf.createLineString(parseLineString(root.get("coordinates")));
 		} else if (typeName.equals("MultiLineString")) {

@@ -125,7 +125,7 @@ public class OMCarParkDataSource extends GenericJsonCarParkDataSource{
 			}
             return sourceGeometry;
         } else if(typeName.equals("MultiPoint")) {
-            return this.gf.createMultiPoint(this.parseLineString(root.get("coordinates")));
+            return this.gf.createMultiPointFromCoords(this.parseLineString(root.get("coordinates")));
         } else if(typeName.equals("LineString")) {
             return this.gf.createLineString(this.parseLineString(root.get("coordinates")));
         } else if(typeName.equals("MultiLineString")) {

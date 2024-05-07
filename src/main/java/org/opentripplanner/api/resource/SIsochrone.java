@@ -321,8 +321,9 @@ public class SIsochrone extends RoutingResource {
                     coords = circleShape.getCoordinates();
                 }
                 // -- the states/nodes with time elapsed <= X min.
+                assert coords != null;
                 LOG.debug("write multipoint geom with {} points", coords.length);
-                geometryJSON.write(gf.createMultiPoint(coords), sw);
+                geometryJSON.write(gf.createMultiPointFromCoords(coords), sw);
                 LOG.debug("done");
             } else if (output.equals(SIsochrone.RESULT_TYPE_SHED)) {
 
@@ -336,6 +337,7 @@ public class SIsochrone extends RoutingResource {
                         // -- create a point-based walkshed
                         // less exact and should be used for large walksheds with many edges
                         LOG.debug("create point-based shed (not from edges)");
+                        assert coords != null;
                         geomsArray = new Geometry[coords.length];
                         for (int j = 0; j < geomsArray.length; j++) {
                             geomsArray[j] = gf.createPoint(coords[j]);

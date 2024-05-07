@@ -70,7 +70,7 @@ public class Subgraph {
     private static GeometryFactory gf = new GeometryFactory();
     public Geometry getConvexHull() {
         if (newVertexAdded) {
-            MultiPoint mp = gf.createMultiPoint(vertexCoords.toArray(new Coordinate[0]));
+            MultiPoint mp = gf.createMultiPointFromCoords(vertexCoords.toArray(new Coordinate[0]));
             newVertexAdded = false;
             mp.convexHull();
         }

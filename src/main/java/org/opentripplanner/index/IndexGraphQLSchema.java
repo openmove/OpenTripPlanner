@@ -3011,9 +3011,8 @@ public class IndexGraphQLSchema {
 		                        		.map(item -> {
 		                        			FeedScopedId zoneId = new FeedScopedId(item.stop.getId().getAgencyId(),item.stop.getZoneId());
 		                        			if (environment.getArgument("mode") == null) {
-		                        				Zone zone = index.zonesById.get(zoneId);
-		                        				
-		                        				return zone;
+
+                                                return index.zonesById.get(zoneId);
                                             } else {
                                             	
                                             	TraverseMode traverseMode = index.patternsForStop.get(item.stop)
@@ -3023,7 +3022,7 @@ public class IndexGraphQLSchema {
                                                         .entrySet()
                                                         .stream()
                                                         .max(Comparator.comparing(Map.Entry::getValue))
-                                                        .map(e -> e.getKey())
+                                                        .map(Map.Entry::getKey)
                                                         .orElse(null);
                                                 if(traverseMode != null){
                                                     if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){

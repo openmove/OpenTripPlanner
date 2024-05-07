@@ -41,7 +41,6 @@ class RouteMapper {
         lhs.setUrl(rhs.getUrl());
         lhs.setColor(rhs.getColor());
         lhs.setTextColor(rhs.getTextColor());
-        lhs.setRouteBikesAllowed(rhs.getRouteBikesAllowed());
         lhs.setBikesAllowed(rhs.getBikesAllowed());
         lhs.setSortOrder(rhs.getSortOrder());
         lhs.setBrandingUrl(rhs.getBrandingUrl());

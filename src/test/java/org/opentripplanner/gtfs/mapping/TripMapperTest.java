@@ -54,7 +54,7 @@ public class TripMapperTest {
         TRIP.setTripHeadsign(TRIP_HEADSIGN);
         TRIP.setTripShortName(TRIP_SHORT_NAME);
         TRIP.setWheelchairAccessible(WHEELCHAIR_ACCESSIBLE);
-        TRIP.setTripBikesAllowed(TRIP_BIKES_ALLOWED);
+        TRIP.setBikesAllowed(TRIP_BIKES_ALLOWED);
     }
 
     private TripMapper subject = new TripMapper(new RouteMapper(new AgencyMapper(), new BookingRuleMapper()));
@@ -82,7 +82,7 @@ public class TripMapperTest {
         assertEquals(TRIP_HEADSIGN, result.getTripHeadsign());
         assertEquals(TRIP_SHORT_NAME, result.getTripShortName());
         assertEquals(WHEELCHAIR_ACCESSIBLE, result.getWheelchairAccessible());
-        assertEquals(TRIP_BIKES_ALLOWED, result.getTripBikesAllowed());
+        assertEquals(TRIP_BIKES_ALLOWED, result.getBikesAllowed());
     }
 
     @Test
@@ -104,10 +104,10 @@ public class TripMapperTest {
         assertNull(result.getTripHeadsign());
         assertNull(result.getTripShortName());
         assertEquals(0, result.getWheelchairAccessible());
-        assertEquals(0, result.getTripBikesAllowed());
+        assertEquals(0, result.getBikesAllowed());
     }
 
-    /** Mapping the same object twice, should return the the same instance. */
+    /** Mapping the same object twice, should return the same instance. */
     @Test
     public void testMapCache() throws Exception {
         org.opentripplanner.model.Trip result1 = subject.map(TRIP);

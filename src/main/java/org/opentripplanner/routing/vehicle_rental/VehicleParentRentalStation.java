@@ -17,6 +17,7 @@ public class VehicleParentRentalStation extends VehicleRentalStation{
 
 	public VehicleParentRentalStation(VehicleRentalStation v) {
 		this.name = v.name;
+		this.id = v.id;
 		this.allowDropoff = v.allowDropoff;
 		this.allowPickup = v.allowPickup;
 		this.isVirtual = v.isVirtual;

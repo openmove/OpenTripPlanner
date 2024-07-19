@@ -107,6 +107,7 @@ public class AlertPatch implements Serializable {
                 }
             } else if (route != null) {
                 tripPatterns = graph.index.patternsForRoute.get(route);
+                graph.addAlertPatchForRoute(route.getId(), this);
             } else {
                 // Find patterns for the feed.
                 tripPatterns = graph.index.patternsForFeedId.get(feedId);

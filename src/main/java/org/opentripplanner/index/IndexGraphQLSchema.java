@@ -1,15 +1,7 @@
 package org.opentripplanner.index;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
@@ -38,6 +30,7 @@ import org.opentripplanner.api.model.Place;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.model.VertexType;
 import org.opentripplanner.api.model.WalkStep;
+import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.GtfsLibrary;
@@ -68,8 +61,10 @@ import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.WrappedCurrency;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.TripPattern;
+import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.graph.GraphIndex.StopAndDistance;
+import org.opentripplanner.routing.services.AlertPatchService;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.vehicle_rental.VehicleParentRentalStation;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalStation;
@@ -286,6 +281,8 @@ public class IndexGraphQLSchema {
     public GraphQLOutputType patternType = new GraphQLTypeReference("Pattern");
 
     public GraphQLOutputType routeType = new GraphQLTypeReference("Route");
+
+    public GraphQLOutputType alertType = new GraphQLTypeReference("Alert");
 
     public GraphQLOutputType stoptimeType = new GraphQLTypeReference("Stoptime");
 
@@ -1723,6 +1720,41 @@ public class IndexGraphQLSchema {
             .build();
 
 
+        alertType = GraphQLObjectType.newObject()
+                .name("Alert")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("header")
+                        .description("The title/header for this alert.")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((LocalizedAlert) environment.getSource()).getAlertHeaderText())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("description")
+                        .description("The description for this alert.")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((LocalizedAlert) environment.getSource()).getAlertDescriptionText())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("url")
+                        .description("An url" )
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((LocalizedAlert) environment.getSource()).getAlertUrl())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("startDate")
+                        .description("The effective start date.")
+                        .type(Scalars.GraphQLLong)
+                        .dataFetcher(environment -> ((LocalizedAlert) environment.getSource()).alert.effectiveStartDate.getTime())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("endDate")
+                        .description("The effective end date.")
+                        .type(Scalars.GraphQLLong)
+                        .dataFetcher(environment -> ((LocalizedAlert) environment.getSource()).alert.effectiveEndDate.getTime())
+                        .build())
+                .build();
+
+
         routeType = GraphQLObjectType.newObject()
             .name("Route")
             .withInterface(nodeInterface)
@@ -1784,6 +1816,32 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("bikesAllowed")
                 .type(bikesAllowedEnum)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alerts")
+                .type(new GraphQLList(alertType))
+                .argument(GraphQLArgument.newArgument()
+                        .name("lang")
+                        .type(Scalars.GraphQLString)
+                        .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("date")
+                        .type(Scalars.GraphQLLong)
+                        .defaultValue(new Date().getTime())
+                        .build())
+                .dataFetcher(environment -> {
+                    Locale locale;
+                    String localString = environment.getArgument("lang");
+                    long unixDate = environment.getArgument("date");
+
+                    if(localString!=null){
+                        locale = new Locale(localString);
+                    }else{
+                        locale = new Locale("en", "US");
+                    }
+                    return index.graph.getAlertPatchesForRoute(((Route) environment.getSource()).getId(), locale, unixDate);
+
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("patterns")
@@ -3818,6 +3876,8 @@ public class IndexGraphQLSchema {
                         .build())
                 .build();
 
+
+
         final GraphQLObjectType legType = GraphQLObjectType.newObject()
                 .name("Leg")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -3953,6 +4013,12 @@ public class IndexGraphQLSchema {
                         .description("For transit legs, intermediate stops between the Place where the leg originates and the Place where the leg ends. For non-transit legs, null. Returns Place type, which has fields for e.g. departure and arrival times")
                         .type(new GraphQLList(placeType))
                         .dataFetcher(environment -> ((Leg) environment.getSource()).stop)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("alerts")
+                        .description("alerts for this leg")
+                        .type(new GraphQLList(alertType))
+                        .dataFetcher(environment -> ((Leg) environment.getSource()).alerts)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("steps")

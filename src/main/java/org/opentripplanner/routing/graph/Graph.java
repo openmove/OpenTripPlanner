@@ -22,6 +22,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.joda.time.DateTime;
 import org.objenesis.strategy.SerializingInstantiatorStrategy;
+import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.calendar.impl.CalendarServiceImpl;
 import org.opentripplanner.graph_builder.module.GraphBuilderModuleSummary;
 import org.opentripplanner.model.*;
@@ -77,6 +78,7 @@ public class Graph implements Serializable {
     public String routerId;
 
     private final Map<Edge, Set<AlertPatch>> alertPatches = new HashMap<Edge, Set<AlertPatch>>(0);
+    private final Map<FeedScopedId, Set<AlertPatch>> alertPatchesByRouteFeedScopeId = new HashMap<FeedScopedId, Set<AlertPatch>>(0);
 
     private final Map<Edge, List<TurnRestriction>> turnRestrictions = Maps.newHashMap();
 
@@ -386,6 +388,23 @@ public class Graph implements Serializable {
         }
     }
 
+    public void addAlertPatchForRoute(FeedScopedId routeId, AlertPatch alertPatch) {
+        if (routeId == null || alertPatch == null) return;
+        synchronized (alertPatches) {
+            Set<AlertPatch> alertPatches = this.alertPatchesByRouteFeedScopeId.get(routeId);
+            if (alertPatches == null) {
+                this.alertPatchesByRouteFeedScopeId.put(routeId, Collections.singleton(alertPatch));
+            } else if (alertPatches instanceof HashSet) {
+                alertPatches.add(alertPatch);
+            } else {
+                alertPatches = new HashSet<AlertPatch>(alertPatches);
+                if (alertPatches.add(alertPatch)) {
+                    this.alertPatchesByRouteFeedScopeId.put(routeId, alertPatches);
+                }
+            }
+        }
+    }
+
     /**
      * Remove an {@link AlertPatch} from the {@link AlertPatch} {@link Set} belonging to an
      * {@link Edge}.
@@ -421,6 +440,19 @@ public class Graph implements Serializable {
             }
         }
         return new AlertPatch[0];
+    }
+
+    public List<LocalizedAlert> getAlertPatchesForRoute(FeedScopedId routeId, Locale locale, long unixDate) {
+
+        List<LocalizedAlert> returnAlerts= new ArrayList<>();
+
+        for (AlertPatch alert : this.alertPatchesByRouteFeedScopeId.getOrDefault(routeId, new HashSet<>())) {
+            if( alert.getAlert().effectiveStartDate.getTime() <= unixDate && unixDate <= alert.getAlert().effectiveEndDate.getTime()){
+                returnAlerts.add(new LocalizedAlert(alert.getAlert(), locale));
+            }
+        }
+
+        return returnAlerts;
     }
 
     /**

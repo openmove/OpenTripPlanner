@@ -909,6 +909,7 @@ public abstract class GraphPathToTripPlanConverter {
                 }
             }
 
+
             for (AlertPatch alertPatch : graph.getAlertPatches(edge)) {
                 if (disableAlertFiltering || alertPatch.displayDuring(state)) {
                     if (alertPatch.hasTrip()) {

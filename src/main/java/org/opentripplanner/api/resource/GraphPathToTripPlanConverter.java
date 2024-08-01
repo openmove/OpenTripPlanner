@@ -560,8 +560,18 @@ public abstract class GraphPathToTripPlanConverter {
     private static BookingRuleSummary addBookingRule(Graph graph, Trip trip, Agency agency) {
     	if(trip.getRoute().getBookingRule() != null) {
     		return new BookingRuleSummary(trip.getRoute().getBookingRule());
-    	}
-		return null;
+    	}else{
+            BookingRule bookingRule = new BookingRule();
+            bookingRule.setMessage("INFO");
+            bookingRule.setType(0);
+            if(agency.getFareUrl() != null){
+                bookingRule.setInfoUrl(agency.getFareUrl());
+            }else{
+                bookingRule.setInfoUrl(agency.getUrl());
+            }
+
+            return new BookingRuleSummary(bookingRule);
+        }
 	}
 
 

@@ -248,6 +248,29 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
         add("4442");
     }};
 
+    private static Set<String> roveretoArea = new HashSet<String>() {
+        {
+            add("3055");
+            add("3070");
+            add("3100");
+            add("3101");
+            add("3102");
+            add("3103");
+            add("3104");
+            add("3105");
+            add("3111");
+            add("3150");
+            add("3198");
+            add("3201");
+            add("3230");
+            add("3341");
+            add("3264");
+            add("3310");
+            add("3312");
+            add("3320");
+            add("3030");
+            add("3040");
+        }};
 
 
     public TrentinoFareServiceImpl(Collection<FareRuleSet> regularFareRules) {
@@ -327,12 +350,26 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
         // find the best fare that matches this set of rides
         for (FareRuleSet ruleSet : fareRules) {
             FareAttribute attribute = ruleSet.getFareAttribute();
+
+            boolean roveretoUrbanPlan = (
+                    //I'm looking for suburban area in origin/destination that are inside the Rovereto Area, if true I have to use the urban fare.
+                    roveretoArea.contains(startZone) &&
+                    roveretoArea.contains(endZone) &&
+                    attribute.getId().getId().contains("Biglietto Urbano Pda Rovereto")
+            );
+
+
             // fares also don't really have an agency id, they will have the per-feed default id
             // check only if the fare is not mapped to an agency
-            if (!ruleSet.hasAgencyDefined() && !attribute.getId().getAgencyId().equals(feedId))
+            if (!ruleSet.hasAgencyDefined()
+                && !attribute.getId().getAgencyId().equals(feedId)
+                && !roveretoUrbanPlan
+            )
                 continue;
 
-            if (ruleSet.matchesTT(agencies, startZone, endZone, zones, routes, trips)) {
+            if (ruleSet.matchesTT(agencies, startZone, endZone, zones, routes, trips)
+            || roveretoUrbanPlan
+            ) {
                 // TODO Maybe move the code below in FareRuleSet::matches() ?
                 if (attribute.isTransfersSet() && attribute.getTransfers() < transfersUsed) {
                     continue;
@@ -401,9 +438,14 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
                 }
             }
         }
+
+
         LOG.info("{} best for {}", bestAttribute, rides);
         if (bestFare == Float.POSITIVE_INFINITY) {
+
             LOG.info("No fare for a ride sequence: {}", rides);
+
+
         }
         return new FareAndId(bestFare, bestAttribute == null ? null : bestAttribute.getId(), fareRule);
     }

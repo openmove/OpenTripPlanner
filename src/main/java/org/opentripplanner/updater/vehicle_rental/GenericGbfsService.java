@@ -550,6 +550,16 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
                 
                 floatingVehicle.fuelPercentage = fuelPercentuage;
                 floatingVehicle.parentStationId = bike.station_id;
+
+                if(bike.station_id != null){
+                    for(VehicleRentalStation vehicleRentalStation : stations){
+                        if(vehicleRentalStation.id.equals(bike.station_id)){
+                            floatingVehicle.parentStationName = vehicleRentalStation.getName();
+                            break;
+                        }
+                    }
+                }
+
                 floatingVehicle.lastReportedEpochSeconds = RentalStation.getLastReportedTimeUsingFallbacks(
                     bike.last_reported,
                     floatingBikes.last_updated
@@ -614,6 +624,7 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
         vehicleRentalStation.isBorderDropoff = false;
         vehicleRentalStation.isFloatingVehicle = false;
         vehicleRentalStation.networks = Sets.newHashSet(networkName);
+        vehicleRentalStation.isVirtual = station.is_virtual_station;
 
         return vehicleRentalStation;
     }

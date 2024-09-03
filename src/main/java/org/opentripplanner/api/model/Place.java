@@ -90,6 +90,9 @@ public class Place {
     @JsonSerialize
     public String vertexSubType;
 
+    @JsonSerialize
+    public String parentStationName;
+
     /**
      * In case the vertex is of type Bike sharing station.
      */

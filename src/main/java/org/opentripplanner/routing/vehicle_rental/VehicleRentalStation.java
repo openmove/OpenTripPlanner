@@ -68,6 +68,7 @@ public class VehicleRentalStation extends RentalStation implements Serializable,
     
     public Float fuelPercentage = (float) -1;
     public String parentStationId = null;
+    public String parentStationName = null;
     public String propulsionType = null;
     
     public List<VehicleRentalStation> vehicles = new ArrayList<>();

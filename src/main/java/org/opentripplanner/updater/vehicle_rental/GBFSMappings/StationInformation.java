@@ -26,7 +26,6 @@ public class StationInformation extends BaseGbfsResponse {
         public String post_code;
         public Set<RentalMethod> rental_methods;
         public Integer capacity;
-        
         public Boolean is_virtual_station;
     }
 

@@ -38,14 +38,15 @@ public class VehicleRentalStationVertex extends RentalStationVertex {
     private int spacesAvailable;
 
     private String id;
-
+    private String name;
     private String address;
 
     private Set<String> networks;
     
     private String vehicleType = "BICYCLE";
-    
+    private Boolean isStation = true;
     private String vehiclePropulsionType = "HUMAN";
+    private String parentStationName;
 
     public VehicleRentalStationVertex(Graph g, VehicleRentalStation station) {
         //FIXME: raw_name can be null if vehicle station is made from graph updater
@@ -56,7 +57,11 @@ public class VehicleRentalStationVertex extends RentalStationVertex {
         this.setSpacesAvailable(station.spacesAvailable);
         this.setNetworks(station.networks);
         this.setVehicleType(station.vehicleType);
-        this.setVehiclePropulsionType(vehiclePropulsionType);
+        this.setIsStation(!station.isFloatingVehicle);
+        if(station.isFloatingVehicle && station.parentStationId != null ){
+            this.parentStationName = station.parentStationName;
+        }
+        this.setVehiclePropulsionType(station.propulsionType);
     }
 
     public int getVehiclesAvailable() {
@@ -106,4 +111,20 @@ public class VehicleRentalStationVertex extends RentalStationVertex {
 	public void setVehiclePropulsionType(String vehiclePropulsionType) {
 		this.vehiclePropulsionType = vehiclePropulsionType;
 	}
+
+    public Boolean isStation() {
+        return isStation;
+    }
+
+    public void setIsStation(Boolean b) {
+        this.isStation = b;
+    }
+
+    public String getParentStationName() {
+        return parentStationName;
+    }
+
+    public void setParentStationName(String parentStationName) {
+        this.parentStationName = parentStationName;
+    }
 }

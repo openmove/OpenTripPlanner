@@ -1221,7 +1221,11 @@ public abstract class GraphPathToTripPlanConverter {
             place.networks = ((VehicleRentalStationVertex) vertex).getNetworks();
             place.vertexType = VertexType.VEHICLERENTAL;
             place.vertexSubType = ((VehicleRentalStationVertex) vertex).getVehicleType() + '_' + ((VehicleRentalStationVertex) vertex).getVehiclePropulsionType() ;
-            
+            if(!((VehicleRentalStationVertex) vertex).isStation()
+                    && ((VehicleRentalStationVertex) vertex).getParentStationName() != null){
+                place.parentStationName = ((VehicleRentalStationVertex) vertex).getParentStationName();
+            }
+
         } else if (vertex instanceof ParkAndRideVertex) {
             place.carParkId = ((ParkAndRideVertex) vertex).getId();
             place.vertexType = VertexType.CARPARK;

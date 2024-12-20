@@ -25,7 +25,9 @@ public interface WayPropertySetSource {
 			return new UKWayPropertySetSource();
 		} else if ("atlanta".equals(type)) {
 			return new AtlantaWayPropertySetSource();
-		} else {
+		} else if ("campiglio".equals(type)) {
+		return new CampiglioWayPropertySetSource();
+	}	else {
 			throw new IllegalArgumentException(String.format("Unknown osmWayPropertySet: '%s'", type));
 		}
 	}

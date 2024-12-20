@@ -354,7 +354,7 @@ public class RoutingContext implements Cloneable {
         if (notFound.size() > 0) {
             throw new VertexNotFoundException(notFound);
         }
-        if (opt.modes.isTransit() && !graph.transitFeedCovers(opt.dateTime)) {
+        if (opt.modes.isTransit() && !graph.transitFeedCovers(opt.dateTime) && !opt.ignoreTransitCoverage) {
             // user wants a path through the transit network,
             // but the date provided is outside those covered by the transit feed.
             throw new TransitTimesException();

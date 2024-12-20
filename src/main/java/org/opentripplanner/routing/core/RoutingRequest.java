@@ -820,6 +820,11 @@ public class RoutingRequest implements Cloneable, Serializable {
     public int travelers = 1;
     public int bikes = 0;
 
+    /**
+     * if true ignore if date provided is outside the covered by the transit feed
+     */
+    public boolean ignoreTransitCoverage = false;
+
     /* CONSTRUCTORS */
 
     /** Constructor for options; modes defaults to walk and transit */
@@ -1438,7 +1443,8 @@ public class RoutingRequest implements Cloneable, Serializable {
             && clockTimeSec == other.clockTimeSec
             && serviceDayLookout == other.serviceDayLookout
             && bikes == other.bikes
-            && travelers == other.travelers;
+            && travelers == other.travelers
+            && ignoreTransitCoverage == other.ignoreTransitCoverage;
     }
 
     /**
@@ -1485,7 +1491,8 @@ public class RoutingRequest implements Cloneable, Serializable {
             + new Boolean(useTraffic).hashCode() * 10169
             + Integer.hashCode(serviceDayLookout) * 31558519
             + Integer.hashCode(travelers) * 179992387
-            + Integer.hashCode(bikes) * 15485863;
+            + Integer.hashCode(bikes) * 15485863
+            + new Boolean(ignoreTransitCoverage).hashCode() * 193938;
 
         if (batch) {
             hashCode *= -1;
@@ -1789,4 +1796,12 @@ public class RoutingRequest implements Cloneable, Serializable {
 	public void setBikes(int bikes) {
 		this.bikes = bikes;
 	}
+
+    public boolean isIgnoreTransitCoverage() {
+        return ignoreTransitCoverage;
+    }
+
+    public void setIgnoreTransitCoverage(boolean ignoreTransitCoverage) {
+        this.ignoreTransitCoverage = ignoreTransitCoverage;
+    }
 }

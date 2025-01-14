@@ -4,6 +4,7 @@ import org.opentripplanner.api.model.Place;
 import org.opentripplanner.api.parameter.QualifiedMode;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.routing.car_park.ParkVehicle;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.error.TransportationNetworkCompanyAvailabilityException;
@@ -553,6 +554,9 @@ public abstract class RoutingResource {
     @QueryParam("travelers")
     private Integer travelers;
 
+    @QueryParam("parkRideVehicle")
+    private String parkRideVehicle;
+
     /*
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones.
      * this should ideally be done when setting the routing context, but at present departure/
@@ -935,6 +939,15 @@ public abstract class RoutingResource {
         
         if(travelers != null) {
         	request.travelers = travelers;
+        }
+
+        if (parkRideVehicle != null) {
+            try {
+                request.parkRideVehicle = ParkVehicle.valueOf(parkRideVehicle);
+            } catch (IllegalArgumentException e){
+                LOG.warn("Unable to parse vehicle: {} - {}", parkRideVehicle, e.toString());
+                parkRideVehicle = null;
+            }
         }
 
         //getLocale function returns defaultLocale if locale is null

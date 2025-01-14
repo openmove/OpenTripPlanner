@@ -17,6 +17,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opentripplanner.routing.car_park.CarPark;
+import org.opentripplanner.routing.car_park.ParkVehicle;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.util.HttpUtils;
 import org.opentripplanner.util.NonLocalizedString;
@@ -84,9 +85,20 @@ public class OMCarParkDataSource extends GenericJsonCarParkDataSource{
                 }
             }
 
+            if (node.has("allowedVehicles") && node.path("allowedVehicles").isArray()) {
+                for(JsonNode allowedVehicle : node.path("allowedVehicles")){
+                    try {
+                        ParkVehicle vehicle = ParkVehicle.valueOf(allowedVehicle.asText().toUpperCase());
+                        station.allowedVehicles.add(vehicle);
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Cannot parse allowedVehicles value: {} - {}", allowedVehicle.asText(), e.toString());
+                    }
+                }
+            }
+
             return station;
         } catch (Exception e) {
-            log.warn("Error parsing car park " + station.id, e);
+            log.warn("Error parsing car park {}", station.id, e);
             return null;
         }
     }

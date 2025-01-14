@@ -9,25 +9,23 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.vertextype.ParkAndRideVertex;
 
 import org.locationtech.jts.geom.LineString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
 /**
  * Parking a car at a park-and-ride station.
- * 
+ * <p>
  * We only allow going from CAR to WALK mode. Routing the opposite way would need more information
  * (ie knowing where you park your car in the first place), and is probably better handled by a
  * two-step routing (in walk mode from origin to parking, then in car mode from the parking to
  * destination).
- * 
+ *
  * @author laurent
- * 
  */
 public class ParkAndRideEdge extends Edge {
 
     private static final long serialVersionUID = MavenVersion.VERSION.getUID();
+
     public ParkAndRideEdge(ParkAndRideVertex parkAndRide) {
         super(parkAndRide, parkAndRide);
     }
@@ -38,30 +36,36 @@ public class ParkAndRideEdge extends Edge {
         if (!request.parkAndRide) {
             return null;
         }
-        if(
-            request.isTripPlannedForNow()
-            &&
-            ((ParkAndRideVertex) tov).hasFewSpacesAvailable()
-        ){
+        if (
+                request.isTripPlannedForNow()
+                        &&
+                        ((ParkAndRideVertex) tov).hasFewSpacesAvailable()
+        ) {
             return null;
-        }else{
+        } else {
             long currentDiffTime = request.getDateTime().getTime() - System.currentTimeMillis();
-            if( currentDiffTime > (10 * 60 * 1000) && currentDiffTime < (20 * 60 * 1000) ){
-                if(((ParkAndRideVertex) tov).hasFewSpacesAvailable(15)){
+            if (currentDiffTime > (10 * 60 * 1000) && currentDiffTime < (20 * 60 * 1000)) {
+                if (((ParkAndRideVertex) tov).hasFewSpacesAvailable(15)) {
                     return null;
                 }
             }
 
-            if( currentDiffTime > (20 * 60 * 1000) && currentDiffTime < (35 * 60 * 1000) ){
-                if(((ParkAndRideVertex) tov).hasFewSpacesAvailable(30)){
+            if (currentDiffTime > (20 * 60 * 1000) && currentDiffTime < (35 * 60 * 1000)) {
+                if (((ParkAndRideVertex) tov).hasFewSpacesAvailable(30)) {
                     return null;
                 }
             }
 
-            if( currentDiffTime > (35 * 60 * 1000) && currentDiffTime < (50 * 60 * 1000) ){
-                if(((ParkAndRideVertex) tov).hasFewSpacesAvailable(45)){
+            if (currentDiffTime > (35 * 60 * 1000) && currentDiffTime < (50 * 60 * 1000)) {
+                if (((ParkAndRideVertex) tov).hasFewSpacesAvailable(45)) {
                     return null;
                 }
+            }
+        }
+
+        if (request.parkRideVehicle != null) {
+            if (!((ParkAndRideVertex) tov).canParkVehicle(request.parkRideVehicle)) {
+                return null;
             }
         }
 

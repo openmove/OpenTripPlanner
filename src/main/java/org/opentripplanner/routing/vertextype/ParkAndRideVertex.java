@@ -1,6 +1,7 @@
 package org.opentripplanner.routing.vertextype;
 
 import org.opentripplanner.common.MavenVersion;
+import org.opentripplanner.routing.car_park.ParkVehicle;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.util.I18NString;
@@ -56,5 +57,9 @@ public class ParkAndRideVertex extends Vertex {
 
     public boolean hasFewSpacesAvailable(int forecast) {
         return carPark.hasFewSpacesAvailable(forecast);
+    }
+
+    public boolean canParkVehicle(ParkVehicle vehicle) {
+        return carPark.canParkVehicle(vehicle);
     }
 }

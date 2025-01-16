@@ -85,8 +85,8 @@ public class OMCarParkDataSource extends GenericJsonCarParkDataSource{
                 }
             }
 
-            if (node.has("allowedVehicles") && node.path("allowedVehicles").isArray()) {
-                for(JsonNode allowedVehicle : node.path("allowedVehicles")){
+            if (node.has("allowed_vehicles") && node.path("allowed_vehicles").isArray()) {
+                for(JsonNode allowedVehicle : node.path("allowed_vehicles")){
                     try {
                         ParkVehicle vehicle = ParkVehicle.valueOf(allowedVehicle.asText().toUpperCase());
                         station.allowedVehicles.add(vehicle);

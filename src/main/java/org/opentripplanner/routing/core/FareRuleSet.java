@@ -226,12 +226,15 @@ public class FareRuleSet implements Serializable {
 			}else {
 				for(FeedScopedId r: routesVisited) {
 					String key = startZone+"$"+endZone+"$"+routingId+"$null$"+r.getId();
-					if(this.identifiers.containsKey(key)) {
+                    String key2 = "null$null$null$null$" + r.getId();
+					if (this.identifiers.containsKey(key)) {
 						return this.identifiers.get(key);
-					}
+					} else if (this.identifiers.containsKey(key2)) {
+                        return this.identifiers.get(key2);
+                    }
 				}
 			}
-		}else {
+		} else {
 			for(String z: zonesVisited) {
 				if(routes.isEmpty()) {
 					String key = "null$null$null$"+z+"$null";

@@ -624,7 +624,9 @@ public class GenericGbfsService implements VehicleRentalDataSource, JsonConfigur
         vehicleRentalStation.isBorderDropoff = false;
         vehicleRentalStation.isFloatingVehicle = false;
         vehicleRentalStation.networks = Sets.newHashSet(networkName);
-        vehicleRentalStation.isVirtual = station.is_virtual_station;
+        if (station.is_virtual_station != null) {
+            vehicleRentalStation.isVirtual = station.is_virtual_station;
+        }
 
         return vehicleRentalStation;
     }

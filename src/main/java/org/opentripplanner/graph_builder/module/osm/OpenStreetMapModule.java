@@ -423,6 +423,7 @@ public class OpenStreetMapModule implements GraphBuilderModule {
                 bikePark.name = creativeName.toString();
                 bikePark.x = node.lon;
                 bikePark.y = node.lat;
+                bikePark.spacesAvailable = node.getCapacity();
                 bikeRentalService.addBikePark(bikePark);
                 BikeParkVertex parkVertex = new BikeParkVertex(graph, bikePark);
                 new BikeParkEdge(parkVertex);

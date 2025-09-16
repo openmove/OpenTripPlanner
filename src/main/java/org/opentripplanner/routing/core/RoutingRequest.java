@@ -8,6 +8,7 @@ import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
+import org.opentripplanner.routing.car_park.ParkVehicle;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
@@ -818,6 +819,12 @@ public class RoutingRequest implements Cloneable, Serializable {
      * How many travelers for the journey. This is used in case trips have limited seats.
      * */
     public int travelers = 1;
+
+    /**
+     *
+     */
+    public ParkVehicle parkRideVehicle;
+
     public int bikes = 0;
 
     /**

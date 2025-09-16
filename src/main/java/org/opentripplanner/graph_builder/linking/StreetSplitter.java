@@ -368,7 +368,12 @@ public class StreetSplitter {
 
                 for (TransitStop stop: bestStops) {
                     LOG.debug("Linking vertex to stop: {}", stop.getName());
-                    makeTemporaryEdges((TemporaryStreetLocation)vertex, stop, destructiveSplitting);
+                    TemporaryStreetLocation v = new TemporaryStreetLocation(
+                            vertex.getLabel(),
+                            new Coordinate(vertex.getX(), vertex.getY()),
+                            new NonLocalizedString(vertex.getName()),
+                            false);
+                    makeTemporaryEdges(v, stop, destructiveSplitting);
                 }
                 return true;
             }

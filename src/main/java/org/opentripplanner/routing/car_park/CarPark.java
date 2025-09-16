@@ -21,8 +21,6 @@ import java.util.*;
 
 import org.opentripplanner.util.I18NString;
 
-
-
 public class CarPark implements Serializable {
     private static final long serialVersionUID = 8311460609708089384L;
 
@@ -51,6 +49,13 @@ public class CarPark implements Serializable {
     @JsonSerialize
     public HashMap<Integer,Integer> spacesForecast = new HashMap<Integer, Integer>() {};
 
+    /**
+     * List of vehicles allowed to park in this car park
+     */
+    @XmlAttribute
+    @JsonSerialize
+    public List<ParkVehicle> allowedVehicles = new ArrayList<>();
+
 
     @XmlAttribute
     @JsonSerialize
@@ -75,7 +80,7 @@ public class CarPark implements Serializable {
     }
 
     public int hashCode() {
-        return id.hashCode() + 1;
+        return Objects.hash(id, name, x, y, maxCapacity);
     }
 
     public String toString () {
@@ -106,5 +111,22 @@ public class CarPark implements Serializable {
             float percentFree = ((float) spacesAvailable / maxCapacity);
             return !(Double.isNaN(percentFree)) && percentFree <= 0.1f;
         }
+    }
+
+    /**
+     * Check wether a vehicle can park in the car park or not
+     * @param ParkVehicle vehicle
+     * @return boolean
+     */
+    public boolean canParkVehicle(ParkVehicle vehicle) {
+        if (vehicle == null) {  // false if the input parameter is null
+            return false;
+        }
+
+        if (this.allowedVehicles.isEmpty()) {  // if the information is absent return true for backward compatibility
+            return true;
+        }
+
+        return this.allowedVehicles.contains(vehicle);
     }
 }

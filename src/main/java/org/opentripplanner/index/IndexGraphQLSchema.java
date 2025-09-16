@@ -3098,45 +3098,40 @@ public class IndexGraphQLSchema {
                                         	.stream()
                                         	.flatMap(Collection::stream)
                                         	.map(fareRule -> {
-                                        		if(zone.getFareIdentifiers() != null) {
-                                        			if(zone.getFareIdentifiers().contains(fareRule.getIdentifier())) {
-                                        				if((fareRule.getOriginId() != null && fareRule.getOriginId().equals(zone.getZoneId()))
-                                        						|| fareRule.getContainsId() != null
-                                        						) {
-                                                			if (environment.getArgument("mode") == null) {
-            		                                			return fareRule.getIdentifier(); 
-            	                                            } else {
-            			                                		for(Zone z : index.zonesById.values()) {
-            			                                			if(fareRule.getDestinationId() != null) {
-            			                                				if(z.getZoneId().equals(fareRule.getDestinationId())) {
-            				                                				for(Stop stop : z.getStops()){
-            				                                                    TraverseMode traverseMode = index.patternsForStop.get(stop)
-            				                                                            .stream()
-            				                                                            .map(pattern -> pattern.mode)
-            				                                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-            				                                                            .entrySet()
-            				                                                            .stream()
-            				                                                            .max(Comparator.comparing(Map.Entry::getValue))
-            				                                                            .map(e -> e.getKey())
-            				                                                            .orElse(null);
-            				                                                    if(traverseMode != null){
-            				                                                        if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
-            				                                                        	return fareRule.getIdentifier();                                                    	
-            				                                                        }
-            				                                                    }
-            				                                                }
-            				                                			}
-            			                                			}else {
-            			                                				return fareRule.getIdentifier(); 
-            			                                			}
-            			                                			
-            			                                		}
-            	                                            }
-                                                		}
-                                        			}
-                                        			return null;
-                                        		}
-                                        		return null;
+                                                if((fareRule.getOriginId() != null && fareRule.getOriginId().equals(zone.getZoneId()))
+                                                        || fareRule.getContainsId() != null
+                                                        ) {
+                                                    if (environment.getArgument("mode") == null) {
+                                                        return fareRule.getIdentifier();
+                                                    } else {
+                                                        for(Zone z : index.zonesById.values()) {
+                                                            if(fareRule.getDestinationId() != null) {
+                                                                if(z.getZoneId().equals(fareRule.getDestinationId())) {
+                                                                    for(Stop stop : z.getStops()){
+                                                                        TraverseMode traverseMode = index.patternsForStop.get(stop)
+                                                                                .stream()
+                                                                                .map(pattern -> pattern.mode)
+                                                                                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                                                .entrySet()
+                                                                                .stream()
+                                                                                .max(Comparator.comparing(Map.Entry::getValue))
+                                                                                .map(e -> e.getKey())
+                                                                                .orElse(null);
+                                                                        if(traverseMode != null){
+                                                                            if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
+                                                                                return fareRule.getIdentifier();
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }else {
+                                                                return fareRule.getIdentifier();
+                                                            }
+
+                                                        }
+                                                    }
+                                                }
+                                                return null;
                                         	});
 		                                })
                                     	.filter(Objects::nonNull)

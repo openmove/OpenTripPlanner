@@ -1428,7 +1428,7 @@ public class RoutingRequest implements Cloneable, Serializable {
             && disableAlertFiltering == other.disableAlertFiltering
             && geoidElevation == other.geoidElevation
             && invalidDateStrategy.equals(other.invalidDateStrategy)
-            && minTransitDistance == other.minTransitDistance
+            && minTransitDistance.equals(other.minTransitDistance)
             && searchTimeout == other.searchTimeout
             && flexFlagStopExtraPenalty == other.flexFlagStopExtraPenalty
             && flexDeviatedRouteExtraPenalty == other.flexDeviatedRouteExtraPenalty

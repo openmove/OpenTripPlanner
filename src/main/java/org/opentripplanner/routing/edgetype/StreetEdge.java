@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * This represents a street segment.
@@ -127,7 +129,7 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
      *  Map of OSM tags for this way. Only stored when 'includeOsmWays' builder param is true;
      *  enables on-the-fly recalculation of walk comfort scores for testing/calibration purposes.
      */
-    private Map<String, String> osmTags;
+    private Map<String, String> osmTags = new HashMap<>();
 
     /**
      * A set of car networks where this edge is located inside their service regions.
@@ -1545,7 +1547,7 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
     }
 
     public void setOsmTags(Map<String, String> osmTags) {
-        this.osmTags = osmTags;
+        this.osmTags = Objects.requireNonNullElseGet(osmTags, HashMap::new);
     }
 
     public boolean addCarNetwork(String carNetwork) {

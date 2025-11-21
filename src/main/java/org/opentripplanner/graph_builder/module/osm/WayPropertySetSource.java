@@ -14,22 +14,24 @@ public interface WayPropertySetSource {
 	 * Return the given WayPropertySetSource or throws IllegalArgumentException
 	 * if an unkown type is specified
 	 */
-	public static WayPropertySetSource fromConfig(String type) {
-		// type is set to "default" by GraphBuilderParameters if not provided in
-		// build-config.json
-		if ("default".equals(type)) {
-			return new DefaultWayPropertySetSource();
-		} else if ("norway".equals(type)) {
-			return new NorwayWayPropertySetSource();
-		} else if ("uk".equals(type)) {
-			return new UKWayPropertySetSource();
-		} else if ("atlanta".equals(type)) {
-			return new AtlantaWayPropertySetSource();
-		} else if ("campiglio".equals(type)) {
-		return new CampiglioWayPropertySetSource();
-	}	else {
-			throw new IllegalArgumentException(String.format("Unknown osmWayPropertySet: '%s'", type));
-		}
-	}
+    public static WayPropertySetSource fromConfig(String type) {
+        // type is set to "default" by GraphBuilderParameters if not provided in
+        // build-config.json
+        if ("default".equals(type)) {
+            return new DefaultWayPropertySetSource();
+        } else if ("norway".equals(type)) {
+            return new NorwayWayPropertySetSource();
+        } else if ("uk".equals(type)) {
+            return new UKWayPropertySetSource();
+        } else if ("atlanta".equals(type)) {
+            return new AtlantaWayPropertySetSource();
+        } else if ("campiglio".equals(type)) {
+            return new CampiglioWayPropertySetSource();
+        } else if ("venezia".equals(type)) {
+            return new VeneziaWayPropertySetSource();
+        }	else {
+            throw new IllegalArgumentException(String.format("Unknown osmWayPropertySet: '%s'", type));
+        }
+    }
 
 }

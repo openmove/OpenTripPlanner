@@ -3029,7 +3029,7 @@ public class IndexGraphQLSchema {
                     .build())
 		            .field(GraphQLFieldDefinition.newFieldDefinition()
 		                    .name("faresByRange")
-		                    .description("Get fare identifiers from zones order by distance from a point")
+		                    .description("Get fare id from zones order by distance from a point")
 		                    .type(new GraphQLList(Scalars.GraphQLString))
 		                    .argument(GraphQLArgument.newArgument()
 		                            .name("lat")
@@ -3067,6 +3067,8 @@ public class IndexGraphQLSchema {
 		                        		.stream()
 		                        		//.sorted(Comparator.comparing(s -> (float) s.distance))
 		                        		.map(item -> {
+                                            if(item.stop.getZoneId() == null)
+                                                return null;
 		                        			FeedScopedId zoneId = new FeedScopedId(item.stop.getId().getAgencyId(),item.stop.getZoneId());
 		                        			if (environment.getArgument("mode") == null) {
 
@@ -3102,7 +3104,7 @@ public class IndexGraphQLSchema {
                                                         || fareRule.getContainsId() != null
                                                         ) {
                                                     if (environment.getArgument("mode") == null) {
-                                                        return fareRule.getIdentifier();
+                                                        return fareRule.getFare().getId().toString();
                                                     } else {
                                                         for(Zone z : index.zonesById.values()) {
                                                             if(fareRule.getDestinationId() != null) {
@@ -3119,13 +3121,13 @@ public class IndexGraphQLSchema {
                                                                                 .orElse(null);
                                                                         if(traverseMode != null){
                                                                             if(traverseMode.equals(Enum.valueOf(TraverseMode.class, environment.getArgument("mode")))){
-                                                                                return fareRule.getIdentifier();
+                                                                                return fareRule.getFare().getId().toString();
                                                                             }
                                                                         }
                                                                     }
                                                                 }
                                                             }else {
-                                                                return fareRule.getIdentifier();
+                                                                return fareRule.getFare().getId().toString();
                                                             }
 
                                                         }

@@ -1330,7 +1330,6 @@ public abstract class GraphPathToTripPlanConverter {
                 // the floor name is the AlightEdge name
                 // reset to avoid confusion with 'Elevator on floor 1 to floor 1'
                 step.streetName = ((ElevatorAlightEdge) edge).getName(requestedLocale);
-
                 step.relativeDirection = RelativeDirection.ELEVATOR;
 
                 steps.add(step);
@@ -1338,6 +1337,7 @@ public abstract class GraphPathToTripPlanConverter {
             }
 
             String streetName = edge.getName(requestedLocale);
+
             int idx = streetName.indexOf('(');
             String streetNameNoParens;
             if (idx > 0)

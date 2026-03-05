@@ -14,6 +14,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * This is the standard implementation of an edge with fixed from and to Vertex instances;

@@ -1596,6 +1596,13 @@ public abstract class GraphPathToTripPlanConverter {
         Edge en = s.getBackEdge();
         WalkStep step;
         step = new WalkStep();
+        if (en instanceof StreetEdge) {
+            ((StreetEdge) en).getOsmTags().forEach((key, value) -> {
+                if (WalkStep.OSM_TAGS_TO_INCLUDE.contains(key)) {
+                    step.addOsmTag(key, value);
+                }
+            });
+        }
         step.streetName = en.getName(wantedLocale);
         step.lon = en.getFromVertex().getX();
         step.lat = en.getFromVertex().getY();

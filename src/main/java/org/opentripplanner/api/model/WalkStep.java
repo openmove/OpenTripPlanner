@@ -9,9 +9,12 @@ import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.graph.Edge;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.Collection;
 import java.util.Locale;
 
 /**
@@ -42,6 +45,9 @@ import java.util.Locale;
  * </p>
  * */
 public class WalkStep {
+
+    public static final Set<String> OSM_TAGS_TO_INCLUDE =
+            Set.of("surface", "highway", "lit");
 
     /**
      * The distance in meters that this step takes.
@@ -122,6 +128,20 @@ public class WalkStep {
      * Used only in generating the streetEdges array in StreetSegment; not serialized. 
      */
     public transient BikeRentalStationInfo bikeRentalOnStation, bikeRentalOffStation;
+
+    public Map<String, String> osmTags = new HashMap<>();
+
+    public Map<String, String> getOsmTags() {
+        return osmTags;
+    }
+
+    public void setOsmTags(Map<String, String> osmTags) {
+        this.osmTags = osmTags;
+    }
+
+    public void addOsmTag(String key, String value) {
+        this.osmTags.put(key, value);
+    }
 
     public void setDirections(double lastAngle, double thisAngle, boolean roundabout) {
         relativeDirection = getRelativeDirection(lastAngle, thisAngle, roundabout);

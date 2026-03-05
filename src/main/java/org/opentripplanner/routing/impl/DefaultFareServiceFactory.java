@@ -86,14 +86,14 @@ public class DefaultFareServiceFactory implements FareServiceFactory {
 
             String routingId = rule.getRoutingId();
             String identifier = rule.getIdentifier();
-            if(routingId != null){
+            //if(routingId != null){
                 fareRule.addRoutingId(origin, destination, routingId);
                 Set<String> traversedNodes = new HashSet<>();
                 for(String s : rule.getTraversedNodes()){
                     traversedNodes.add(s);
                 }
                 fareRule.addTraversedNodes(origin,destination,routingId,traversedNodes);
-            }
+            //}
             if(identifier != null) {
             	String routeId = null;
             	if(route != null) {

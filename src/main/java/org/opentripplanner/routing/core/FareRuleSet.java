@@ -88,7 +88,7 @@ public class FareRuleSet implements Serializable {
             this.routingIds.get(key).add(routingId);
         }else{
             Set<String> list = new HashSet<>();
-            list.add(routingId);
+            list.add(""+routingId);
             this.routingIds.put(key, list);
         }
     }

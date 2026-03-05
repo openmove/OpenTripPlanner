@@ -47,7 +47,7 @@ class FareRuleMapper {
         
 
         if(lhs.getOriginId() != null && lhs.getDestinationId() != null
-                && lhs.getRoutingId() != null
+              //  && lhs.getRoutingId() != null
                 && allNodes != null){
             String key = lhs.getOriginId()+"ᚫ"+lhs.getDestinationId()+"ᚫ"+lhs.getRoutingId();
             if(allNodes.containsKey(key)) {

@@ -158,7 +158,7 @@ public class FareRuleSet implements Serializable {
         }
 
         //check for matching origin/destination, if this ruleset has any origin/destination restrictions
-        if (originDestinations.size() > 0) {
+        if (!originDestinations.isEmpty() && !this.fareAttribute.getId().getAgencyId().equals("TU")) {
             P2<String> od = new P2<String>(startZone, endZone);
             if (!originDestinations.contains(od)) {
                 P2<String> od2 = new P2<String>(od.first, null);

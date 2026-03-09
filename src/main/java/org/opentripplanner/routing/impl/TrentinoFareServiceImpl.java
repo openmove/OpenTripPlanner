@@ -390,7 +390,7 @@ public class TrentinoFareServiceImpl extends DefaultFareServiceImpl {
                 String routingId = null;
                
                 boolean found = true;
-                if(routingIds != null){
+                if(routingIds != null && attribute.getId().getAgencyId().equals("TT")){
                     found = false;
                     for(String s : routingIds){
                         if(s != null){

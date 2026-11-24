@@ -9,9 +9,11 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.opentripplanner.graph_builder.linking.StreetSplitter;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.RentAVehicleOffEdge;
 import org.opentripplanner.routing.edgetype.RentAVehicleOnEdge;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.StreetVehicleRentalLink;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalRegion;
@@ -247,11 +249,30 @@ public class VehicleRentalUpdater extends PollingGraphUpdater {
                 // the toString includes the text "Vehicle rental station"
                 LOG.warn("{} not near any streets; it will not be usable.", station);
             }
+            // A rented car is reached on foot through the walkable link, but needs a drivable way out: a car
+            // parked next to a separately mapped footway would otherwise only be linked to the footway.
+            if (station.isCar() && !isLinkedToDrivableEdge(vertex)) {
+                if (!splitter.linkToClosestDrivableEdge(vertex, NON_DESTRUCTIVE_SPLIT, true)) {
+                    LOG.warn("{} not near any drivable street; the car will not be usable.", station);
+                }
+            }
             verticesByStation.put(station, vertex);
             if (station.allowPickup)
                 new RentAVehicleOnEdge(vertex, station);
             if (station.allowDropoff)
                 new RentAVehicleOffEdge(vertex, station);
+        }
+
+        private boolean isLinkedToDrivableEdge(VehicleRentalStationVertex vertex) {
+            for (Edge link : vertex.getOutgoing()) {
+                if (!(link instanceof StreetVehicleRentalLink)) continue;
+                for (Edge edge : link.getToVertex().getOutgoing()) {
+                    if (edge instanceof StreetEdge && ((StreetEdge) edge).getPermission().allows(TraverseMode.CAR)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public void applyRegions(Graph graph) {

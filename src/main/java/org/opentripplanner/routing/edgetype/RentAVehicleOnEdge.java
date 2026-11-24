@@ -17,6 +17,7 @@ import com.google.common.collect.Sets;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalStation;
 import org.opentripplanner.routing.vertextype.VehicleRentalStationVertex;
 
@@ -67,6 +68,11 @@ public class RentAVehicleOnEdge extends RentAVehicleAbstractEdge {
                 station.networks
             )
         ) {
+            return null;
+        }
+
+        // one rented form factor per search: cars only in a car sharing search, never in a micromobility one
+        if (station.isCar() != (options.rentedVehicleMode == TraverseMode.CAR)) {
             return null;
         }
 

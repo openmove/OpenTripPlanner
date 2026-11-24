@@ -3,6 +3,7 @@ package org.opentripplanner.api.parameter;
 import com.beust.jcommander.internal.Sets;
 
 import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.TraverseModeSet;
 
 import java.io.Serializable;
@@ -45,6 +46,13 @@ public class QualifiedModeSet implements Serializable {
 
         if (qModes.isEmpty()) return;
 
+        // a request configured for car sharing by an earlier mode set (GraphQL modes, then transportModes)
+        // starts over
+        if (req.rentedVehicleMode == TraverseMode.CAR) {
+            req.rentedVehicleMode = TraverseMode.MICROMOBILITY;
+            req.allowVehicleRental = false;
+        }
+
         /* Start with an empty mode set. */
         TraverseModeSet modes = new TraverseModeSet();
         req.setModes(modes);
@@ -62,6 +70,41 @@ public class QualifiedModeSet implements Serializable {
         for (QualifiedMode qMode : qModes) {
             qMode.applyToRoutingRequest(req, usingTransit);
         }
+
+        applyCarSharing(req);
+    }
+
+    /**
+     * CAR_RENT with no other CAR mode is car sharing through the vehicle rental updaters: the search rents only
+     * vehicles whose form factor is CAR and drives them as CAR. The CAR mode bit is cleared so the search does
+     * not start in a private car. One rented form factor per search: combining it with MICROMOBILITY_RENT is
+     * rejected.
+     */
+    private void applyCarSharing(RoutingRequest req) {
+        boolean carRent = false;
+        boolean otherCarMode = false;
+        boolean micromobilityRent = false;
+        for (QualifiedMode qMode : qModes) {
+            if (qMode.mode == TraverseMode.CAR) {
+                if (qMode.qualifiers.size() == 1 && qMode.qualifiers.contains(Qualifier.RENT)) {
+                    carRent = true;
+                } else {
+                    otherCarMode = true;
+                }
+            } else if (qMode.mode == TraverseMode.MICROMOBILITY && qMode.qualifiers.contains(Qualifier.RENT)) {
+                micromobilityRent = true;
+            }
+        }
+        if (!carRent || otherCarMode) return;
+        if (micromobilityRent) {
+            throw new IllegalArgumentException("CAR_RENT and MICROMOBILITY_RENT cannot be combined in one request: "
+                + "send one request per rental type.");
+        }
+        req.allowCarRental = false;
+        req.allowVehicleRental = true;
+        req.rentedVehicleMode = TraverseMode.CAR;
+        req.modes.setCar(false);
+        req.modes.setWalk(true);
     }
     
     public String toString() {

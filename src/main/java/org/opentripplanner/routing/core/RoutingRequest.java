@@ -654,6 +654,12 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     // currently used exclusively for micromobility, may refactor bike and car rentals into here later
     public boolean allowVehicleRental = false;
+
+    /**
+     * Form factor rented through vehicle rental in this search: MICROMOBILITY (default) or CAR (car sharing).
+     * One form factor per search, so car and micromobility renting states never meet in one tree.
+     */
+    public TraverseMode rentedVehicleMode = TraverseMode.MICROMOBILITY;
     public boolean bikeParkAndRide = false;
     public boolean parkAndRide  = false;
     public boolean kissAndRide  = false;
@@ -1551,6 +1557,9 @@ public class RoutingRequest implements Cloneable, Serializable {
     /** @return The highest speed for all possible road-modes. */
     public double getStreetSpeedUpperBound() {
         // Assume carSpeed > bikeSpeed > walkSpeed
+        // A car sharing request has the CAR mode bit cleared, see QualifiedModeSet.
+        if (allowVehicleRental && rentedVehicleMode == TraverseMode.CAR)
+            return carSpeed;
         if (modes.getCar())
             return carSpeed;
         if (modes.getMicromobility())

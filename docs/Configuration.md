@@ -499,6 +499,13 @@ The complete list of modes are:
 
     For dynamic car positions configure an input feed. See [Configuring real-time updaters](Configuration.md#configuring-real-time-updaters).
 
+    Unless combined with another car mode (`CAR`, `CAR_PARK`, `CAR_HAIL`), `CAR_RENT` rents only the vehicles of the
+    vehicle rental updaters whose GBFS `form_factor` is `car`, with or without transit. The rented car is driven with
+    car permissions, speeds and turn restrictions and is left on a street that allows cars and street parking (no
+    docking stations). The vehicle rental pickup/dropoff costs and times and `minimumVehicleRentalDistance` apply.
+    A rented car leg comes out with `mode` `CAR`, `rentedVehicle` true and `vehicleType` `CAR_<PROPULSION>`.
+    `CAR_RENT` cannot be combined with `MICROMOBILITY_RENT`: send one request per rental type.
+
 - `CAR_HAIL`: Hailing a car from a transportation network company such as Lyft or Uber and then riding in the vehicle for part or the entirety of the route. OTP will still use its underlying graph to calculate driving directions, so car leg results will likely contain different travel time estimates than those quoted from the TNC providers. If service is not available at a particular pickup location, this can cause a TNC availability error which can result in an itinerary not being able to be calculated.
 
     _Prerequisite:_ At least one TNC updater must be added in `router-config.json`.
@@ -510,6 +517,8 @@ The complete list of modes are:
     _Prerequisite:_ Vehicle positions need to be added to OTP  as dynamic data feeds.
 
     For dynamic vehicle positions configure an input feed. See [Configuring real-time updaters](Configuration.md#configuring-real-time-updaters).
+
+    Vehicles whose GBFS `form_factor` is `car` are not rented in this mode: use `CAR_RENT`.
 
 The following modes are 1-to-1 mappings from the [GTFS `route_type`](https://developers.google.com/transit/gtfs/reference/#routestxt):
 

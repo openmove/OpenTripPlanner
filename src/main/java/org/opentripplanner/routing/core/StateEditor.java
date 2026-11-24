@@ -662,7 +662,7 @@ public class StateEditor {
         cloneStateDataAsNeeded();
         child.stateData.usingRentedVehicle = vehicleRenting;
         if (vehicleRenting) {
-            child.stateData.nonTransitMode = TraverseMode.MICROMOBILITY;
+            child.stateData.nonTransitMode = child.stateData.opt.rentedVehicleMode;
         } else {
             child.stateData.nonTransitMode = TraverseMode.WALK;
         }

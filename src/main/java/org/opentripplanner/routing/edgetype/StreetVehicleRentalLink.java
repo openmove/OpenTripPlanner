@@ -59,7 +59,10 @@ public class StreetVehicleRentalLink extends StreetRentalLink {
 
     @Override
     public double weightLowerBound(RoutingRequest options) {
-        return options.modes.contains(TraverseMode.MICROMOBILITY) ? 0 : Double.POSITIVE_INFINITY;
+        return options.modes.contains(TraverseMode.MICROMOBILITY) ||
+            (options.allowVehicleRental && options.rentedVehicleMode == TraverseMode.CAR)
+            ? 0
+            : Double.POSITIVE_INFINITY;
     }
 
     public String toString() {

@@ -16,6 +16,7 @@ package org.opentripplanner.routing.edgetype;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalStation;
 
@@ -38,6 +39,11 @@ public class RentAVehicleOffEdge extends RentAVehicleAbstractEdge {
     @Override
     public State traverse(State s0) {
         RoutingRequest options = s0.getOptions();
+
+        // a rented car is only dropped off on a street edge, never at a docking station or a border drop-off
+        if (options.rentedVehicleMode == TraverseMode.CAR) {
+            return null;
+        }
 
         // check if the current state would allow a vehicle dropoff. In certain cases, RentAVehicleOffEdges can be
         // created when creating border drop-off stations. In these cases we still want to specify that the vehicle is

@@ -133,6 +133,12 @@ public class StreetTransitLink extends Edge {
                         return null;
                     }
                 }
+            } else if (
+                req.allowVehicleRental &&
+                    req.rentedVehicleMode == TraverseMode.CAR &&
+                    s0.isVehicleRenting()
+            ) {
+                // a car rented through vehicle rental: the vehicle rental block below drops it off or refuses
             } else {
                 // above conditions not satisfied or the request is a Park & Ride or regular driving without transit.
                 // Return null to avoid transition

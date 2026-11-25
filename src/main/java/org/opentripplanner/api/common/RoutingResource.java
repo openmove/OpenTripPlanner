@@ -209,9 +209,9 @@ public abstract class RoutingResource {
      *  <li>CAR</li>
      *  <li>CAR_PARK</li>
      *  <li>CAR_HAIL</li>
-     *  <li>CAR_RENT</li>
+     *  <li>CAR_RENT (car sharing: rents vehicles with form factor car; cannot be combined with MICROMOBILITY_RENT)</li>
      *  <li>MICROMOBILITY</li>
-     *  <li>MICROMOBILITY_RENT</li>
+     *  <li>MICROMOBILITY_RENT (rents vehicles of any form factor except car)</li>
      *  <li>TRAM</li>
      *  <li>SUBWAY</li>
      *  <li>RAIL</li>

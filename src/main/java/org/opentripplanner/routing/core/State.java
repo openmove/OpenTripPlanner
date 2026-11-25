@@ -5,6 +5,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.algorithm.NegativeWeightException;
 import org.opentripplanner.routing.car_rental.CarRentalStationService;
+import org.opentripplanner.routing.edgetype.FreeEdge;
 import org.opentripplanner.routing.edgetype.OnboardEdge;
 import org.opentripplanner.routing.edgetype.PatternInterlineDwell;
 import org.opentripplanner.routing.edgetype.RentAVehicleAbstractEdge;
@@ -179,7 +180,9 @@ public class State implements Cloneable {
         }
         // Initialize the non-transit mode when a vehicle rental is possible.
         else if (options.allowVehicleRental) {
-            if (options.arriveBy) {
+            // A car search starts in WALK also when arriveBy: the StreetEdge arriveBy fork creates the rented car
+            // state on the first edge, next to the walking state.
+            if (options.arriveBy && options.rentedVehicleMode != TraverseMode.CAR) {
                 // if searching with arriveBy mode, it is possible that the search ended with a rental car being dropped
                 // off at the target. See if that could be possible.
                 StreetEdge firstStreetEdge = getFirstSeenStreetEdge(vertex);
@@ -642,7 +645,7 @@ public class State implements Cloneable {
         // If the original trip was depart at and did end with dropping off the vehicle at the destination, we need to
         // immediately set the back mode to match the final state of the original trip
         else if (!stateData.opt.arriveBy && stateData.usingRentedVehicle) {
-            newState.stateData.backMode = TraverseMode.MICROMOBILITY;
+            newState.stateData.backMode = stateData.opt.rentedVehicleMode;
         }
         // begin with the same non-transit mode that the end state had
         newState.stateData.nonTransitMode = stateData.nonTransitMode;
@@ -830,6 +833,7 @@ public class State implements Cloneable {
         long newInitialWaitTime = this.stateData.initialWaitTime;
 
         Edge edge = null;
+        boolean endVehicleRentalOnThisEdge = false;
 
         while (orig.getBackState() != null) {
             edge = orig.getBackEdge();
@@ -928,7 +932,25 @@ public class State implements Cloneable {
                         orig.stateData.rentedCarAllowsFloatingDropoffs
                     );
                 }
-                if (orig.isVehicleRenting() && !origBackState.isVehicleRenting()) {
+                if (endVehicleRentalOnThisEdge) {
+                    if (edge instanceof FreeEdge && origBackState.getBackState() == null) {
+                        // the last edge is the link to the destination: a car driven up to the destination is
+                        // still rented when the trip ends, as in departAt
+                        editor.setVehicleRenting(true);
+                    } else {
+                        editor.setVehicleRenting(false);
+                        endVehicleRentalOnThisEdge = false;
+                    }
+                }
+                // The StreetEdge arriveBy fork starts a car rental on the last driven edge. Going forward the car is
+                // driven on that edge and left at its end, so the rental ends on the next edge, as in departAt.
+                boolean carLeftAtEndOfEdge = stateData.opt.arriveBy &&
+                    stateData.opt.rentedVehicleMode == TraverseMode.CAR &&
+                    edge instanceof StreetEdge &&
+                    orig.isVehicleRenting() && !origBackState.isVehicleRenting();
+                if (carLeftAtEndOfEdge) {
+                    endVehicleRentalOnThisEdge = true;
+                } else if (orig.isVehicleRenting() && !origBackState.isVehicleRenting()) {
                     editor.endVehicleRenting();
                 } else if (!orig.isVehicleRenting() && origBackState.isVehicleRenting()) {
                     editor.beginVehicleRenting(
@@ -945,7 +967,7 @@ public class State implements Cloneable {
                     editor.setUsingHailedCar(!orig.isUsingHailedCar());
                 if (orig.isCarRenting() != origBackState.isCarRenting())
                     editor.setCarRenting(!orig.isCarRenting());
-                if (orig.isVehicleRenting() != origBackState.isVehicleRenting())
+                if (!carLeftAtEndOfEdge && orig.isVehicleRenting() != origBackState.isVehicleRenting())
                     editor.setVehicleRenting(!orig.isVehicleRenting());
 
                 editor.setNumBoardings(getNumBoardings() - orig.getNumBoardings());
@@ -1388,7 +1410,12 @@ public class State implements Cloneable {
         }
 
         // check if the street edge has some characteristic that would not be suitable for leaving the vehicle at
-        if (!theEdge.getFloatingVehicleDropoffSuitability()) {
+        if (options.rentedVehicleMode == TraverseMode.CAR) {
+            // a rented car is left on a drivable street suitable for parking
+            if (!theEdge.getPermission().allows(TraverseMode.CAR) || !theEdge.getFloatingCarDropoffSuitability()) {
+                return false;
+            }
+        } else if (!theEdge.getFloatingVehicleDropoffSuitability()) {
             // Floating vehicles cannot be dropped off at the edge.
             return false;
         }
@@ -1397,6 +1424,12 @@ public class State implements Cloneable {
             // User has specified in routing request they intend to keep the vehicle even if dropping off outside a
             // vehicle rental region.
             return true;
+        }
+
+        if (options.rentedVehicleMode == TraverseMode.CAR) {
+            // In reverse, the street supplies its region labels. Check them when the pickup identifies the operator.
+            return options.arriveBy || (stateData.rentedVehicleAllowsFloatingDropoffs &&
+                carRentalRegionAllowsDropoff(stateData.vehicleRentalNetworks, theEdge.getVehicleNetworks()));
         }
 
         // make sure the vehicle networks associated with the edge make a floating dropoff possible.
@@ -1431,6 +1464,20 @@ public class State implements Cloneable {
         }
     }
 
+    /** A floating car can be left inside any of its operator regions, or anywhere for an unrestricted operator. */
+    public boolean carRentalRegionAllowsDropoff(Set<String> pickupNetworks, Set<String> dropoffNetworks) {
+        if (pickupNetworks == null) return true;
+        VehicleRentalStationService service = getContext() == null ? null :
+            getContext().graph.getService(VehicleRentalStationService.class);
+        for (String network : pickupNetworks) {
+            if (service == null || !service.getVehicleRentalRegions().containsKey(network) ||
+                (dropoffNetworks != null && dropoffNetworks.contains(network))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isVehicleRenting() { return stateData.usingRentedVehicle; }
 
     public Set<String> getVehicleRentalNetworks() { return stateData.vehicleRentalNetworks; }
@@ -1441,7 +1488,7 @@ public class State implements Cloneable {
         boolean rentedVehicleAllowsFloatingDropoffs
     ) {
         stateData.usingRentedVehicle = true;
-        stateData.nonTransitMode = TraverseMode.MICROMOBILITY;
+        stateData.nonTransitMode = stateData.opt.rentedVehicleMode;
         stateData.backMode = backState != null ? backState.getNonTransitMode() : null;
         stateData.vehicleRentalNetworks = networks;
         stateData.rentedVehicleAllowsFloatingDropoffs = rentedVehicleAllowsFloatingDropoffs;

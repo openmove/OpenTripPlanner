@@ -131,6 +131,16 @@ public class VehicleRentalStation extends RentalStation implements Serializable,
     }
 
     /**
+     * Whether this vehicle has the CAR form factor (GenericGbfsService uppercases the GBFS form_factor).
+     * Ignored by JSON/XML so the /vehicle_rental response does not gain a property.
+     */
+    @JsonIgnore
+    @XmlTransient
+    public boolean isCar() {
+        return "CAR".equals(vehicleType);
+    }
+
+    /**
      * Gets translated name of vehicle rental station based on locale
      */
     @XmlAttribute

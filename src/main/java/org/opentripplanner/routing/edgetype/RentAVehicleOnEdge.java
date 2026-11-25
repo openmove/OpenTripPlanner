@@ -17,6 +17,7 @@ import com.google.common.collect.Sets;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalStation;
 import org.opentripplanner.routing.vertextype.VehicleRentalStationVertex;
 
@@ -70,6 +71,11 @@ public class RentAVehicleOnEdge extends RentAVehicleAbstractEdge {
             return null;
         }
 
+        // one rented form factor per search: cars only in a car sharing search, never in a micromobility one
+        if (station.isCar() != (options.rentedVehicleMode == TraverseMode.CAR)) {
+            return null;
+        }
+
         StateEditor s1e = s0.edit(this);
         if (options.arriveBy) {
             // In an "arrive by" search, a vehicle may have already been dropped off and this potential
@@ -84,7 +90,12 @@ public class RentAVehicleOnEdge extends RentAVehicleAbstractEdge {
             // Check if the vehicle network at this edge is compatible with the allowable vehicle networks
             // where the vehicle was dropped off.  Dropoff points could be either a dropoff station or a
             // StreetEdge for floating vehicle rentals.
-            if (!hasCompatibleNetworks(s0.getVehicleRentalNetworks(), station.networks)) {
+            if (options.rentedVehicleMode == TraverseMode.CAR) {
+                if (!options.allowVehicleRentalDropoffAnywhere && (!station.isFloatingVehicle ||
+                    !s0.carRentalRegionAllowsDropoff(station.networks, s0.getVehicleRentalNetworks()))) {
+                    return null;
+                }
+            } else if (!hasCompatibleNetworks(s0.getVehicleRentalNetworks(), station.networks)) {
                 // The networks found at the dropoff point are incompatible with those found at
                 // this pickup station, so return null.
                 return null;

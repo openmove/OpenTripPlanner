@@ -431,11 +431,14 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
                 }
             }
         } else if (options.allowVehicleRental) {
+            // the form factor rented in this search: MICROMOBILITY, or CAR for car sharing
+            final TraverseMode rentedMode = options.rentedVehicleMode;
+            final boolean rentingCar = rentedMode == TraverseMode.CAR;
             // possible transitions out of renting a Micromobility vehicle during "depart at" searches
             if (
                 !options.arriveBy &&
                     s0.isVehicleRenting() &&
-                    currMode == TraverseMode.MICROMOBILITY
+                    currMode == rentedMode
             ) {
                 // A StreetEdge has been encountered that
                 // 1. Does not allow Micromobility travel
@@ -449,10 +452,13 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
                 // In this case fork the state into 2 options:
                 // 1. End the vehicle rental and begin walking
                 // 2. Keep renting the vehicle, but transition to WALK mode
+                // A rented car stays on the last driven edge (the back edge) and is never walked, so option 2 is
+                // not created for a car. A car is also left when it cannot drive this edge although the permission
+                // allows CAR (barrier vertex, turn restriction), as the arriveBy fork allows.
                 if (
-                    !getPermission().allows(TraverseMode.MICROMOBILITY) &&
+                    (rentingCar ? state == null : !getPermission().allows(rentedMode)) &&
                         (
-                            s0.isVehicleRentalDropoffAllowed(this, false) ||
+                            (!rentingCar && s0.isVehicleRentalDropoffAllowed(this, false)) ||
                                 (
                                     s0.backEdge instanceof StreetEdge &&
                                         s0.isVehicleRentalDropoffAllowed(
@@ -463,7 +469,9 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
                         )
                 ) {
                     StateEditor editorEndedVehicleRental = doTraverse(s0, options, TraverseMode.WALK);
-                    StateEditor editorKeepVehicleRental = doTraverse(s0, options, TraverseMode.WALK);
+                    StateEditor editorKeepVehicleRental = rentingCar
+                        ? null
+                        : doTraverse(s0, options, TraverseMode.WALK);
                     State keepVehicleRentalState = null;
                     if (editorKeepVehicleRental != null) {
                         editorKeepVehicleRental.setBackMode(TraverseMode.WALK);
@@ -490,8 +498,11 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
                 // 1. Still renting and riding the vehicle
                 // 2. Vehicle rental ended and walking on foot
                 else if (
-                    getPermission().allows(TraverseMode.MICROMOBILITY) &&
-                        !getFloatingVehicleDropoffSuitability() &&
+                    getPermission().allows(rentedMode) &&
+                        // a car is also left before a drivable edge its network does not allow parking on
+                        (rentingCar
+                            ? !s0.isVehicleRentalDropoffAllowed(this, false)
+                            : !getFloatingVehicleDropoffSuitability()) &&
                         s0.backEdge instanceof StreetEdge &&
                         s0.isVehicleRentalDropoffAllowed((StreetEdge) s0.backEdge, false)
                 ) {
@@ -514,13 +525,17 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
             // previous StreetEdge constitutes a part of this current StreetEdge. Since a vehicle rental could end on
             // the previous StreetEdge, the floating rental vehicle is assumed to be left at the very end of the
             // StreetEdge.
+            // A rented car is only left on a drivable edge, so for a car the drop-off is tested on this edge only.
             else if (
                 !s0.isVehicleRenting() &&
-                    (getPermission().allows(TraverseMode.MICROMOBILITY) || getPermission().allows(TraverseMode.WALK)) &&
-                    currMode != TraverseMode.MICROMOBILITY &&
+                    (rentingCar
+                        ? getPermission().allows(TraverseMode.CAR)
+                        : (getPermission().allows(TraverseMode.MICROMOBILITY) || getPermission().allows(TraverseMode.WALK))) &&
+                    currMode != rentedMode &&
                     options.arriveBy &&
                     (s0.isVehicleRentalDropoffAllowed(this, false) ||
                         (
+                            !rentingCar &&
                             s0.backEdge instanceof StreetEdge &&
                                 s0.isVehicleRentalDropoffAllowed(
                                     (StreetEdge) s0.backEdge,
@@ -529,11 +544,13 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
                         )
                     )
             ) {
-                StateEditor editorWithVehicleRental = doTraverse(s0, options, TraverseMode.MICROMOBILITY);
+                StateEditor editorWithVehicleRental = doTraverse(s0, options, rentedMode);
                 if (editorWithVehicleRental != null) {
-                    // begin vehicle rental usage.
-                    editorWithVehicleRental.incrementWeight(options.vehicleRentalPickupCost);
-                    editorWithVehicleRental.incrementTimeInSeconds(options.vehicleRentalPickupTime);
+                    // The backward car rental transition represents dropping off the vehicle.
+                    editorWithVehicleRental.incrementWeight(rentingCar
+                        ? options.vehicleRentalDropoffCost : options.vehicleRentalPickupCost);
+                    editorWithVehicleRental.incrementTimeInSeconds(rentingCar
+                        ? options.vehicleRentalDropoffTime : options.vehicleRentalPickupTime);
                     editorWithVehicleRental.beginVehicleRenting(getDistance(), vehicleNetworks, true);
                     // in arriveBy mode transitions on a street edge, we must immediately set the backmode to
                     // Micromobility to make sure proper state is maintained for correct state slicing and reverse
@@ -542,9 +559,11 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
                     // occur here. NOTE: if the edge is only traversable by walking, then the backMode should be set to
                     // walk
                     editorWithVehicleRental.setBackMode(
-                        canTraverseIncludingBarrier(TraverseMode.MICROMOBILITY)
-                            ? TraverseMode.MICROMOBILITY
-                            : TraverseMode.WALK
+                        rentingCar
+                            ? TraverseMode.CAR
+                            : canTraverseIncludingBarrier(TraverseMode.MICROMOBILITY)
+                                ? TraverseMode.MICROMOBILITY
+                                : TraverseMode.WALK
                     );
                     State editorWithVehicleRentalState = editorWithVehicleRental.makeState();
                     if (state != null) {
@@ -815,6 +834,10 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
             }
             if (s0.isCarRenting()) {
                 s1.incrementCarRentalDistance(getDistance());
+            }
+            // a car rented through vehicle rental must reach minimumVehicleRentalDistance too
+            if (s0.isVehicleRenting() && options.rentedVehicleMode == TraverseMode.CAR) {
+                s1.incrementVehicleRentalDistance(getDistance());
             }
         }
 

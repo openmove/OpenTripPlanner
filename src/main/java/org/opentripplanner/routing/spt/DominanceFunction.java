@@ -2,6 +2,7 @@ package org.opentripplanner.routing.spt;
 
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TimedTransferEdge;
@@ -114,6 +115,17 @@ public abstract class DominanceFunction implements Serializable {
         // Does one state represent using a rented vehicle and the other not currently renting?
         if (a.isVehicleRenting() != b.isVehicleRenting()) {
             return false;
+        }
+
+        // In CAR_RENT searches, states with different compatible networks or floating drop-off capabilities are
+        // incomparable (e.g. restricted vs unrestricted operators, or edges inside vs outside a region).
+        if (a.isVehicleRenting() && a.getOptions().rentedVehicleMode == TraverseMode.CAR) {
+            if (a.stateData.rentedVehicleAllowsFloatingDropoffs() != b.stateData.rentedVehicleAllowsFloatingDropoffs()) {
+                return false;
+            }
+            if (!Objects.equals(a.getVehicleRentalNetworks(), b.getVehicleRentalNetworks())) {
+                return false;
+            }
         }
 
         // Does one state represent using a rented vehicle before transit and the other using a rented vehicle after?

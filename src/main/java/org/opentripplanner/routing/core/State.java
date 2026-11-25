@@ -1426,6 +1426,12 @@ public class State implements Cloneable {
             return true;
         }
 
+        if (options.rentedVehicleMode == TraverseMode.CAR) {
+            // In reverse, the street supplies its region labels. Check them when the pickup identifies the operator.
+            return options.arriveBy || (stateData.rentedVehicleAllowsFloatingDropoffs &&
+                carRentalRegionAllowsDropoff(stateData.vehicleRentalNetworks, theEdge.getVehicleNetworks()));
+        }
+
         // make sure the vehicle networks associated with the edge make a floating dropoff possible.
         if (options.arriveBy) {
             // the search is progressing backwards to the origin an a floating vehicle dropoff might have occurred at
@@ -1456,6 +1462,20 @@ public class State implements Cloneable {
             // possible here.
             return false;
         }
+    }
+
+    /** A floating car can be left inside any of its operator regions, or anywhere for an unrestricted operator. */
+    public boolean carRentalRegionAllowsDropoff(Set<String> pickupNetworks, Set<String> dropoffNetworks) {
+        if (pickupNetworks == null) return true;
+        VehicleRentalStationService service = getContext() == null ? null :
+            getContext().graph.getService(VehicleRentalStationService.class);
+        for (String network : pickupNetworks) {
+            if (service == null || !service.getVehicleRentalRegions().containsKey(network) ||
+                (dropoffNetworks != null && dropoffNetworks.contains(network))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isVehicleRenting() { return stateData.usingRentedVehicle; }

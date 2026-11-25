@@ -35,6 +35,7 @@ import org.opentripplanner.util.NonLocalizedString;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -102,6 +103,33 @@ public class TestVehicleRentalFormFactor {
             }
         }
         assertFalse(path.states.getLast().isVehicleRenting());
+    }
+
+    @Test
+    public void carArriveByChargesPickupAndDropoffOnce() {
+        addCar();
+        GraphPath charged = plan(CAR_SEARCH, true, false);
+        assertNotNull(charged);
+        State pickup = searchStateAfter(rentCar);
+        RoutingRequest chargedOptions = pickup.getOptions();
+        assertEquals(chargedOptions.vehicleRentalPickupTime, pickup.getAbsTimeDeltaSeconds());
+        assertEquals(chargedOptions.vehicleRentalPickupCost, pickup.getWeightDelta(), 1e-6);
+
+        RoutingRequest freeOptions = new RoutingRequest(CAR_SEARCH);
+        freeOptions.vehicleRentalPickupTime = 0;
+        freeOptions.vehicleRentalPickupCost = 0;
+        freeOptions.vehicleRentalDropoffTime = 0;
+        freeOptions.vehicleRentalDropoffCost = 0;
+        freeOptions.setArriveBy(true);
+        freeOptions.setRoutingContext(graph, a, d);
+        GraphPath free = new AStar().getShortestPathTree(freeOptions).getPath(a, false);
+
+        assertNotNull(free);
+        assertEquals(charged.edges, free.edges);
+        assertEquals(chargedOptions.vehicleRentalPickupTime + chargedOptions.vehicleRentalDropoffTime,
+            charged.getDuration() - free.getDuration());
+        assertEquals(chargedOptions.vehicleRentalPickupCost + chargedOptions.vehicleRentalDropoffCost,
+            charged.getWeight() - free.getWeight(), 1e-6);
     }
 
     @Test
@@ -221,14 +249,343 @@ public class TestVehicleRentalFormFactor {
 
     @Test
     public void carIsNotLeftOutsideItsNetworkRegion() {
-        graph.getService(VehicleRentalStationService.class)
-            .addVehicleRentalRegion(
-                new VehicleRentalRegion(NETWORK, GeometryUtils.getGeometryFactory().createPoint(a.getCoordinate())));
+        addRegion(NETWORK);
         for (StreetEdge e : roadBC) e.setVehicleNetworks(new HashSet<>());
         for (StreetEdge e : roadCB) e.setVehicleNetworks(new HashSet<>());
         addCar();
 
         assertCarNeverDropped(plan(CAR_SEARCH, false, false));
+        assertCarNeverDropped(plan(CAR_SEARCH, true, false));
+    }
+
+    @Test
+    public void carArriveByUsesUnlabelledEdgesWhenOperatorHasNoRegion() {
+        clearAllEdgeVehicleNetworks(true);
+        addCar();
+
+        GraphPath departAt = plan(CAR_SEARCH, false, false);
+        GraphPath arriveBy = plan(CAR_SEARCH, true, false);
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(rentCar));
+        assertTrue(departAt.edges.containsAll(roadBC));
+        assertEquals(departAt.edges, arriveBy.edges);
+
+        // Also works with explicit empty (non-null) vehicleNetworks sets on edges.
+        clearAllEdgeVehicleNetworks(false);
+        GraphPath arriveByEmptySet = plan(CAR_SEARCH, true, false);
+        assertNotNull(arriveByEmptySet);
+        assertEquals(departAt.edges, arriveByEmptySet.edges);
+
+        // Reverse optimization on unlabelled edges keeps edges without falling back.
+        List<ILoggingEvent> errors = captureStateErrors(() -> {
+            GraphPath optimizedDepartAt = plan(CAR_SEARCH + ",TRANSIT", false, true);
+            GraphPath optimizedArriveBy = plan(CAR_SEARCH + ",TRANSIT", true, true);
+            assertNotNull(optimizedDepartAt);
+            assertNotNull(optimizedArriveBy);
+            assertEquals(departAt.edges, optimizedDepartAt.edges);
+            assertEquals(departAt.edges, optimizedArriveBy.edges);
+        });
+        assertTrue("reverse optimization fell back: " + errors, errors.isEmpty());
+    }
+
+    @Test
+    public void mixedRestrictedAndUnrestrictedOperatorsRespectRestrictedRegionInArriveBy() {
+        buildGraph(true);
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("restricted");
+        roadBC.get(0).addVehicleNetwork("restricted");
+        roadCB.get(1).addVehicleNetwork("restricted");
+        StreetEdge outside = roadBC.get(1);
+        outside.setPermission(StreetTraversalPermission.ALL);
+
+        RentAVehicleOnEdge restrictedCar = addVehicle(
+            b, "car-restricted", "CAR", "COMBUSTION", networks("restricted"), true, true, 1);
+        // An unrestricted floating car exists elsewhere (unreachable), so `outside` is droppable for "unrestricted"
+        // only. The restricted car at B must still be left on roadBC.get(0) and must not be pruned by dominance.
+        IntersectionVertex island = new IntersectionVertex(graph, "ISLAND", 0.01, 0.01);
+        RentAVehicleOnEdge unrestrictedCar = addVehicle(
+            island, "car-unrestricted", "CAR", "COMBUSTION", networks("unrestricted"), true, true, 1);
+
+        GraphPath departAt = null;
+        for (boolean arriveBy : new boolean[] { false, true }) {
+            RoutingRequest options = new RoutingRequest(CAR_SEARCH);
+            options.vehicleRentalPickupCost = 0;
+            options.vehicleRentalDropoffCost = 0;
+            options.setArriveBy(arriveBy);
+            GraphPath path = plan(options);
+            assertNotNull(path);
+            assertTrue("restricted car not rented, arriveBy=" + arriveBy, path.edges.contains(restrictedCar));
+            assertFalse(path.edges.contains(unrestrictedCar));
+            assertEquals(TraverseMode.CAR, stateAfter(path, roadBC.get(0)).getBackMode());
+            assertEquals(TraverseMode.WALK, stateAfter(path, outside).getBackMode());
+            if (!arriveBy) {
+                departAt = path;
+            } else {
+                assertEquals(departAt.edges, path.edges);
+            }
+        }
+    }
+
+    @Test
+    public void mixedRestrictedAndUnrestrictedOperatorsPickUnrestrictedForUnlabelledRoad() {
+        buildGraph(true);
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("restricted");
+        roadBC.get(0).addVehicleNetwork("restricted");
+        roadCB.get(1).addVehicleNetwork("restricted");
+        StreetEdge outside = roadBC.get(1);
+        outside.setPermission(StreetTraversalPermission.ALL);
+
+        // Place the unrestricted car a short 20 m detour off B so the restricted car reaches M first in departAt.
+        IntersectionVertex b2 = new IntersectionVertex(graph, "B2", 0.0001, 0.0015);
+        StreetEdge bb2 = edge(b, b2, 20, StreetTraversalPermission.ALL);
+        StreetEdge b2b = edge(b2, b, 20, StreetTraversalPermission.ALL);
+        bb2.setCarSpeed(ROAD_CAR_SPEED);
+        b2b.setCarSpeed(ROAD_CAR_SPEED);
+        bb2.setVehicleNetworks(null);
+        b2b.setVehicleNetworks(null);
+
+        RentAVehicleOnEdge restrictedCar = addVehicle(
+            b, "car-restricted", "CAR", "COMBUSTION", networks("restricted"), true, true, 1);
+        RentAVehicleOnEdge unrestrictedCar = addVehicle(
+            b2, "car-unrestricted", "CAR", "COMBUSTION", networks("unrestricted"), true, true, 1);
+
+        GraphPath departAt = plan(CAR_SEARCH, false, false);
+        GraphPath arriveBy = plan(CAR_SEARCH, true, false);
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(unrestrictedCar));
+        assertFalse(departAt.edges.contains(restrictedCar));
+        assertEquals(TraverseMode.CAR, stateAfter(departAt, outside).getBackMode());
+        assertEquals(departAt.edges, arriveBy.edges);
+    }
+
+    @Test
+    public void unrestrictedCarCanDropOnEdgeLabelledOnlyForAnotherRestrictedOperator() {
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("restricted");
+        for (StreetEdge e : roadBC) e.addVehicleNetwork("restricted");
+        for (StreetEdge e : roadCB) e.addVehicleNetwork("restricted");
+
+        RentAVehicleOnEdge unrestrictedCar = addVehicle(
+            b, "car-unrestricted", "CAR", "COMBUSTION", networks("unrestricted"), true, true, 1);
+
+        GraphPath departAt = plan(CAR_SEARCH, false, false);
+        GraphPath arriveBy = plan(CAR_SEARCH, true, false);
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(unrestrictedCar));
+        assertEquals(departAt.edges, arriveBy.edges);
+    }
+
+    @Test
+    public void multiNetworkCarUsesUnrestrictedFallbackAndMatchesCompanyFilter() {
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("restricted");
+
+        RentAVehicleOnEdge restrictedOnly = addVehicle(
+            b, "car-restricted-only", "CAR", "COMBUSTION", networks("restricted"), true, true, 1);
+        RentAVehicleOnEdge multiNetwork = addVehicle(
+            b, "car-multi", "CAR", "COMBUSTION", networks("restricted", "unrestricted"), true, true, 1);
+
+        for (String companies : new String[] { null, "restricted" }) {
+            RoutingRequest departOpts = new RoutingRequest(CAR_SEARCH);
+            departOpts.companies = companies;
+            GraphPath departAt = plan(departOpts);
+
+            RoutingRequest arriveOpts = new RoutingRequest(CAR_SEARCH);
+            arriveOpts.companies = companies;
+            arriveOpts.setArriveBy(true);
+            GraphPath arriveBy = plan(arriveOpts);
+
+            assertNotNull(departAt);
+            assertNotNull(arriveBy);
+            assertTrue("companies=" + companies, departAt.edges.contains(multiNetwork));
+            assertFalse("companies=" + companies, departAt.edges.contains(restrictedOnly));
+            assertEquals("companies=" + companies, departAt.edges, arriveBy.edges);
+        }
+    }
+
+    @Test
+    public void multiNetworkCarWithRestrictedNetworksMatchesCompanyFilterAndEdgeRegion() {
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("netA");
+        addRegion("netB");
+        for (StreetEdge e : roadBC) e.addVehicleNetwork("netB");
+        for (StreetEdge e : roadCB) e.addVehicleNetwork("netB");
+
+        RentAVehicleOnEdge carMulti = addVehicle(
+            b, "car-multi", "CAR", "COMBUSTION", networks("netA", "netB"), true, true, 1);
+        RentAVehicleOnEdge carBOnly = addVehicle(
+            b, "car-b-only", "CAR", "COMBUSTION", networks("netB"), true, true, 1);
+
+        RoutingRequest departOpts = new RoutingRequest(CAR_SEARCH);
+        departOpts.companies = "netA";
+        GraphPath departAt = plan(departOpts);
+
+        RoutingRequest arriveOpts = new RoutingRequest(CAR_SEARCH);
+        arriveOpts.companies = "netA";
+        arriveOpts.setArriveBy(true);
+        GraphPath arriveBy = plan(arriveOpts);
+
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(carMulti));
+        assertFalse(departAt.edges.contains(carBOnly));
+        assertEquals(departAt.edges, arriveBy.edges);
+    }
+
+    @Test
+    public void requestCompanyFilterPreventsUnrestrictedOperatorUnlockingUnlabelledEdges() {
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("restricted");
+
+        addVehicle(b, "car-restricted", "CAR", "COMBUSTION", networks("restricted"), true, true, 1);
+        RentAVehicleOnEdge unrestrictedCar = addVehicle(
+            b, "car-unrestricted", "CAR", "COMBUSTION", networks("unrestricted"), true, true, 1);
+
+        // Filtering to "restricted" excludes "unrestricted", so unlabelled edges forbid drop-off in both directions.
+        RoutingRequest blockedDepart = new RoutingRequest(CAR_SEARCH);
+        blockedDepart.companies = "restricted";
+        assertCarNeverDropped(plan(blockedDepart));
+
+        RoutingRequest blockedArrive = new RoutingRequest(CAR_SEARCH);
+        blockedArrive.companies = "restricted";
+        blockedArrive.setArriveBy(true);
+        assertCarNeverDropped(plan(blockedArrive));
+
+        // Comma-separated company list matching the unrestricted operator allows both directions.
+        RoutingRequest allowedDepart = new RoutingRequest(CAR_SEARCH);
+        allowedDepart.companies = "other,unrestricted";
+        GraphPath departAt = plan(allowedDepart);
+
+        RoutingRequest allowedArrive = new RoutingRequest(CAR_SEARCH);
+        allowedArrive.companies = "other,unrestricted";
+        allowedArrive.setArriveBy(true);
+        GraphPath arriveBy = plan(allowedArrive);
+
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(unrestrictedCar));
+        assertEquals(departAt.edges, arriveBy.edges);
+    }
+
+    @Test
+    public void nullNetworkCarIsAllowedWithoutUnlockingRestrictedCarOutsideRegion() {
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("restricted");
+
+        RentAVehicleOnEdge restrictedCar = addVehicle(
+            b, "car-restricted", "CAR", "COMBUSTION", networks("restricted"), true, true, 1);
+        IntersectionVertex island = new IntersectionVertex(graph, "ISLAND", 0.01, 0.01);
+        addVehicle(island, "car-null-net-unreachable", "CAR", "COMBUSTION", null, true, true, 1);
+
+        // Unreachable catch-all car must not let the restricted car at B drop outside its region.
+        assertCarNeverDropped(plan(CAR_SEARCH, false, false));
+        assertCarNeverDropped(plan(CAR_SEARCH, true, false));
+
+        // A reachable catch-all car with networks == null works in both directions.
+        RentAVehicleOnEdge catchAllCar = addVehicle(
+            b, "car-null-net", "CAR", "COMBUSTION", null, true, true, 1);
+        GraphPath departAt = plan(CAR_SEARCH, false, false);
+        GraphPath arriveBy = plan(CAR_SEARCH, true, false);
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(catchAllCar));
+        assertFalse(departAt.edges.contains(restrictedCar));
+        assertEquals(departAt.edges, arriveBy.edges);
+    }
+
+    @Test
+    public void nonFloatingCarIsRejectedUnlessDropoffAnywhereIsEnabled() {
+        clearAllEdgeVehicleNetworks(true);
+        RentAVehicleOnEdge dockedCar = addVehicle(
+            b, "car-docked", "CAR", "COMBUSTION", networks("unrestricted"), false, true, 1);
+
+        assertCarNeverDropped(plan(CAR_SEARCH, false, false));
+        assertCarNeverDropped(plan(CAR_SEARCH, true, false));
+
+        // Even when a floating car of the same network exists slightly further away, neither direction rents the
+        // non-floating car.
+        IntersectionVertex b2 = new IntersectionVertex(graph, "B2", 0.0001, 0.0015);
+        StreetEdge bb2 = edge(b, b2, 20, StreetTraversalPermission.ALL);
+        StreetEdge b2b = edge(b2, b, 20, StreetTraversalPermission.ALL);
+        bb2.setCarSpeed(ROAD_CAR_SPEED);
+        b2b.setCarSpeed(ROAD_CAR_SPEED);
+        bb2.setVehicleNetworks(null);
+        b2b.setVehicleNetworks(null);
+        RentAVehicleOnEdge floatingCar = addVehicle(
+            b2, "car-floating", "CAR", "COMBUSTION", networks("unrestricted"), true, true, 1);
+
+        GraphPath departAt = plan(CAR_SEARCH, false, false);
+        GraphPath arriveBy = plan(CAR_SEARCH, true, false);
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(floatingCar));
+        assertFalse(departAt.edges.contains(dockedCar));
+        assertEquals(departAt.edges, arriveBy.edges);
+
+        // With allowVehicleRentalDropoffAnywhere enabled, even a non-floating car on an edge labelled for another
+        // network is usable in both directions.
+        for (StreetEdge e : roadBC) e.setVehicleNetworks(networks("other"));
+        for (StreetEdge e : roadCB) e.setVehicleNetworks(networks("other"));
+        RoutingRequest anywhereDepart = new RoutingRequest(CAR_SEARCH);
+        anywhereDepart.allowVehicleRentalDropoffAnywhere = true;
+        GraphPath anywhereDepartPath = plan(anywhereDepart);
+
+        RoutingRequest anywhereArrive = new RoutingRequest(CAR_SEARCH);
+        anywhereArrive.allowVehicleRentalDropoffAnywhere = true;
+        anywhereArrive.setArriveBy(true);
+        GraphPath anywhereArrivePath = plan(anywhereArrive);
+
+        assertNotNull(anywhereDepartPath);
+        assertNotNull(anywhereArrivePath);
+        assertTrue(anywhereDepartPath.edges.contains(dockedCar));
+        assertEquals(anywhereDepartPath.edges, anywhereArrivePath.edges);
+    }
+
+    @Test
+    public void pickupAvailabilityAllowPickupAndFormFactorGateArriveByDropoff() {
+        clearAllEdgeVehicleNetworks(true);
+        addRegion("restricted");
+        addVehicle(b, "car-restricted", "CAR", "COMBUSTION", networks("restricted"), true, true, 1);
+
+        // An unrestricted scooter does not unlock unlabelled edges for CAR_RENT.
+        addVehicle(b, "scooter-unrestricted", "SCOOTER", "ELECTRIC", networks("scooter"), true, true, 1);
+        // An unrestricted car with allowPickup == false does not unlock unlabelled edges.
+        addVehicle(b, "car-no-pickup", "CAR", "COMBUSTION", networks("nopickup"), true, false, 1);
+        // An unrestricted car with vehiclesAvailable == 0 does not unlock unlabelled edges when checking availability.
+        RentAVehicleOnEdge emptyCar = addVehicle(
+            b, "car-empty", "CAR", "COMBUSTION", networks("empty"), true, true, 0);
+
+        RoutingRequest withAvailDepart = new RoutingRequest(CAR_SEARCH);
+        withAvailDepart.useVehicleRentalAvailabilityInformation = true;
+        assertCarNeverDropped(plan(withAvailDepart));
+
+        RoutingRequest withAvailArrive = new RoutingRequest(CAR_SEARCH);
+        withAvailArrive.useVehicleRentalAvailabilityInformation = true;
+        withAvailArrive.setArriveBy(true);
+        assertCarNeverDropped(plan(withAvailArrive));
+
+        // When availability is not checked, the car with vehiclesAvailable == 0 is usable in both directions.
+        GraphPath departAt = plan(CAR_SEARCH, false, false);
+        GraphPath arriveBy = plan(CAR_SEARCH, true, false);
+        assertNotNull(departAt);
+        assertNotNull(arriveBy);
+        assertTrue(departAt.edges.contains(emptyCar));
+        assertEquals(departAt.edges, arriveBy.edges);
+    }
+
+    @Test
+    public void micromobilityArriveByStillRejectsUnlabelledEdges() {
+        clearAllEdgeVehicleNetworks(true);
+        addScooter();
+
+        RoutingRequest options = new RoutingRequest(SCOOTER_SEARCH);
+        options.setArriveBy(true);
+        options.setRoutingContext(graph, a, d);
+        assertFalse(new State(d, options).isVehicleRentalDropoffAllowed(cycleBC, false));
     }
 
     /**
@@ -465,25 +822,69 @@ public class TestVehicleRentalFormFactor {
 
     /** Same vertex and edges as VehicleRentalUpdater.makeVertex for a vehicle snapped onto vertex B. */
     private RentAVehicleOnEdge addFloatingVehicle(String id, String vehicleType, String propulsionType) {
+        return addVehicle(b, id, vehicleType, propulsionType, NETWORKS, true, true, 1);
+    }
+
+    private RentAVehicleOnEdge addVehicle(
+        IntersectionVertex at,
+        String id,
+        String vehicleType,
+        String propulsionType,
+        Set<String> networks,
+        boolean floating,
+        boolean allowPickup,
+        int vehiclesAvailable
+    ) {
         VehicleRentalStation station = new VehicleRentalStation();
         station.id = id;
         station.name = new NonLocalizedString(id);
-        station.x = b.getX();
-        station.y = b.getY();
-        station.vehiclesAvailable = 1;
+        station.x = at.getX();
+        station.y = at.getY();
+        station.vehiclesAvailable = vehiclesAvailable;
         station.spacesAvailable = 0;
-        station.isFloatingVehicle = true;
-        station.allowPickup = true;
+        station.isFloatingVehicle = floating;
+        station.allowPickup = allowPickup;
         station.allowDropoff = false;
-        station.networks = NETWORKS;
+        station.networks = networks;
         station.vehicleType = vehicleType;
         station.propulsionType = propulsionType;
         graph.getService(VehicleRentalStationService.class).addVehicleRentalStation(station);
 
         VehicleRentalStationVertex vertex = new VehicleRentalStationVertex(graph, station);
-        new StreetVehicleRentalLink(b, vertex);
-        new StreetVehicleRentalLink(vertex, b);
-        return new RentAVehicleOnEdge(vertex, station);
+        new StreetVehicleRentalLink(at, vertex);
+        new StreetVehicleRentalLink(vertex, at);
+        return allowPickup ? new RentAVehicleOnEdge(vertex, station) : null;
+    }
+
+    private void addRegion(String network) {
+        graph.getService(VehicleRentalStationService.class)
+            .addVehicleRentalRegion(
+                new VehicleRentalRegion(network, GeometryUtils.getGeometryFactory().createPoint(a.getCoordinate())));
+    }
+
+    private void clearAllEdgeVehicleNetworks(boolean useNull) {
+        List<StreetEdge> all = new ArrayList<>();
+        all.add(ab);
+        all.add(ba);
+        all.add(cd);
+        all.add(dc);
+        all.add(cycleBC);
+        all.add(cycleCB);
+        all.addAll(roadBC);
+        all.addAll(roadCB);
+        for (StreetEdge e : all) {
+            e.setVehicleNetworks(useNull ? null : new HashSet<>());
+        }
+    }
+
+    private static Set<String> networks(String... names) {
+        return new HashSet<>(Arrays.asList(names));
+    }
+
+    private GraphPath plan(RoutingRequest options) {
+        options.setRoutingContext(graph, a, d);
+        tree = new AStar().getShortestPathTree(options);
+        return tree.getPath(options.arriveBy ? a : d, false);
     }
 
     private GraphPath plan(String modes, boolean arriveBy, boolean optimize) {

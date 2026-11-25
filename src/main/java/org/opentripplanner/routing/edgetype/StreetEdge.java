@@ -546,9 +546,11 @@ public class StreetEdge extends Edge implements Cloneable, WheelchairEdge {
             ) {
                 StateEditor editorWithVehicleRental = doTraverse(s0, options, rentedMode);
                 if (editorWithVehicleRental != null) {
-                    // begin vehicle rental usage.
-                    editorWithVehicleRental.incrementWeight(options.vehicleRentalPickupCost);
-                    editorWithVehicleRental.incrementTimeInSeconds(options.vehicleRentalPickupTime);
+                    // The backward car rental transition represents dropping off the vehicle.
+                    editorWithVehicleRental.incrementWeight(rentingCar
+                        ? options.vehicleRentalDropoffCost : options.vehicleRentalPickupCost);
+                    editorWithVehicleRental.incrementTimeInSeconds(rentingCar
+                        ? options.vehicleRentalDropoffTime : options.vehicleRentalPickupTime);
                     editorWithVehicleRental.beginVehicleRenting(getDistance(), vehicleNetworks, true);
                     // in arriveBy mode transitions on a street edge, we must immediately set the backmode to
                     // Micromobility to make sure proper state is maintained for correct state slicing and reverse

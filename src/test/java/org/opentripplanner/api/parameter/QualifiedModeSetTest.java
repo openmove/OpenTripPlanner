@@ -58,11 +58,14 @@ public class QualifiedModeSetTest {
 
     @Test
     public void carRentWithMicromobilityRentIsRejected() {
-        try {
-            apply("MICROMOBILITY_RENT,CAR_RENT,WALK");
-            fail("CAR_RENT combined with MICROMOBILITY_RENT must be rejected");
-        } catch (IllegalArgumentException expected) {
-            // expected
+        for (String otherModes : new String[] {"WALK", "CAR,WALK", "CAR_PARK,TRANSIT", "CAR_HAIL,TRANSIT"}) {
+            String modes = "MICROMOBILITY_RENT,CAR_RENT," + otherModes;
+            try {
+                apply(modes);
+                fail("Expected conflicting rental modes to be rejected: " + modes);
+            } catch (IllegalArgumentException expected) {
+                assertTrue(expected.getMessage().contains("CAR_RENT and MICROMOBILITY_RENT cannot be combined"));
+            }
         }
     }
 

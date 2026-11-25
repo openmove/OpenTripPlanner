@@ -77,8 +77,7 @@ public class QualifiedModeSet implements Serializable {
     /**
      * CAR_RENT with no other CAR mode is car sharing through the vehicle rental updaters: the search rents only
      * vehicles whose form factor is CAR and drives them as CAR. The CAR mode bit is cleared so the search does
-     * not start in a private car. One rented form factor per search: combining it with MICROMOBILITY_RENT is
-     * rejected.
+     * not start in a private car. CAR_RENT and MICROMOBILITY_RENT are mutually exclusive in any mode set.
      */
     private void applyCarSharing(RoutingRequest req) {
         boolean carRent = false;
@@ -95,11 +94,11 @@ public class QualifiedModeSet implements Serializable {
                 micromobilityRent = true;
             }
         }
-        if (!carRent || otherCarMode) return;
-        if (micromobilityRent) {
+        if (carRent && micromobilityRent) {
             throw new IllegalArgumentException("CAR_RENT and MICROMOBILITY_RENT cannot be combined in one request: "
                 + "send one request per rental type.");
         }
+        if (!carRent || otherCarMode) return;
         req.allowCarRental = false;
         req.allowVehicleRental = true;
         req.rentedVehicleMode = TraverseMode.CAR;

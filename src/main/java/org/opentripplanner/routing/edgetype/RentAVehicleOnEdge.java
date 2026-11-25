@@ -90,7 +90,12 @@ public class RentAVehicleOnEdge extends RentAVehicleAbstractEdge {
             // Check if the vehicle network at this edge is compatible with the allowable vehicle networks
             // where the vehicle was dropped off.  Dropoff points could be either a dropoff station or a
             // StreetEdge for floating vehicle rentals.
-            if (!hasCompatibleNetworks(s0.getVehicleRentalNetworks(), station.networks)) {
+            if (options.rentedVehicleMode == TraverseMode.CAR) {
+                if (!options.allowVehicleRentalDropoffAnywhere && (!station.isFloatingVehicle ||
+                    !s0.carRentalRegionAllowsDropoff(station.networks, s0.getVehicleRentalNetworks()))) {
+                    return null;
+                }
+            } else if (!hasCompatibleNetworks(s0.getVehicleRentalNetworks(), station.networks)) {
                 // The networks found at the dropoff point are incompatible with those found at
                 // this pickup station, so return null.
                 return null;
